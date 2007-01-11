@@ -1,0 +1,11 @@
+Revision history for Perl extension Audio::TagLib::Shell.
+
+1.4  Mon Dec 19 19:18:29 2005
+	- original version; created by h2xs 1.23 with options
+		-X -n Audio::TagLib::Shell
+
+1.41 Sat Dec 31 2005
+	- <TAB> completion bug fix
+
+1.42 Tue Feb 07 2006
+    - use Term::BashTab instead of Term::ReadLine

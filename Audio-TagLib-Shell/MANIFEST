@@ -1,0 +1,10 @@
+Changes
+LICENSE
+LICENSE.Artistic
+LICENSE.GPL
+Makefile.PL
+MANIFEST
+README
+TODO
+t/Audio-TagLib-Shell.t
+lib/Audio/TagLib/Shell.pm
