@@ -1,0 +1,11 @@
+Revision history for Perl extension Term::BashTab.
+
+0.01  Tue Jan 10 12:05:25 2006
+	- original version; created by h2xs 1.23 with options
+		-X -n Term::BashTab
+
+0.02  Tue Feb 07 2006
+    - bugfix to new method
+
+0.03  Thu Feb 16 2006
+    - MSWin32 support(no test) && bugfix

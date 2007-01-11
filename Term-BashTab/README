@@ -1,0 +1,35 @@
+Term-BashTab
+=========================
+
+A simple wrapper of Term::ReadLine, offerring bash-like <TAB> feature.
+
+It is useful when you need an interactive session asking a valid path
+from term-user.
+
+It makes use of the completion stub offerred by Term::ReadLine
+(actually Term::ReadLine::*).
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Term::ReadLine
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2006 by Dongxu Ma
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.7 or,
+at your option, any later version of Perl 5 you may have available.
+
+
