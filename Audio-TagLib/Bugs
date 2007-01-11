@@ -1,0 +1,12 @@
+known bugs in libtag.so.1.4.0
+------------------------------
+1) TagLib::ByteVector::setData without updating size(actually not a bug
+but should use with caution since this effects the behavior of other
+methods such as at & clear & resize)
+2) TagLib::String::data encodes in UTF16LE while specifying UTF16BE
+3) TagLib::ID3v2::RelativeVolumeFrame() defined in
+relativevolumeframe.h but not implemented in relativevolumeframe.cpp
+4) TagLib::ID3v2::UserTextIdentificationFrame::find not exported
+properly
+5) TagLib::MPEG::Properties::protectionEnabled() defined but not
+implemented 

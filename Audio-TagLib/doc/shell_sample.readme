@@ -1,0 +1,8 @@
+perl -MAudio::TagLib -e shell
+>open <file>
+>title
+blah blah blah
+>set_artist "blah"
+>artist
+blah
+>close

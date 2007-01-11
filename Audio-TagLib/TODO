@@ -1,0 +1,4 @@
+1) setArist(Audio::TagLib::String) -> setArist(PV)
+2) overload q("") => sub{ shift->toCString(); } for Audio::TagLib::String
+3) overload q("") => sub{ shift->data(); } for Audio::TagLib::ByteVector
+4) implement q(=) for some classes
