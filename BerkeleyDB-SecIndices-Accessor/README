@@ -1,0 +1,38 @@
+BerkeleyDB-SecIndices-Accessor
+===========================================
+
+BerkeleyDB is one of the most famous flat/non-relational databases
+widely used. Depending on the very strong features offerred, one can
+implement fast cache, in-memory/embedded database, btree, queue and
+vice versa. Smart guys from both sleepycat and open-source world are
+working very hard to bring new wonderful stuff. 
+
+Here you are touching another great feature of BerkeleyDB - Secondary
+Indicies. One can create several secondary databases for index
+purpose. 
+
+Refer to pod in module itself for more detail.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  BerkeleyDB YAML Storable
+  File::Temp (testing code)
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2006 by Dongxu Ma
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+

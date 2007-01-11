@@ -1,0 +1,9 @@
+Changes
+LICENSE
+LICENSE.Artistic
+LICENSE.GPL
+Makefile.PL
+MANIFEST
+README
+t/BerkeleyDB-SecIndices-Accessor.t
+lib/BerkeleyDB/SecIndices/Accessor.pm

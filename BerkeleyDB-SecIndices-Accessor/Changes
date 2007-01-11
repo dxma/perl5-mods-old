@@ -1,0 +1,15 @@
+Revision history for Perl extension BerkeleyDB::SecIndices::Accessor.
+
+0.06  fix on splice index by index
+
+0.05  bug fix on splice
+
+0.04  negative offset support
+
+0.03  Added new PUT2 method
+
+0.02  Sync-ed with new uploaded BerkeleyDB 0.28
+
+0.01  Wed Jul 12 12:25:04 2006
+	- original version; created by h2xs 1.23 with options
+		-X -n BerkeleyDB::SecIndices::Accessor
