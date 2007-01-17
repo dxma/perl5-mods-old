@@ -4,23 +4,21 @@ use ExtUtils::MakeMaker;
 BEGIN {
     # a simple work around to perform the neccessary pre-check
     # instead of overloading subs of MakeMaker or other wrapper
-    print STDOUT "ONLY support TagLib version 1.4.* on Linux\n";
+    print STDERR "ONLY support TagLib version 1.4.*\n";
     require Carp;
 	# FIXME
-	# openned for FreeBSD
-    Carp::croak("currently only support Linux\n") 
-      unless $^O eq 'linux' or $^O eq 'freebsd';
-    our $libpath = qx(taglib-config --prefix);
-    chomp($libpath);
-    our $incpath = $libpath . "/include/taglib";
-    $libpath .= -d $libpath. "/lib64" ? "/lib64" : "/lib";
-    my ($lib) = glob($libpath . "/libtag.so.1.4.*");
-    if (defined $lib) {
-        print STDOUT "got $lib, good, go on\n";
-    } else {
-        Carp::croak("version 1.4.* not found,". 
-                    "please install firstly\n");
-    }
+	# openned for FreeBSD, OS X (darwin) and Cygwin
+    Carp::croak("$^O is not supported currently") 
+		unless $^O eq 'linux' or $^O eq 'freebsd' or $^O eq 'darwin' or 
+		    $^O eq 'cygwin';
+	Carp::croak("Please install taglib C++ package first") unless 
+		system("taglib-config --version") == 0;
+	our $libver = qx(taglib-config --version);
+	chomp($libver);
+	Carp::croak("Please install taglib ver 1.4.*") unless 
+		$libver =~ m/^1\.4/io;
+	our $libs = qx(taglib-config --libs);
+	our $inc  = ' -I/usr/include -I./include -I. '. qx(taglib-config --cflags);
 }
 
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
@@ -35,11 +33,11 @@ WriteMakefile(
        AUTHOR         => 'Dongxu, Ma <dongxu@cpan.org>') : ()),
     CC                => 'g++',
     LD                => 'g++',
-    LDDLFLAGS         => "-shared -L${libpath}",
+    LDDLFLAGS         => $^O eq 'darwin' ? "-dynamiclib $libs" : "-shared ". $libs,
     XSOPT             => '-C++ -hiertype',
-    LIBS              => ['-ltag'], # e.g., '-lm'
+    LIBS              => $libs, 
     DEFINE            => $^O eq 'freebsd' ? '-D_BSD_ICONV -DNO_DOXYGEN' : '-DNO_DOXYGEN', # e.g., '-DHAVE_SOMETHING'
-    INC               => "-I${incpath} -I/usr/include -I./include ", # e.g., '-I. -I/usr/include/other'
+    INC               => $inc, # e.g., '-I. -I/usr/include/other'
 	# Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );

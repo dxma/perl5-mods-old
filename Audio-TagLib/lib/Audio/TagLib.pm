@@ -4,7 +4,7 @@ use 5.008003;
 use strict;
 use warnings;
 
-our $VERSION = '1.42';
+our $VERSION = '1.43';
 
 require XSLoader;
 XSLoader::load('Audio::TagLib', $VERSION);

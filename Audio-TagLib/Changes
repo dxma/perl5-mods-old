@@ -1,12 +1,16 @@
 Revision history for Perl extension TagLib.
 
-1.4   Mon Aug 15 18:47:30 2005
-	- original version; created by h2xs 1.23 with options
-		-A -n TagLib
-
-1.41 Tu 20.12.05
-    - bug fix (stack manipulation bug and Makefile.PL)
+1.43 Tu 17.01.07
+    - support for MacOSX
+    - fix on MakeFile.PL
 
 1.42 Mo 17.04.06
     - x86_64 support
     - FreeBSD support(test required)
+
+1.41 Tu 20.12.05
+    - bug fix (stack manipulation bug and Makefile.PL)
+
+1.4   Mon Aug 15 18:47:30 2005
+	- original version; created by h2xs 1.23 with options
+		-A -n TagLib
