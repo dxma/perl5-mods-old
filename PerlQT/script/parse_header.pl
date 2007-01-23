@@ -73,7 +73,13 @@ sub main {
 }
 
 main(@ARGV);
-
 __DATA__
-# CORE SPECS
-begin: '#' { print @item[1], "\n" }
+# focus on:
+# Level 1: class, typedef, function, enum, union
+# Level 2: template
+# 
+# which are relavant to make binding
+begin    : loop
+loop     : ( typedef(s) | comment(s) ) loop
+comment  : /#.*?$/mio { print $item[1], "\n" }
+typedef  : /typedef.*$/mio { print $item[1], "\n"; }
