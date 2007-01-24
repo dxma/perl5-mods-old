@@ -79,7 +79,60 @@ __DATA__
 # Level 2: template
 # 
 # which are relavant to make binding
-begin    : loop
-loop     : ( typedef(s) | comment(s) ) loop
-comment  : /#.*?$/mio { print $item[1], "\n" }
-typedef  : /typedef.*$/mio { print $item[1], "\n"; }
+# loop structure
+begin : loop
+loop  : ( 
+           typedef(s) 
+         | comment(s) 
+         | enum(s)
+         | template(s)
+        ) loop
+# keywords
+keyword_class    : 'class'
+keyword_typedef  : 'typedef'
+keyword_comment  : '#'
+keyword_template : 'template'
+keyword_enum     : 'enum'
+keyword_union    : 'union'
+# primitive code blocks
+comment  : keyword_comment /.*?$/mio 
+           { print $item[1], " ", $item[2], "\n" }
+# FIXME: typedef anonymous enum|union|class
+typedef  : keyword_typedef /(?>[^;]+)/sio ';'  
+           { print $item[1], " ", $item[2], " ", $item[3], "\n" }
+enum     : keyword_enum enum_name enum_body ';'
+# container code blocks
+template : keyword_template '<' template_typename '>' template_body ';'
+class    : keyword_class class_name class_inheritance class_body ';'
+           { print $item[1], " ", $item[2], " ", $item[3], "\n" }
+# functional code blocks
+until_begin_brace         : /(?>[^\{]+)/sio
+                            { $return = $item[1] }
+until_end_brace           : /(?>[^\}]+)/sio
+                            { $return = $item[1] }
+until_begin_angle_bracket : /(?>[^\<]+)/sio
+                            { $return = $item[1] }
+until_end_angle_bracket   : /(?>[^\>]+)/sio
+                            { $return = $item[1] }
+until_equals              : /(?>[^\=]+)/sio
+                            { $return = $item[1] }
+until_dot                 : /(?>[^\,]+)/sio
+                            { $return = $item[1] }
+
+enum_name          : until_begin_brace
+                     { $return = $item[1] }
+enum_body          : '{' enum_unit(s /,/) '}'
+enum_unit          : until_dot 
+                     { $return = (split /=/, $item[1])[0] }
+
+template_typename  : until_end_angle_bracket 
+                     { $return = $item[1] } 
+                   |                
+                     { $return = ''       }
+template_body      : template_class 
+                   | template_function
+class_name         : until_begin_brace
+                     { $return = $item[1] } 
+class_body         : '{' class_body_content '}'
+                   | 
+class_body_content : 
