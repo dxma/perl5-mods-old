@@ -167,7 +167,8 @@ next_begin_brace_or_colon_or_semicolon :
 # at least one '()' block should appear for a valid header
 # trap other keywords to prevent mess
 function_header       : 
-  ( keyword_comment | keyword_class | keyword_enum ) <commit> <reject>
+  (   keyword_comment | keyword_class | keyword_enum 
+    | keyword_typedef ) <commit> <reject>
   | function_header_block(s)
     { $return = join(" ", @{$item[1]}) } 
 function_header_next_token : 
@@ -177,10 +178,12 @@ function_header_next_token :
     { $return = ''       } 
 function_header_block : 
   function_header_next_token '(' function_header_loop ')' 
-  { $return = join(" ", $item[1], $item[2], $item[3], $item[4]) }
+    { $return = join(" ", $item[1], $item[2], $item[3], $item[4]) }
 function_header_loop  : 
   function_header_next_token
-  ( (  '(' function_header_loop ')' ) | ) 
+  ( 
+    (  '(' function_header_loop ')' { $return = $item[2] } ) 
+      | { $return = '' } ) 
     { $return = join(" ", $item[1], $item[2]) } 
   | 
     { $return = '' } 
@@ -189,11 +192,13 @@ function_body         : '{' function_body_content '}'
                       | ';'
                         { $return = '' } 
 # FIXME: recursive
-function_body_content : next_end_brace 
+function_body_content : next_end_brace | 
 
 # enum related
 enum_name          : next_begin_brace
                      { $return = $item[1] }
+                   | 
+                     { $return = ''       } 
 # enum_unit(s /,/) _NOT_ work here
 enum_body          : '{' enum_unit(s) '}'
                      { $return = join(" ", @{$item[2]}) }
