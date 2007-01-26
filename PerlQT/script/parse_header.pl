@@ -13,6 +13,13 @@ marshalling interface.
 
 B<NOTE>: currently focus on typedef and class declaration mainly.
 
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 by Dongxu Ma
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =cut
 
 # Global flags 
@@ -94,6 +101,8 @@ primitive_loop : typedef(s)
                  { $return = $item[1] }
                | function(s)
                  { $return = $item[1] }
+               | expression(s)
+                 { $return = $item[1] } 
 loop           : primitive_loop 
                | 
 # keywords
@@ -104,64 +113,85 @@ keyword_template : 'template'
 keyword_enum     : 'enum'
 keyword_union    : 'union'
 # primitive code blocks
-comment  : keyword_comment /.*?$/mio 
-           { print $item[1], " ", $item[2], "\n" }
-           { $return = $item[1]. " ". $item[2]   } 
+comment   : 
+  keyword_comment /.*?$/mio 
+    { print $item[1], " ", $item[2], "\n" }
+    { $return = $item[1]. " ". $item[2]   } 
 # FIXME: typedef anonymous enum|union|class
-typedef  : keyword_typedef /(?>[^;]+)/sio ';'  
-           { print "typedef: ", join(" ", @item[2 .. $#item-1]), "\n" }
-           { $return = join(" ", @item[1 .. $#item-1])   }
-enum     : keyword_enum enum_name enum_body ';'
-           { print "enum: ", join(" ", @item[2 .. $#item-1]), "\n" }
-           { $return = join(" ", @item[1 .. $#item-1])   }  
+typedef   : 
+  keyword_typedef /(?>[^;]+)/sio ';'  
+    { print "typedef: ", join(" ", @item[2 .. $#item-1]), "\n" }
+    { $return = join(" ", @item[1 .. $#item-1])   }
+enum      : 
+  keyword_enum enum_name enum_body ';'
+    { print "enum: ", join(" ", @item[2 .. $#item-1]), "\n" }
+    { $return = join(" ", @item[1 .. $#item-1])   }  
+# make sure it has no other structure delimiters
+expression: 
+  class_accessibility_content <commit> <reject>
+  | expression_next_token ';'
+    { print "expression: ", $item[1], "\n" }
+    { $return = $item[1] } 
 # container code blocks
-template : keyword_template '<' template_typename '>' template_body
-           { print "template: ", join(" ", @item[2 .. $#item]), "\n" }
-           { $return = join(" ", @item[1 .. $#item])   } 
-class    : keyword_class class_name class_inheritance class_body ';'
-           { print "class: ", join(" ", @item[2 .. $#item-1]), "\n" }
-           { $return = join(" ", @item[1 .. $#item-1])   } 
+template : 
+  keyword_template '<' template_typename '>' template_body
+    { print "template: ", join(" ", @item[2 .. $#item]), "\n" }
+    { $return = join(" ", @item[1 .. $#item])   } 
+class    : 
+  keyword_class class_name class_inheritance class_body ';'
+    { print "class: ", join(" ", @item[2 .. $#item-1]), "\n" }
+    { $return = join(" ", @item[1 .. $#item-1])   } 
 # a simple trap here 
 # to prevent template function parsed as normal one
-function : keyword_template <commit> <reject>
-         | function_header function_body
-           { print "function: ", join(" ", @item[1 .. $#item-1]), "\n" }
-           { $return = join(" ", @item[1 .. $#item-1])   } 
+function : 
+  keyword_template <commit> <reject>
+  | function_header function_body
+    { print "function: ", join(" ", @item[1 .. $#item-1]), "\n" }
+    { $return = join(" ", @item[1 .. $#item-1])   } 
 # functional code blocks
 # internal actions
 # CAUTION: might get dirty string which contains \t\n
 #          strip hard return
 # FIXME: \015 for MSWin32
 next_begin_brace : 
-  /(?>[^\{]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\{]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_end_brace : 
-  /(?>[^\}]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\}]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_begin_or_end_brace : 
-  /(?>[^\{\}]+)/sio   { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\{\}]+)/sio   { ( $return = $item[1] ) =~ s/\n//go }
 next_begin_angle_bracket : 
-  /(?>[^\<]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\<]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_end_angle_bracket : 
-  /(?>[^\>]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\>]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_begin_or_end_angle_bracket : 
-  /(?>[^\<\>]+)/sio   { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\<\>]+)/sio   { ( $return = $item[1] ) =~ s/\n//go }
 next_equals : 
-  /(?>[^\=]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\=]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_dot : 
-  /(?>[^\,]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\,]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_dot_or_end_brace : 
-  /(?>[^\,\}]+)/sio   { $return = $item[1]; $return =~ s/\n//go } 
+  /(?>[^\,\}]+)/sio   { ( $return = $item[1] ) =~ s/\n//go } 
 next_begin_bracket : 
-  /(?>[^\(]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\(]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_end_bracket : 
-  /(?>[^\)]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\)]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_begin_or_end_bracket : 
-  /(?>[^\(\)]+)/sio   { $return = $item[1]; $return =~ s/\n//go } 
+  /(?>[^\(\)]+)/sio   { ( $return = $item[1] ) =~ s/\n//go } 
 next_begin_or_end_bracket_or_semicolon_or_begin_brace : 
-  /(?>[^\(\)\;\{]+)/sio { $return = $item[1]; $return =~ s/\n//go } 
+  /(?>[^\(\)\;\{]+)/sio { ( $return = $item[1] ) =~ s/\n//go } 
+next_bracket_or_brace_or_semicolon : 
+  /(?>[^\(\)\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go } 
 next_semicolon : 
-  /(?>[^\;]+)/sio     { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\;]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
 next_begin_brace_or_colon_or_semicolon : 
-  /(?>[^\{\:\;]+)/sio { $return = $item[1]; $return =~ s/\n//go }
+  /(?>[^\{\:\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go }
+
+# expression related
+expression_next_token : 
+  next_bracket_or_brace_or_semicolon
+    { $return = $item[1] }
+  | 
+    { $return = ''       } 
 
 # function related
 # at least one '()' block should appear for a valid header
@@ -179,20 +209,34 @@ function_header_next_token :
 function_header_block : 
   function_header_next_token '(' function_header_loop ')' 
     { $return = join(" ", $item[1], $item[2], $item[3], $item[4]) }
+  | 'const' 
+    { $return = '' } 
 function_header_loop  : 
   function_header_next_token
   ( 
-    (  '(' function_header_loop ')' { $return = $item[2] } ) 
-      | { $return = '' } ) 
-    { $return = join(" ", $item[1], $item[2]) } 
+    (  '(' function_header_loop ')' 
+      { $return = $item[2] } ) 
+    | 
+      { $return = '' } 
+    ) 
+      { $return = join(" ", $item[1], $item[2]) } 
   | 
     { $return = '' } 
-function_body         : '{' function_body_content '}' 
-                        { $return = '' }
-                      | ';'
-                        { $return = '' } 
+function_body         : 
+  '{' function_body_block(s) '}' 
+    { $return = '' }
+  | ';'
+    { $return = '' } 
+function_body_next_token : 
+  next_begin_or_end_brace 
+    { $return = $item[1] }
+  | 
+    { $return = ''       } 
 # FIXME: recursive
-function_body_content : next_end_brace | 
+function_body_block   : 
+  function_body_next_token 
+  (  '{' function_body_block '}' | ) 
+  | 
 
 # enum related
 enum_name          : next_begin_brace
@@ -240,7 +284,11 @@ class_body_content  : class_accessibility primitive_loop
                     | 
                       { $return = ''                       } 
                       #{ print "class_body_content: NULL\n" } 
-class_accessibility : ( 'public' | 'private' | 'protected' ) ':'
-                      { $return = $item[1] }
-                    | 
-                      { $return = ''       }
+class_accessibility : 
+  class_accessibility_content 
+    { $return = $item[1] }
+  | 
+    { $return = ''       }
+class_accessibility_content : 
+  ( 'public' | 'private' | 'protected' ) ':'
+    { $return = $item[1] }
