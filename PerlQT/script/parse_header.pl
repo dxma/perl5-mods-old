@@ -362,8 +362,8 @@ class_body          :
     { $return = join(" ", @{$item[2]}) } 
   | { $return = ''       } 
 class_body_content  : 
-    class_accessibility primitive_loop_inside_class 
-    { $return = join(" ", $item[1], $item[2]) } 
+    class_accessibility primitive_loop_inside_class(?) 
+    { $return = join(" ", $item[1], @{$item[2]}) } 
     #{ print "class_body_content: ", $return, "\n" }
   | { $return = ''       } 
     #{ print "class_body_content: NULL\n" } 
