@@ -1,7 +1,7 @@
 ################################################################
 ####
-#### Author: Dongxu Ma
-#### License: GPLv2
+#### Author: Dongxu Ma <dongxu.ma@gmail.com>
+#### License: GPLv2 
 ####
 ################################################################
 
@@ -37,6 +37,9 @@ OUT_NOINC_DIR   := $(MAKE_ROOT)/00noincluded
 IN_PREPRO_DIR   := $(OUT_NOINC_DIR)
 OUT_PREPRO_DIR  := $(MAKE_ROOT)/01preprocessed
 
+IN_PARSE_DIR    := $(OUT_PREPRO_DIR)
+OUT_PARSE_DIR   := $(MAKE_ROOT)/02parsed
+
 #################### MAKE TOOLS ################################
 
 # DEBUG echos all shell commands
@@ -51,6 +54,7 @@ CMD_CC          := g++
 # intepretable echo
 CMD_ECHO        := echo -e
 CMD_PREPRO      := $(CMD_CC) -E
+CMD_PARSE       := $(SCRIPT_DIR)/parse_header.pl
 CMD_MKDIR       := mkdir -p
 CMD_MV          := mv -f
 CMD_CAT         := cat
@@ -64,10 +68,13 @@ CMD_STRIP_INC   := $(SCRIPT_DIR)/strip_include.pl
 CMD_STRIP_MK    := $(SCRIPT_DIR)/gen_strip_mk.pl
 CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES)
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
+CMD_PARSE_HD    := $(CMD_PARSE)
+CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
 PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
+PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
 
 _R              := $(shell $(CMD_ECHO) "\n")
 
@@ -79,7 +86,9 @@ HEADERS_NO_ROOT := $(patsubst $(HEADER_DIR)/%,%,$(HEADERS))
 
 NOINC_HEADERS   := $(addprefix $(OUT_NOINC_DIR)/,$(HEADERS_NO_ROOT))
 PREPRO_HEADERS  := $(addprefix $(OUT_PREPRO_DIR)/,\
-                       $(patsubst %.h,%.pre,$(HEADERS_NO_ROOT)))
+                       $(patsubst %.h,%.i,$(HEADERS_NO_ROOT)))
+PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
+                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 
 #################### SUBROUTINES ###############################
 
@@ -88,7 +97,6 @@ PREPRO_HEADERS  := $(addprefix $(OUT_PREPRO_DIR)/,\
 
 # default goal
 all: 
-
 .PONNY: all
 
 .SUFFIXES: .pre .h .cpp
@@ -96,9 +104,10 @@ all:
 FORCE:
 
 ifneq ($(MAKECMDGOALS),"clean")
-include $(HEADER_DOT_MK)
-include $(STRIP_DOT_MK)
-include $(PREPRO_DOT_MK)
+-include $(HEADER_DOT_MK)
+-include $(STRIP_DOT_MK)
+-include $(PREPRO_DOT_MK)
+-include $(PARSE_DOT_MK)
 endif
 
 #################### META RULES and PATTERNS ###################
@@ -121,6 +130,13 @@ $(PREPRO_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)$(CMD_PREPRO_MK) $< $(IN_NOINC_DIR) $(IN_PREPRO_DIR) \
         $(OUT_PREPRO_DIR) $@
 
+# parse preprocessed headers
+# YAML output
+$(PARSE_DOT_MK): $(HEADER_DOT_MK) 
+	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] || $(CMD_MKDIR) $(OUT_PARSE_DIR)
+	$(_Q)$(CMD_PARSE_MK) $< $(IN_NOINC_DIR) $(IN_PARSE_DIR) \
+        $(OUT_PARSE_DIR) $@
+
 #################### GENERIC RULES #############################
 
 gen_noinc: $(NOINC_HEADERS)
@@ -140,3 +156,17 @@ clean_prepro:
 	$(_Q)echo removing $(PREPRO_DOT_MK)
 	$(_Q)[[ -f $(PREPRO_DOT_MK) ]] && $(CMD_RM) $(PREPRO_DOT_MK)
 .PONNY: clean_prepro
+
+gen_parse: $(PARSE_HEADERS)
+.PONNY: gen_parse
+clean_parse:
+	$(_Q)echo removing $(OUT_PARSE_DIR)
+	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] && $(CMD_RMDIR) $(OUT_PARSE_DIR)
+	$(_Q)echo removing $(PARSE_DOT_MK)
+	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
+.PONNY: clean_parse
+
+clean: $(HEADER_DOT_MK) clean_noinc clean_prepro clean_parse
+	$(_Q)echo removing $<
+	$(_Q)[[ -f $< ]] && $(CMD_RM) $<
+.PONNY: clean

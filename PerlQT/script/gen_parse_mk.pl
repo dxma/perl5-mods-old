@@ -6,7 +6,7 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 =head1 DESCIPTION
 
-Create strip.mk
+Create parse.mk
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -19,27 +19,28 @@ it under the same terms as Perl itself.
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <header.mk> <in_noinc_dir> <out_noinc_dir> [<output_file>]
+usage: $0 <header.mk> <in_noinc_dir> <in_parse_dir> <out_parse_dir> [<output_file>]
 EOU
     exit 1;
 }
 
 sub main {
-    usage if @ARGV < 3;
+    usage if @ARGV < 4;
     
-    my ( $in, $in_noinc_dir, $out_noinc_dir, $out ) = 
-      @ARGV;
+    my ( $in, $in_noinc_dir, $in_parse_dir, $out_parse_dir, 
+         $out, ) = @ARGV;
     die "header.mk not found!" unless -f $in;
     
     local ( *IN, );
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
-    $cont =~ s{^\Q$in_noinc_dir\E((?>[^:]+)):\s*$}
-              {$out_noinc_dir$1: $in_noinc_dir$1
+    $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.h:\s*$}
+              {$out_parse_dir$1.yaml: $in_parse_dir$1.i
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
-\t\$(_Q)\$(CMD_STRIP_INC) \$< \$@
-$out_noinc_dir$1: 
+\t\$(_Q)\$(CMD_PARSE_HD) \$< \$@.tmp
+\t\$(_Q)\$(CMD_MV) \$@.tmp \$@
+$out_parse_dir$1.yaml: 
 }miogx;
     
     if (defined $out) {

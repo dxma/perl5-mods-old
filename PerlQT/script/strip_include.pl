@@ -2,16 +2,24 @@
 
 use strict;
 #use English qw( -no_match_vars );
+use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 =head1 DESCIPTION
 
 Strip include directives to make 'semi' preprocessor happy ;-)
 
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 by Dongxu Ma
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =cut
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <cpp_header_to_strip_macro.h>
+usage: $0 <cpp_header_to_strip_macro.h> [<output_file>]
 EOU
     exit 1;
 }
@@ -31,7 +39,7 @@ sub main {
     $cont =~ s{^\s*#\s*include\s.+$}{}igmo;
     if (defined $out) {
         local ( *STRIPPED );
-        open STRIPPED, '>', $out or 
+        sysopen STRIPPED, $out, O_CREAT|O_WRONLY|O_TRUNC or 
           die "cannot open file to write: $!";
         print STRIPPED $cont;
         close STRIPPED or die "cannot write to file: $!";
@@ -42,4 +50,4 @@ sub main {
     exit 0;
 }
 
-main(@ARGV);
+&main;
