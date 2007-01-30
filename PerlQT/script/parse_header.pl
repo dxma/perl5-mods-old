@@ -307,7 +307,7 @@ function_header_block :
     { $return = join(" ", $item[1], @{$item[2]}) } 
 function_header_loop  : 
     function_header_next_token ( '(' function_header_loop(s) ')' 
-      { $return = join(" ", @item[1 .. $#item]) } 
+      { $return = join(" ", $item[1], @{$item[2]}, $item[3]) } 
     | { $return = '' } ) 
     { $return = join(" ", @item[1 .. $#item]) } 
   | { $return = '' } 
@@ -362,16 +362,15 @@ class_body          :
     { $return = join(" ", @{$item[2]}) } 
   | { $return = ''       } 
 class_body_content  : 
-    class_accessibility primitive_loop_inside_class(?) 
-    { $return = join(" ", $item[1], @{$item[2]}) } 
+    class_accessibility(s?) primitive_loop_inside_class(?) 
+    { $return = join(" ", @{$item[1]}, @{$item[2]}) } 
     #{ print "class_body_content: ", $return, "\n" }
   | { $return = ''       } 
     #{ print "class_body_content: NULL\n" } 
 class_accessibility : 
-    ( class_accessibility_content(?) qt_accessibility_content(?) ':' 
-      { $return = join(" ", @{$item[1]}, @{$item[2]}) } )
-    { $return = $item[1] }
-  | { $return = ''       }
+  ( class_accessibility_content(?) qt_accessibility_content(?) ':' 
+    { $return = join(" ", @{$item[1]}, @{$item[2]}) } )
+  { $return = $item[1] }
 qt_accessibility_content : 
   ( 'Q_SIGNALS' | 'Q_SLOTS' ) { $return = $item[1] } 
 class_accessibility_content : 
