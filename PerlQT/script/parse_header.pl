@@ -128,7 +128,9 @@ keywords         :
   | keyword_template | keyword_enum 
 keyword_friend   : 'friend' 
 keyword_class    : 
-  keyword_friend(?) ( 'class' | 'struct' | 'union' ) 
+  keyword_friend(?) keyword_static(?) ( 'class' | 'struct' | 'union' ) 
+  { $return = join(" ", @{$item[1]}, @{$item[2]}, $item[3]) } 
+keyword_static   : 'static'
 keyword_namespace: 'namespace'
 keyword_typedef  : 'typedef'
 keyword_comment  : '#'
@@ -347,7 +349,12 @@ template_body      :
 
 # class related
 class_name          : 
-    next_begin_brace_or_colon_or_semicolon { $return = $item[1] } 
+    class_name_loop
+class_name_loop     : 
+    next_begin_brace_or_colon_or_semicolon 
+    (   '::' class_name_loop { $return = '::'.$item[2] } 
+      | { $return = '' } ) 
+    { $return = join("", $item[1], $item[2]) } 
     #{ print "class_name: ", $item[1], "\n" } 
   | { $return = ''       } 
 # FIXME: multiple inherit
@@ -370,7 +377,7 @@ class_body_content  :
 class_accessibility : 
   ( class_accessibility_content(?) qt_accessibility_content(?) ':' 
     { $return = join(" ", @{$item[1]}, @{$item[2]}) } )
-  { $return = $item[1] }
+  { $return = $item[1] } 
 qt_accessibility_content : 
   ( 'Q_SIGNALS' | 'Q_SLOTS' ) { $return = $item[1] } 
 class_accessibility_content : 
