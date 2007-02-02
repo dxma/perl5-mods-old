@@ -1,0 +1,50 @@
+=pod
+
+=head1 NAME
+
+Parse::QTEDI - Parse QT/KDE preprocessed headers
+
+=head1 SYNOPSIS
+
+  use Parse::QTEDI qw($parser);
+  defined $parser->begin($in) or warn "parse failed";
+
+=head1 DESCRIPTION
+
+Parse QT/KDE preprocessed headers to generate interface information.
+
+=head1 WHAT IS INPUT
+
+input stream should be the output of a preprocessor like `gcc -E
+-DBLAH_BLAH'.  
+
+B<NOTE>: Normally one should strip #include and #error directives
+before invoking preprocessor. 
+
+=head1 WHAT IS THE NAME
+
+QTEDI is QT and QT-basEd Desktop environment Interface ;-)
+
+=head1 EXPORT
+
+an instance of Parse::RecDescent on demand
+
+=head1 SEE ALSO
+
+svn repos L<http://dongxu.googlecode.com/svn/trunk/Parse-QTEDI/> 
+
+Also check my Perl QT4 binding project page 
+L<http://code.google.com/p/dongxu/wiki/PerlQT> 
+
+=head1 AUTHOR
+
+Dongxu Ma, E<lt>dongxu.ma@gmail.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 by Dongxu Ma
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
