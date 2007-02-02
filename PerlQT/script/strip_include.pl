@@ -6,7 +6,7 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 =head1 DESCIPTION
 
-Strip include directives to make 'semi' preprocessor happy ;-)
+Strip include/error directives to make 'semi' preprocessor happy ;-)
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -37,6 +37,7 @@ sub main {
         $cont = <HEADER>;
     }
     $cont =~ s{^\s*#\s*include\s.+$}{}igmo;
+    $cont =~ s{^\s*#\s*error\s.+$}{}igmo;
     if (defined $out) {
         local ( *STRIPPED );
         sysopen STRIPPED, $out, O_CREAT|O_WRONLY|O_TRUNC or 

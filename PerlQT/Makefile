@@ -31,10 +31,10 @@ MAKE_ROOT       := $(shell pwd)
 HEADER_DIR      := /usr/include/qt4
 SCRIPT_DIR      := $(MAKE_ROOT)/script
 
-IN_NOINC_DIR    := $(HEADER_DIR)
-OUT_NOINC_DIR   := $(MAKE_ROOT)/00noincluded
+IN_STRIP_DIR    := $(HEADER_DIR)
+OUT_STRIP_DIR   := $(MAKE_ROOT)/00stripped
 
-IN_PREPRO_DIR   := $(OUT_NOINC_DIR)
+IN_PREPRO_DIR   := $(OUT_STRIP_DIR)
 OUT_PREPRO_DIR  := $(MAKE_ROOT)/01preprocessed
 
 IN_PARSE_DIR    := $(OUT_PREPRO_DIR)
@@ -84,7 +84,7 @@ HEADERS         := $(filter-out $(HEADER_DIR)/QtCore/qatomic_%,\
                        $(wildcard $(HEADER_DIR)/*/*.h))
 HEADERS_NO_ROOT := $(patsubst $(HEADER_DIR)/%,%,$(HEADERS))
 
-NOINC_HEADERS   := $(addprefix $(OUT_NOINC_DIR)/,$(HEADERS_NO_ROOT))
+STRIP_HEADERS   := $(addprefix $(OUT_STRIP_DIR)/,$(HEADERS_NO_ROOT))
 PREPRO_HEADERS  := $(addprefix $(OUT_PREPRO_DIR)/,\
                        $(patsubst %.h,%.i,$(HEADERS_NO_ROOT)))
 PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
@@ -121,32 +121,32 @@ $(HEADER_DOT_MK): $(HEADERS)
 # strip include directives
 # or preprocessor will croak
 $(STRIP_DOT_MK): $(HEADER_DOT_MK)
-	$(_Q)[[ -d $(OUT_NOINC_DIR) ]] || $(CMD_MKDIR) $(OUT_NOINC_DIR)
-	$(_Q)$(CMD_STRIP_MK) $< $(IN_NOINC_DIR) $(OUT_NOINC_DIR) $@
+	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] || $(CMD_MKDIR) $(OUT_STRIP_DIR)
+	$(_Q)$(CMD_STRIP_MK) $< $(IN_STRIP_DIR) $(OUT_STRIP_DIR) $@
 
 # preprocess to omit macros
 $(PREPRO_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)[[ -d $(OUT_PREPRO_DIR) ]] || $(CMD_MKDIR) $(OUT_PREPRO_DIR)
-	$(_Q)$(CMD_PREPRO_MK) $< $(IN_NOINC_DIR) $(IN_PREPRO_DIR) \
+	$(_Q)$(CMD_PREPRO_MK) $< $(IN_STRIP_DIR) $(IN_PREPRO_DIR) \
         $(OUT_PREPRO_DIR) $@
 
 # parse preprocessed headers
 # YAML output
 $(PARSE_DOT_MK): $(HEADER_DOT_MK) 
 	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] || $(CMD_MKDIR) $(OUT_PARSE_DIR)
-	$(_Q)$(CMD_PARSE_MK) $< $(IN_NOINC_DIR) $(IN_PARSE_DIR) \
+	$(_Q)$(CMD_PARSE_MK) $< $(IN_STRIP_DIR) $(IN_PARSE_DIR) \
         $(OUT_PARSE_DIR) $@
 
 #################### GENERIC RULES #############################
 
-gen_noinc: $(NOINC_HEADERS)
-.PONNY: gen_noinc
-clean_noinc: 
-	$(_Q)echo removing $(OUT_NOINC_DIR) 
-	$(_Q)[[ -d $(OUT_NOINC_DIR) ]] && $(CMD_RMDIR) $(OUT_NOINC_DIR)
+gen_strip: $(STRIP_HEADERS)
+.PONNY: gen_strip
+clean_strip: 
+	$(_Q)echo removing $(OUT_STRIP_DIR) 
+	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] && $(CMD_RMDIR) $(OUT_STRIP_DIR)
 	$(_Q)echo removing $(STRIP_DOT_MK)
 	$(_Q)[[ -f $(STRIP_DOT_MK) ]] && $(CMD_RM) $(STRIP_DOT_MK)
-.PONNY: clean_noinc
+.PONNY: clean_strip
 
 gen_prepro: $(PREPRO_HEADERS)
 .PONNY: gen_prepro
@@ -166,7 +166,7 @@ clean_parse:
 	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
 .PONNY: clean_parse
 
-clean: $(HEADER_DOT_MK) clean_noinc clean_prepro clean_parse
+clean: $(HEADER_DOT_MK) clean_strip clean_prepro clean_parse
 	$(_Q)echo removing $<
 	$(_Q)[[ -f $< ]] && $(CMD_RM) $<
 .PONNY: clean
