@@ -2,12 +2,14 @@ package Parse::QTEDI;
 
 use 5.005;
 use strict;
-use vars qw($VERSION @ISA @EXPORT_OK $parser);
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $parser $DEBUG);
 require Exporter;
 @ISA = qw(Exporter);
+@EXPORT    = qw();
 @EXPORT_OK = qw($parser);
 
-use Parse::RecDescent;
+use Parse::RecDescent ();
+use YAML ();
 
 $VERSION = '0.01_01';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
@@ -26,6 +28,8 @@ $::RD_HINT = 1;
 # if defined, appends specified action to productions
 #$::RD_AUTOACTION = 1;
 
+$::RD_DEBUG = $DEBUG ? 1 : 0;
+
 my $grammar = do { local $/; <DATA> };
 $parser = Parse::RecDescent::->new($grammar);
 
@@ -37,8 +41,11 @@ __DATA__
 # 
 # which are relavant to make binding
 # loop structure
-# CAUTION: the biggest asset here is we are working on a _VALID_ header
-begin          : loop(s) eof 
+# CAUTION: the biggest assert here is we are working on a _VALID_ header
+begin          : <rulevar: local $stash_all = [] >
+begin          : 
+  loop(s) eof 
+  { $stash_all = ['a', 'ab' ];print YAML::Dump($stash_all), "\n" } 
 eof            : /^\Z/
 primitive_loop : 
     qt_macro(s)   { $return = $item[1] } 
@@ -87,7 +94,7 @@ keyword_inside_expression :
 comment   : 
   keyword_comment /.*?$/mio 
   { $return = $item[1]. " ". $item[2]   } 
-  { print $item[1], ": ", $item[2], "\n" }
+  { print STDERR $item[1], ": ", $item[2], "\n" if $::RD_DEBUG }
 typedef   : 
   keyword_typedef 
   (   enum { $return = $item[1] } 
@@ -95,11 +102,12 @@ typedef   :
     | /(?>[^;]+)/sio ';' { $return = $item[1] } 
   )  
   { $return = join(" ", @item[1 .. 2])   }
-  { print $item[1], ": ", $item[2], "\n" }
+  { print STDERR $item[1], ": ", $item[2], "\n" if $::RD_DEBUG }
 enum      : 
   keyword_enum enum_name enum_body variables ';'
   { $return = join(" ", @item[1 .. $#item-1])   }  
-  { print $item[1], ": ", join(" ", @item[2 .. $#item-1]), "\n" }
+  { print STDERR $item[1], ": ", join(" ", @item[2 .. $#item-1]), "\n" 
+        if $::RD_DEBUG }
 # make sure it has no other structure delimiters
 # special handle for C-stype enum/struct/union expression
 expression: 
@@ -109,31 +117,35 @@ expression:
     ) <commit> <reject>
   | keyword_inside_expression <commit> next_brace_or_semicolon ';' 
     { $return = join(" ", $item[1], $item[3]) } 
-    { print "expression: ", $return, "\n" } 
+    { print STDERR "expression: ", $return, "\n" if $::RD_DEBUG } 
   | expression_body ';'
     { $return = $item[1] } 
-    { print "expression: ", $item[1], "\n" }
+    { print STDERR "expression: ", $item[1], "\n" if $::RD_DEBUG }
 # container code blocks
 template : 
   keyword_template '<' template_typename '>' template_body
   { $return = join(" ", @item[1 .. $#item])   } 
-  { print $item[1], ": ", join(" ", @item[2 .. $#item-1]), "\n" }
+  { print STDERR $item[1], ": ", 
+        join(" ", @item[2 .. $#item-1]), "\n" if $::RD_DEBUG }
 extern   : 
     'extern' '"C"' '{' namespace_body(s?) '}' 
     { $return = join(" ", @item[1 .. 3], @{$item[4]}, $item[5]) } 
-    { print "extern: ", join(" ", $item[2], @{$item[4]}), "\n" } 
+    { print STDERR "extern: ", 
+          join(" ", $item[2], @{$item[4]}), "\n" if $::RD_DEBUG } 
   | 'extern' ( class | enum ) 
     { $return = join(" ", $item[1], $item[2]) } 
-    { print "extern: ", join(" ", $item[1], $item[2]), "\n" } 
+    { print STDERR "extern: ", 
+          join(" ", $item[1], $item[2]), "\n" if $::RD_DEBUG } 
 namespace: 
   keyword_namespace namespace_name '{' namespace_body(s?) '}'
   { $return = join(" ", @item[1 .. 3], @{$item[4]}, $item[5])   }
-  { print "namespace: ", join(" ", @item[2 .. 3], 
-    @{$item[4]}, $item[5]), "\n"  }
+  { print STDERR "namespace: ", join(" ", @item[2 .. 3], 
+        @{$item[4]}, $item[5]), "\n" if $::RD_DEBUG }
 class    : 
   keyword_class class_name class_inheritance class_body variables ';'
   { $return = join(" ", @item[1 .. $#item-1])   } 
-  { print $item[1], ": ", join(" ", @item[2 .. $#item-1]), "\n" }
+  { print STDERR $item[1], ": ", 
+        join(" ", @item[2 .. $#item-1]), "\n" if $::RD_DEBUG }
 # a simple trap here 
 # to prevent template function parsed as normal one
 function : 
@@ -141,7 +153,7 @@ function :
   | class_accessibility <commit> <reject> 
   | function_header function_body
     { $return = $item[1]   } 
-    { print "function: ", $item[1], "\n" }
+    { print STDERR "function: ", $item[1], "\n" if $::RD_DEBUG }
 # QT-specific macros
 qt_macro_1 : 
   'QT_BEGIN_HEADER' | 'QT_END_HEADER' | 'Q_OBJECT' | 'Q_GADGET' 
@@ -164,13 +176,13 @@ qt_macro_99:
 qt_macro : 
     qt_macro_1 
     { $return = $item[1] } 
-    { print $item[1], "\n" } 
+    { print STDERR $item[1], "\n" if $::RD_DEBUG } 
   | qt_macro_2 '(' next_end_bracket ')' 
     { $return = join(" ", @item[1 .. $#item]) } 
-    { print $return, "\n" } 
+    { print STDERR $return, "\n" if $::RD_DEBUG } 
   | qt_macro_3 '(' balanced_bracket(s) ')' 
     { $return = join(" ", $item[1], $item[2], @{$item[3]}, $item[4]) } 
-    { print $return, "\n" } 
+    { print STDERR $return, "\n" if $::RD_DEBUG } 
 # KDE related
 kde_macro_1  : 
   'K_DCOP' 
@@ -183,13 +195,13 @@ kde_macro_99 :
 kde_macro : 
     kde_macro_1 
     { $return = $item[1] } 
-    { print $return, "\n" } 
+    { print STDERR $return, "\n" if $::RD_DEBUG } 
   | kde_macro_2 '(' next_end_bracket ')' 
     { $return = join(" ", $item[1 .. $#item-1]) } 
-    { print $return, "\n" } 
+    { print STDERR $return, "\n" if $::RD_DEBUG } 
   | kde_macro_3 '(' balanced_bracket(s) ')' 
     { $return = join(" ", $item[1], $item[2], @{$item[3]}, $item[4]) } 
-    { print $return, "\n" } 
+    { print STDERR $return, "\n" if $::RD_DEBUG } 
 
 # functional code blocks
 # internal actions
@@ -325,11 +337,11 @@ enum_body          :
     '{' '}' { $return = '' }
   | '{' enum_unit(s) '}'
     { $return = join(" ", @{$item[2]}) }
-    #{ print "enum_body: ", $return, "\n" } 
+    #{ print STDERR "enum_body: ", $return, "\n" if $::RD_DEBUG } 
 enum_unit          : 
   next_dot_or_end_brace ( ',' | )
   { $return = (split /=/, $item[1])[0] }
-  #{ print "enum_unit: $return\n" } 
+  #{ print STDERR "enum_unit: $return\n" if $::RD_DEBUG } 
 
 # template related
 template_typename  : 
@@ -352,12 +364,12 @@ class_name_loop     :
     (   '::' class_name_loop { $return = '::'.$item[2] } 
       | { $return = '' } ) 
     { $return = join("", $item[1], $item[2]) } 
-    #{ print "class_name: ", $item[1], "\n" } 
+    #{ print STDERR "class_name: ", $item[1], "\n" if $::RD_DEBUG } 
   | { $return = ''       } 
 # FIXME: multiple inherit
 class_inheritance   : 
     ':' next_begin_brace { $return = $item[2] }
-    #{ print "class_inheritance: ", $item[2], "\n" }
+    #{ print STDERR "class_inheritance: ", $item[2], "\n" if $::RD_DEBUG }
   | { $return = ''       }
 # class_body_content(s?) _NOT_ work here
 class_body          : 
@@ -370,9 +382,9 @@ class_body_content  :
     { $return = $item[1] } 
   | primitive_loop_inside_class
     { $return = $item[1] } 
-    #{ print "class_body_content: ", $return, "\n" }
+    #{ print STDERR "class_body_content: ", $return, "\n" if $::RD_DEBUG }
 #  | { $return = ''       } 
-#    #{ print "class_body_content: NULL\n" } 
+#    #{ print STDERR "class_body_content: NULL\n" if $::RD_DEBUG } 
 class_accessibility_loop : 
   class_accessibility_content | qt_accessibility_content | 
   kde_accessibility_content 
