@@ -4,7 +4,7 @@ use strict;
 #use English qw( -no_match_vars );
 
 use Fcntl qw(O_CREAT O_WRONLY O_TRUNC);
-use blib qw(../Parse-QTEDI/blib);
+use lib qw(../Parse-QTEDI/lib);
 use Parse::QTEDI qw($parser);
 
 =head1 DESCIPTION
@@ -57,7 +57,7 @@ sub main {
     #print STDERR $source;
     my $rc = $parser->begin($source);
     
-    print "passed!\n" if defined $rc;
+    print STDERR "generated!\n" if defined $rc;
     close OUT or warn "cannot write to file: $!" unless 
       fileno(OUT) == fileno(STDOUT);
     unlink $out if not defined $rc and defined $out and -f $out;
