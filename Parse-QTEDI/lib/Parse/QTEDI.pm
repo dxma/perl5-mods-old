@@ -42,37 +42,36 @@ __DATA__
 # which are relavant to make binding
 # loop structure
 # CAUTION: the biggest assert here is we are working on a _VALID_ header
-begin          : <rulevar: local $stash_all = [] >
+begin          : <rulevar: local $stash = [] >
 begin          : 
-  loop(s) eof 
-  { $stash_all = ['a', 'ab' ];print YAML::Dump($stash_all), "\n" } 
+  loop(s) eof { print YAML::Dump($stash) } 
 eof            : /^\Z/
 primitive_loop : 
-    qt_macro(s)   { $return = $item[1] } 
-  | kde_macro(s)  { $return = $item[1] } 
-  | typedef(s)    { $return = $item[1] }
-  | comment(s)    { $return = $item[1] }
-  | enum(s)       { $return = $item[1] }
-  | template(s)   { $return = $item[1] }
-  | extern(s)     { $return = $item[1] } 
-  | namespace(s)  { $return = $item[1] }
-  | class(s)      { $return = $item[1] }
-  | function(s)   { $return = $item[1] }
-  | expression(s) { $return = $item[1] }
+    qt_macro(s)   { push @$stash, @{$item[1]} } 
+  | kde_macro(s)  { push @$stash, @{$item[1]} } 
+  | typedef(s)    { push @$stash, @{$item[1]} }
+  | comment(s)    { push @$stash, @{$item[1]} }
+  | enum(s)       { push @$stash, @{$item[1]} }
+  | template(s)   { push @$stash, @{$item[1]} }
+  | extern(s)     { push @$stash, @{$item[1]} } 
+  | namespace(s)  { push @$stash, @{$item[1]} }
+  | class(s)      { push @$stash, @{$item[1]} }
+  | function(s)   { push @$stash, @{$item[1]} }
+  | expression(s) { push @$stash, @{$item[1]} }
 # inside a class each primitive code block has to consider 
 # accessibility keyword(s) in front of  
 primitive_loop_inside_class : 
-    qt_macro   { $return = $item[1] } 
-  | kde_macro  { $return = $item[1] } 
-  | typedef    { $return = $item[1] }
-  | comment    { $return = $item[1] }
-  | enum       { $return = $item[1] }
-  | template   { $return = $item[1] }
-  | extern     { $return = $item[1] } 
-  | namespace  { $return = $item[1] }
-  | class      { $return = $item[1] }
-  | function   { $return = $item[1] }
-  | expression { $return = $item[1] } 
+    qt_macro   { push @$stash, $item[1] } 
+  | kde_macro  { push @$stash, $item[1] } 
+  | typedef    { push @$stash, $item[1] }
+  | comment    { push @$stash, $item[1] }
+  | enum       { push @$stash, $item[1] }
+  | template   { push @$stash, $item[1] }
+  | extern     { push @$stash, $item[1] } 
+  | namespace  { push @$stash, $item[1] }
+  | class      { push @$stash, $item[1] }
+  | function   { push @$stash, $item[1] }
+  | expression { push @$stash, $item[1] } 
 loop           : primitive_loop | 
 # keywords
 keywords         : 
