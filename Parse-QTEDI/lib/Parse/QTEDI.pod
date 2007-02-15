@@ -9,6 +9,11 @@ Parse::QTEDI - Parse QT/KDE preprocessed headers
   use Parse::QTEDI qw($parser);
   defined $parser->begin($in) or warn "parse failed";
 
+=head1 USAGE
+
+  $gcc -E -DBLAH_BLAH E<lt>header.hE<gt> E<gt> E<lt>header.iE<gt>
+  $parse_qtedi_header E<lt>header.iE<gt>
+
 =head1 DESCRIPTION
 
 Parse QT/KDE preprocessed headers to generate interface information.
@@ -20,6 +25,11 @@ input stream should be the output of a preprocessor like `gcc -E
 
 B<NOTE>: Normally one should strip #include and #error directives
 before invoking preprocessor. 
+
+=head1 WHAT IS OUTPUT
+
+YAML-ish output to STDOUT; 
+debug info to STDERR if $DEBUG defined.
 
 =head1 WHY IS PREPROCESSED
 
