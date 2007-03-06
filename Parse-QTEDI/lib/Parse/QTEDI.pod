@@ -9,10 +9,11 @@ Parse::QTEDI - Parse QT/KDE preprocessed headers
   use Parse::QTEDI qw($parser);
   defined $parser->begin($in) or warn "parse failed";
 
-=head1 USAGE
+=head1 COMMANDLINE USAGE
 
-  $gcc -E -DBLAH_BLAH E<lt>header.hE<gt> E<gt> E<lt>header.iE<gt>
-  $parse_qtedi_header E<lt>header.iE<gt>
+  $sed -i -e 's/#include/ d' -e 's/#error/ d' header.h # strip
+  $gcc -E -DBLAH_BLAH header.h > header.i              # pre-process
+  $parse_qtedi_header header.i                         # parse
 
 =head1 DESCRIPTION
 
@@ -24,7 +25,8 @@ input stream should be the output of a preprocessor like `gcc -E
 -DBLAH_BLAH'.  
 
 B<NOTE>: Normally one should strip #include and #error directives
-before invoking preprocessor. 
+before invoking preprocessor, or else preprocessor will expand all
+include directives encountered and croak on error progma.
 
 =head1 WHAT IS OUTPUT
 
@@ -37,6 +39,11 @@ To solve macro, basically. There are both arch-specific and
 feature-specific macros. One should decide which feature-specific ones
 to enable. Besides, modern libtool normally record compile-time
 commandline options for later reference. 
+
+=head1 HOW TO DEBUG
+
+Defining $Parse::QTEDI::DEBUG to true will enable parse-level debug
+information to STDERR.
 
 =head1 WHAT IS THE NAME
 
