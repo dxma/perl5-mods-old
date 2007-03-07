@@ -16,10 +16,12 @@ B<NOTE>: currently focus on typedef and class declaration mainly.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Dongxu Ma
+Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
 
 =cut
 
@@ -57,11 +59,10 @@ sub main {
     #print STDERR $source;
     my $rc = $parser->begin($source);
     
-    print STDERR "generated!\n" if defined $rc;
+    #print STDERR "generated!\n" if defined $rc;
     close OUT or warn "cannot write to file: $!" unless 
       fileno(OUT) == fileno(STDOUT);
     unlink $out if not defined $rc and defined $out and -f $out;
-    #print STDERR "passed!\n" if defined $rc;
 	if (defined $rc) {
         exit 0;
     }

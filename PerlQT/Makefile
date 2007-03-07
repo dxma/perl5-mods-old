@@ -40,6 +40,9 @@ OUT_PREPRO_DIR  := $(MAKE_ROOT)/01preprocessed
 IN_PARSE_DIR    := $(OUT_PREPRO_DIR)
 OUT_PARSE_DIR   := $(MAKE_ROOT)/02parsed
 
+IN_FORMAT_DIR   := $(OUT_PARSE_DIR)
+OUT_FORMAT_DIR  := $(MAKE_ROOT)/03formatted
+
 #################### MAKE TOOLS ################################
 
 # DEBUG echos all shell commands
@@ -70,11 +73,14 @@ CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES)
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
 CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
+CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_yaml.pl
+CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
 PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
 PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
+FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
 
 _R              := $(shell $(CMD_ECHO) "\n")
 
@@ -88,6 +94,8 @@ STRIP_HEADERS   := $(addprefix $(OUT_STRIP_DIR)/,$(HEADERS_NO_ROOT))
 PREPRO_HEADERS  := $(addprefix $(OUT_PREPRO_DIR)/,\
                        $(patsubst %.h,%.i,$(HEADERS_NO_ROOT)))
 PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
+                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
+FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 
 #################### SUBROUTINES ###############################
@@ -108,6 +116,7 @@ ifneq ($(MAKECMDGOALS),"clean")
 -include $(STRIP_DOT_MK)
 -include $(PREPRO_DOT_MK)
 -include $(PARSE_DOT_MK)
+-include $(FORMAT_DOT_MK)
 endif
 
 #################### META RULES and PATTERNS ###################
@@ -137,15 +146,31 @@ $(PARSE_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)$(CMD_PARSE_MK) $< $(IN_STRIP_DIR) $(IN_PARSE_DIR) \
         $(OUT_PARSE_DIR) $@
 
+# strip && format parse productions
+# YAML output
+$(FORMAT_DOT_MK): $(HEADER_DOT_MK)
+	$(_Q)[[ -d $(OUT_FORMAT_DIR) ]] || $(CMD_MKDIR) $(OUT_FORMAT_DIR)
+	$(_Q)$(CMD_FORMAT_MK) $< $(IN_STRIP_DIR) $(IN_FORMAT_DIR) \
+        $(OUT_FORMAT_DIR) $@
+
 #################### GENERIC RULES #############################
+
+clean_dot_mk:
+	$(_Q)echo removing $(HEADER_DOT_MK)
+	$(_Q)[[ -f $(HEADER_DOT_MK) ]] && $(CMD_RM) $(HEADER_DOT_MK)
+	$(_Q)echo removing $(STRIP_DOT_MK)
+	$(_Q)[[ -f $(STRIP_DOT_MK) ]] && $(CMD_RM) $(STRIP_DOT_MK)
+	$(_Q)echo removing $(PREPRO_DOT_MK)
+	$(_Q)[[ -f $(PREPRO_DOT_MK) ]] && $(CMD_RM) $(PREPRO_DOT_MK)
+	$(_Q)echo removing $(PARSE_DOT_MK)
+	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
+.PONNY: clean_dot_mk
 
 gen_strip: $(STRIP_HEADERS)
 .PONNY: gen_strip
 clean_strip: 
 	$(_Q)echo removing $(OUT_STRIP_DIR) 
 	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] && $(CMD_RMDIR) $(OUT_STRIP_DIR)
-	$(_Q)echo removing $(STRIP_DOT_MK)
-	$(_Q)[[ -f $(STRIP_DOT_MK) ]] && $(CMD_RM) $(STRIP_DOT_MK)
 .PONNY: clean_strip
 
 gen_prepro: $(PREPRO_HEADERS)
@@ -153,8 +178,6 @@ gen_prepro: $(PREPRO_HEADERS)
 clean_prepro:
 	$(_Q)echo removing $(OUT_PREPRO_DIR)
 	$(_Q)[[ -d $(OUT_PREPRO_DIR) ]] && $(CMD_RMDIR) $(OUT_PREPRO_DIR)
-	$(_Q)echo removing $(PREPRO_DOT_MK)
-	$(_Q)[[ -f $(PREPRO_DOT_MK) ]] && $(CMD_RM) $(PREPRO_DOT_MK)
 .PONNY: clean_prepro
 
 gen_parse: $(PARSE_HEADERS)
@@ -162,11 +185,17 @@ gen_parse: $(PARSE_HEADERS)
 clean_parse:
 	$(_Q)echo removing $(OUT_PARSE_DIR)
 	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] && $(CMD_RMDIR) $(OUT_PARSE_DIR)
-	$(_Q)echo removing $(PARSE_DOT_MK)
-	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
 .PONNY: clean_parse
 
-clean: $(HEADER_DOT_MK) clean_strip clean_prepro clean_parse
-	$(_Q)echo removing $<
-	$(_Q)[[ -f $< ]] && $(CMD_RM) $<
+gen_format: $(FORMAT_YAMLS)
+.PONNY: gen_format
+clean_format: 
+	$(_Q)echo removing $(OUT_FORMAT_DIR)
+	$(_Q)[[ -d $(OUT_FORMAT_DIR) ]] && $(CMD_RMDIR) $(OUT_FORMAT_DIR)
+.PONNY: clean_format
+
+# final assignment
+clean: clean_dot_mk clean_strip clean_prepro clean_parse
 .PONNY: clean
+
+all: gen_format
