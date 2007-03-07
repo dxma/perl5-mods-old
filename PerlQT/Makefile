@@ -5,6 +5,9 @@
 ####
 ################################################################
 
+#################### META CONFIG ###############################
+include config.mk
+
 #################### QT FLAGS ##################################
 
 # modules
@@ -28,7 +31,7 @@ ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
 # always try to be absolute
 
 MAKE_ROOT       := $(shell pwd)
-HEADER_DIR      := /usr/include/qt4
+HEADER_DIR      := $(_HEADER_DIR)
 SCRIPT_DIR      := $(MAKE_ROOT)/script
 
 IN_STRIP_DIR    := $(HEADER_DIR)
@@ -86,8 +89,7 @@ _R              := $(shell $(CMD_ECHO) "\n")
 
 #################### TARGETS ###################################
 
-HEADERS         := $(filter-out $(HEADER_DIR)/QtCore/qatomic_%,\
-                       $(wildcard $(HEADER_DIR)/*/*.h))
+HEADERS         := $(_HEADERS)
 HEADERS_NO_ROOT := $(patsubst $(HEADER_DIR)/%,%,$(HEADERS))
 
 STRIP_HEADERS   := $(addprefix $(OUT_STRIP_DIR)/,$(HEADERS_NO_ROOT))
