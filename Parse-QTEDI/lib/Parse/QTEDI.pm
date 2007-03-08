@@ -141,7 +141,8 @@ template :
         join(" ", @item[2 .. 5]), "\n" if $::RD_DEBUG }
 extern   : 
     'extern' '"C"' '{' namespace_body(s?) '}' 
-    { $return = { type => 'extern', subtype => 'C', body => $item[3] } }
+    { $return = { type => 'extern', subtype => 'C', body => [] }   }
+    { foreach my $a (@{$item[4]}) { push @{$return->{body}}, @$a } }
     { print STDERR "extern: ", 
           join(" ", $item[2], $item[4]), "\n" if $::RD_DEBUG } 
   | 'extern' 
@@ -152,7 +153,8 @@ extern   :
           join(" ", $return->{type}, $return->{subtype}), "\n" if $::RD_DEBUG } 
 namespace: 
   keyword_namespace namespace_name '{' namespace_body(s?) '}'
-  { $return = { type => 'namespace', name => $item[2], body => $item[4] } }
+  { $return = { type => 'namespace', name => $item[2], body => [] } }
+  { foreach my $a (@{$item[4]}) { push @{$return->{body}}, @$a }    }
   { print STDERR "namespace: ", $item[2], "\n" if $::RD_DEBUG }
 class    : 
   keyword_class class_name class_inheritance class_body variables ';'
