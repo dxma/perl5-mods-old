@@ -29,6 +29,156 @@ EOU
     exit 1;
 }
 
+################ DICTIONARY ################
+# property storage flag
+sub FP_KEEP()    { 1 << 2 }
+my $FUNCTION_PROPERTIES = {
+    # C++ standard
+    explicit                            => 0,
+    implicit                            => 0,
+    virtual                             => FP_KEEP,
+    inline                              => 0,
+    static                              => FP_KEEP,
+    friend                              => FP_KEEP,
+    # QT-specific
+    1                                   => 0,
+    QT3_SUPPORT_CONSTRUCTOR             => 0,
+    Q_CORE_EXPORT                       => FP_KEEP,
+    QT_MOC_COMPAT                       => 0,
+    Q_OUTOFLINE_TEMPLATE                => 0,
+    QT_ASCII_CAST_WARN                  => 0,
+    QT_ASCII_CAST_WARN_CONSTRUCTOR      => 0,
+    Q_CORE_EXPORT_INLINE                => 0,
+    QT_DEPRECATED                       => 0,
+    Q_INLINE_TEMPLATE                   => 0,
+};
+
+################ FORMAT UNIT ################
+sub __format_macro {
+    my $entry = shift;
+    
+    # keep Q_OBJECT Q_PROPERTY
+    if ($entry->{name} eq 'Q_OBJECT') {
+        delete $entry->{subtype};
+    }
+    if ($entry->{name} eq 'Q_PROPERTY') {
+        my @values = split / /, $entry->{values};
+        $entry->{TYPE} = shift @values;
+        $entry->{NAME} = shift @values;
+        $entry = { %$entry, @values };
+        delete $entry->{subtype};
+        delete $entry->{values};
+    }
+}
+
+sub __format_class {
+    my $entry = shift;
+    
+    # FIXME: extract name
+    $entry->{body} = _format($entry->{body}) if 
+      exists $entry->{body};
+}
+
+sub __format_struct {
+    my $entry = shift;
+    
+    # FIXME: extract name
+    $entry->{body} = _format_in_struct($entry->{body}) if 
+      exists $entry->{body};
+}
+
+sub __format_function {
+    my $entry = shift;
+    
+    # FIXME: extract prototype
+    my ( $name, $params ) = 
+      $entry->{name} =~ m/^((?>[^(]+))\((.*)\)\s*$/io;
+    $entry->{name} = $name;
+    $entry->{param} = $params;
+    delete $entry->{fullname};
+}
+
+sub __format_enum {
+    my $entry = shift;
+    
+    # normalize
+    $entry->{name} and $entry->{name} =~ s/\s+$//o;
+    foreach my $v (@{$entry->{value}}) {
+        $v =~ s/\s+$//o;
+    }
+}
+
+sub __format_accessibility {
+    my $entry = shift;
+    
+    # normalize
+    foreach my $v (@{$entry->{value}}) {
+        $v =~ s/\s+$//o;
+    }
+}
+
+sub __format_typedef {
+    my $entry = shift;
+    
+    # FIXME
+}
+
+sub __format_extern {
+    my $entry = shift;
+    
+    # FIXME: extract name
+    $entry->{body} = _format($entry->{body}) if 
+      exists $entry->{body};
+}
+
+sub __format_namespace {
+    my $entry = shift;
+    
+    # FIXME: extract name
+    $entry->{body} = _format($entry->{body}) if 
+      exists $entry->{body};
+}
+
+sub __format_expression {
+}
+
+################ FORMAT FUNCTION ################
+sub _format_primitive_loop {
+    my $entry             = shift;
+    my $formatted_entries = shift;
+
+    #use Data::Dumper;
+    #print Dump($entry), "\n";
+    if ($entry->{type} eq 'macro') {
+        __format_macro($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'class') {
+        __format_class($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'struct') {
+        __format_struct($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'extern') {
+        __format_extern($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'namespace') {
+        __format_namespace($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'function') {
+        __format_function($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'enum') {
+        __format_enum($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'accessibility') {
+        __format_accessibility($entry);
+        push @$formatted_entries, $entry;
+    } elsif ($entry->{type} eq 'typedef') {
+        __format_typedef($entry);
+        push @$formatted_entries, $entry;
+    }
+}
+
 sub _format {
     my $entries = shift;
     my $formatted_entries = [];
@@ -36,61 +186,28 @@ sub _format {
     # strip strategy: comment/expression/template
     foreach my $entry (@$entries) {
         #print STDERR $entry->{type}, "\n";
-        if ($entry->{type} eq 'macro') {
-            # keep Q_OBJECT Q_PROPERTY
-            if ($entry->{name} eq 'Q_OBJECT') {
-                delete $entry->{subtype};
-                push @$formatted_entries, $entry;
-            }
-            if ($entry->{name} eq 'Q_PROPERTY') {
-                my @values = split / /, $entry->{values};
-                $entry->{TYPE} = shift @values;
-                $entry->{NAME} = shift @values;
-                $entry = { %$entry, @values };
-                delete $entry->{subtype};
-                delete $entry->{values};
-                push @$formatted_entries, $entry;
-            }
-        }
-        elsif ($entry->{type} eq 'class') {
-            # FIXME: extract name
-            $entry->{body} = _format($entry->{body}) if 
-              exists $entry->{body};
-            push @$formatted_entries, $entry;
-        }
-        elsif ($entry->{type} eq 'struct') {
-            # FIXME: extract name
-            $entry->{body} = _format($entry->{body}) if 
-              exists $entry->{body};
-            push @$formatted_entries, $entry;
-        }
-        elsif ($entry->{type} eq 'function') {
-            # FIXME: extract prototype
-            delete $entry->{fullname};
-            push @$formatted_entries, $entry;
-        }
-        elsif ($entry->{type} eq 'enum') {
-            $entry->{name} and $entry->{name} =~ s/\s+$//o;
-            # normalize
-            foreach my $v (@{$entry->{value}}) {
-                $v =~ s/\s+$//o;
-            }
-            push @$formatted_entries, $entry;
-        }
-        elsif ($entry->{type} eq 'accessibility') {
-            # normalize
-            foreach my $v (@{$entry->{value}}) {
-                $v =~ s/\s+$//o;
-            }
-            push @$formatted_entries, $entry;
-        }
-        elsif ($entry->{type} eq 'typedef') {
+        _format_primitive_loop($entry, $formatted_entries);
+    }
+    return $formatted_entries;
+}
+
+sub _format_in_struct {
+    my $entries = shift;
+    my $formatted_entries = [];
+    
+    # strip strategy: comment/template
+    foreach my $entry (@$entries) {
+        #print STDERR $entry->{type}, "\n";
+        _format_primitive_loop($entry, $formatted_entries);
+        if ($entry->{type} eq 'expression') {
+            __format_expression($entry);
             push @$formatted_entries, $entry;
         }
     }
     return $formatted_entries;
 }
 
+################ MAIN ################
 sub main {
     usage() unless @ARGV;
     my ( $in, $out ) = @ARGV;

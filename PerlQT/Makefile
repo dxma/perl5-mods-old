@@ -72,7 +72,9 @@ OPT_CC_OUTPUT   := -o
 
 CMD_STRIP_INC   := $(SCRIPT_DIR)/strip_include.pl
 CMD_STRIP_MK    := $(SCRIPT_DIR)/gen_strip_mk.pl
-CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES)
+CMD_PREPRO_HD_OPTS := $(_CMD_PREPRO_HD_OPTS)
+CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES) \
+                       $(CMD_PREPRO_HD_OPTS) -I$(HEADER_DIR)
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
 CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
@@ -166,6 +168,8 @@ clean_dot_mk:
 	$(_Q)[[ -f $(PREPRO_DOT_MK) ]] && $(CMD_RM) $(PREPRO_DOT_MK)
 	$(_Q)echo removing $(PARSE_DOT_MK)
 	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
+	$(_Q)echo removing $(FORMAT_DOT_MK)
+	$(_Q)[[ -f $(FORMAT_DOT_MK) ]] && $(CMD_RM) $(FORMAT_DOT_MK)
 .PONNY: clean_dot_mk
 
 gen_strip: $(STRIP_HEADERS)
@@ -197,7 +201,7 @@ clean_format:
 .PONNY: clean_format
 
 # final assignment
-clean: clean_dot_mk clean_strip clean_prepro clean_parse
+clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
 .PONNY: clean
 
 all: gen_format
