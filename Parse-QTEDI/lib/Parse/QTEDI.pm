@@ -11,7 +11,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.01_02';
+$VERSION = '0.01_03';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -110,6 +110,7 @@ enum      :
     $return = { type => 'enum' }; 
     $return->{name} = $item[2] if $item[2];
     $return->{value} = $item[3] if $item[3];
+    $return->{variable} = $item[4] if $item[4];
   }  
   { print STDERR $item[1], ": ", join(" ", $item[2], join(" ", @{$item[3]}), $item[4]), "\n" 
         if $::RD_DEBUG }

@@ -11,6 +11,7 @@ Parse::QTEDI - Parse QT/KDE preprocessed headers
 
 =head1 COMMANDLINE USAGE
 
+  $cp header.h header.h.bak                            # backup
   $sed -i -e 's/#include/ d' -e 's/#error/ d' header.h # strip
   $gcc -E -DBLAH_BLAH header.h > header.i              # pre-process
   $parse_qtedi_header header.i                         # parse
@@ -37,7 +38,7 @@ debug info to STDERR if $DEBUG defined.
 
 To solve macro, basically. There are both arch-specific and
 feature-specific macros. One should decide which feature-specific ones
-to enable. Besides, modern libtool normally record compile-time
+to enable. Besides, modern libtool normally records compile-time
 commandline options for later reference. 
 
 =head1 HOW TO DEBUG
@@ -45,7 +46,7 @@ commandline options for later reference.
 Defining $Parse::QTEDI::DEBUG to true will enable parse-level debug
 information to STDERR.
 
-=head1 WHAT IS THE NAME
+=head1 WHAT ABOUT THE NAME
 
 QTEDI is QT and QT-basEd Desktop environment Interface ;-)
 
@@ -54,6 +55,9 @@ QTEDI is QT and QT-basEd Desktop environment Interface ;-)
 An instance of Parse::RecDescent on demand
 
 =head1 SEE ALSO
+
+output spec and other dev info
+L<http://dongxu.googlecode.com/wiki/QTEDI> 
 
 svn repos L<http://dongxu.googlecode.com/svn/trunk/Parse-QTEDI/> 
 
@@ -66,9 +70,11 @@ Dongxu Ma, E<lt>dongxu.ma@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Dongxu Ma
+Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
 
 =cut
