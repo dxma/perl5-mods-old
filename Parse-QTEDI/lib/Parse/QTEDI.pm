@@ -11,7 +11,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.01_04';
+$VERSION = '0.01_05';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -146,8 +146,14 @@ extern   :
     { print STDERR "extern: ", 
           join(" ", $item[2], $item[4]), "\n" if $::RD_DEBUG } 
   | 'extern' 
-    (   class { $return = { subtype => 'class', body => $item[1] } }
-      | enum  { $return = { subtype => 'enum',  body => $item[1] } } ) 
+    (   class 
+        { $return = { subtype => 'class',      body => $item[1] } }
+      | enum  
+        { $return = { subtype => 'enum',       body => $item[1] } } 
+      | function 
+        { $return = { subtype => 'function',   body => $item[1] } } 
+      | expression 
+        { $return = { subtype => 'expression', body => $item[1] } } ) 
     { $return = $item[2]; $return->{type} = 'extern' } 
     { print STDERR "extern: ", 
           join(" ", $return->{type}, $return->{subtype}), "\n" if $::RD_DEBUG } 

@@ -54,6 +54,10 @@ QTEDI is QT and QT-basEd Desktop environment Interface ;-)
 
 An instance of Parse::RecDescent on demand
 
+=head1 BUGS AND TODO
+
+1. handle of __attribute__ pragma
+
 =head1 SEE ALSO
 
 output spec and other dev info
