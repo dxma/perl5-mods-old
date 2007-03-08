@@ -31,7 +31,7 @@ EOU
 
 ################ DICTIONARY ################
 # property storage flag
-sub FP_KEEP()    { 1 << 2 }
+sub FP_KEEP()    { 1 }
 my $FUNCTION_PROPERTIES = {
     # C++ standard
     explicit                            => 0,
@@ -41,16 +41,8 @@ my $FUNCTION_PROPERTIES = {
     static                              => FP_KEEP,
     friend                              => FP_KEEP,
     # QT-specific
-    1                                   => 0,
-    QT3_SUPPORT_CONSTRUCTOR             => 0,
-    Q_CORE_EXPORT                       => FP_KEEP,
-    QT_MOC_COMPAT                       => 0,
-    Q_OUTOFLINE_TEMPLATE                => 0,
-    QT_ASCII_CAST_WARN                  => 0,
-    QT_ASCII_CAST_WARN_CONSTRUCTOR      => 0,
-    Q_CORE_EXPORT_INLINE                => 0,
-    QT_DEPRECATED                       => 0,
-    Q_INLINE_TEMPLATE                   => 0,
+    Q_TESTLIB_EXPORT                    => 0,
+    Q_DECL_EXPORT                       => FP_KEEP,
 };
 
 ################ FORMAT UNIT ################

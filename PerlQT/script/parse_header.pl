@@ -5,6 +5,8 @@ use strict;
 
 use Fcntl qw(O_CREAT O_WRONLY O_TRUNC);
 use lib qw(../Parse-QTEDI/lib);
+# uncomment to enable parsing debug
+#BEGIN { $Parse::QTEDI::DEBUG = 1; }
 use Parse::QTEDI qw($parser);
 
 =head1 DESCIPTION

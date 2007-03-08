@@ -19,7 +19,13 @@ XML_DEFINE      := -DQT_XML_LIB
 OPENGL_DEFINE   := -DQT_OPENGL_LIB
 QT3_DEFINE      := -DQT3_SUPPORT -DQT_QT3SUPPORT_LIB
 
-EXTRA_DEFINES   := -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_KEYWORDS
+# NOTE: keep the default visibility mark as 'Q_DECL_EXPORT'
+#       or else normally it will be expanded to 
+#       '__attribute__((visibility("default")))' on Linux
+#       '__declspec(dllexport)'                  on Windows
+#       parser will benefit on such uniform look
+EXTRA_DEFINES   := -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_KEYWORDS     \
+                   -DQT_VISIBILITY_AVAILABLE -DQ_DECL_EXPORT="Q_DECL_EXPORT"
 
 ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
                    $(SQL_DEFINE) $(XML_DEFINE) $(OPENGL_DEFINE)   \
@@ -105,11 +111,11 @@ FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
 #################### SUBROUTINES ###############################
 
 
-#################### PONNY and FRIENDS #########################
+#################### PHONY and FRIENDS #########################
 
 # default goal
 all: 
-.PONNY: all
+.PHONY: all
 
 .SUFFIXES: .pre .h .cpp
 
@@ -170,38 +176,38 @@ clean_dot_mk:
 	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
 	$(_Q)echo removing $(FORMAT_DOT_MK)
 	$(_Q)[[ -f $(FORMAT_DOT_MK) ]] && $(CMD_RM) $(FORMAT_DOT_MK)
-.PONNY: clean_dot_mk
+.PHONY: clean_dot_mk
 
 gen_strip: $(STRIP_HEADERS)
-.PONNY: gen_strip
+.PHONY: gen_strip
 clean_strip: 
 	$(_Q)echo removing $(OUT_STRIP_DIR) 
 	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] && $(CMD_RMDIR) $(OUT_STRIP_DIR)
-.PONNY: clean_strip
+.PHONY: clean_strip
 
 gen_prepro: $(PREPRO_HEADERS)
-.PONNY: gen_prepro
+.PHONY: gen_prepro
 clean_prepro:
 	$(_Q)echo removing $(OUT_PREPRO_DIR)
 	$(_Q)[[ -d $(OUT_PREPRO_DIR) ]] && $(CMD_RMDIR) $(OUT_PREPRO_DIR)
-.PONNY: clean_prepro
+.PHONY: clean_prepro
 
 gen_parse: $(PARSE_HEADERS)
-.PONNY: gen_parse
+.PHONY: gen_parse
 clean_parse:
 	$(_Q)echo removing $(OUT_PARSE_DIR)
 	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] && $(CMD_RMDIR) $(OUT_PARSE_DIR)
-.PONNY: clean_parse
+.PHONY: clean_parse
 
 gen_format: $(FORMAT_YAMLS)
-.PONNY: gen_format
+.PHONY: gen_format
 clean_format: 
 	$(_Q)echo removing $(OUT_FORMAT_DIR)
 	$(_Q)[[ -d $(OUT_FORMAT_DIR) ]] && $(CMD_RMDIR) $(OUT_FORMAT_DIR)
-.PONNY: clean_format
+.PHONY: clean_format
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
-.PONNY: clean
+.PHONY: clean
 
 all: gen_format
