@@ -11,7 +11,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.01_03';
+$VERSION = '0.01_04';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
