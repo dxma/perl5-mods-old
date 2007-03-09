@@ -243,45 +243,45 @@ kde_macro :
 #          strip hard return
 # FIXME: \015 for MSWin32
 next_begin_brace : 
-  /(?>[^\{]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\{]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_end_brace : 
-  /(?>[^\}]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\}]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_begin_or_end_brace : 
-  /(?>[^\{\}]+)/sio   { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\{\}]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go }
 next_brace_or_semicolon : 
-  /(?>[^\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go } 
+  /(?>[^\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_begin_angle_bracket : 
-  /(?>[^\<]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\<]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_end_angle_bracket : 
-  /(?>[^\>]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\>]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_angle_bracket : 
-  /(?>[^\<\>]+)/sio   { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\<\>]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go }
 next_begin_square_bracket : 
-  /(?>[^\[]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\[]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_end_square_bracket : 
-  /(?>[^\]]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\]]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_square_bracket : 
-  /(?>[^\[\]]+)/sio   { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\[\]]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go }
 next_equals : 
-  /(?>[^\=]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\=]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_dot : 
-  /(?>[^\,]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\,]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_dot_or_end_brace : 
-  /(?>[^\,\}]+)/sio   { ( $return = $item[1] ) =~ s/\n//go } 
+  /(?>[^\,\}]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_begin_bracket : 
-  /(?>[^\(]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\(]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_end_bracket : 
-  /(?>[^\)]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\)]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_begin_or_end_bracket : 
-  /(?>[^\(\)]+)/sio   { ( $return = $item[1] ) =~ s/\n//go } 
+  /(?>[^\(\)]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_bracket_or_brace_or_semicolon : 
-  /(?>[^\(\)\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go } 
+  /(?>[^\(\)\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_bracket_or_square_bracket_or_brace_or_semicolon : 
-  /(?>[^\(\)\{\}\[\]\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go } 
+  /(?>[^\(\)\{\}\[\]\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_semicolon : 
-  /(?>[^\;]+)/sio     { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\;]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_begin_brace_or_colon_or_semicolon : 
-  /(?>[^\{\:\;]+)/sio { ( $return = $item[1] ) =~ s/\n//go }
+  /(?>[^\{\:\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go }
 
 balanced_bracket_next_token : 
     next_begin_or_end_bracket { $return = $item[1] } 
