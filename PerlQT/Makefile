@@ -24,8 +24,9 @@ QT3_DEFINE      := -DQT3_SUPPORT -DQT_QT3SUPPORT_LIB
 #       '__attribute__((visibility("default")))' on Linux
 #       '__declspec(dllexport)'                  on Windows
 #       parser will benefit on such uniform look
+# -DQT_VISIBILITY_AVAILABLE
 EXTRA_DEFINES   := -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_KEYWORDS     \
-                   -DQT_VISIBILITY_AVAILABLE -DQ_DECL_EXPORT="Q_DECL_EXPORT"
+                   -DQ_DECL_EXPORT="Q_DECL_EXPORT"
 
 ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
                    $(SQL_DEFINE) $(XML_DEFINE) $(OPENGL_DEFINE)   \

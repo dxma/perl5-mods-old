@@ -43,6 +43,7 @@ my $FUNCTION_PROPERTIES = {
     # QT-specific
     Q_TESTLIB_EXPORT                    => 0,
     Q_DECL_EXPORT                       => FP_KEEP,
+    Q_DBUS_EXPORT                       => 0,
 };
 
 ################ FORMAT UNIT ################
@@ -52,14 +53,23 @@ sub __format_macro {
     # keep Q_OBJECT Q_PROPERTY
     if ($entry->{name} eq 'Q_OBJECT') {
         delete $entry->{subtype};
+        return 1;
     }
-    if ($entry->{name} eq 'Q_PROPERTY') {
+    elsif ($entry->{name} eq 'Q_PROPERTY') {
         my @values = split / /, $entry->{values};
         $entry->{TYPE} = shift @values;
         $entry->{NAME} = shift @values;
-        $entry = { %$entry, @values };
+        while (@values) {
+            my $k = shift @values;
+            my $v = shift @values;
+            $entry->{$k} = $v;
+        }
         delete $entry->{subtype};
         delete $entry->{values};
+        return 1;
+    }
+    else {
+        return 0;
     }
 }
 
@@ -69,6 +79,7 @@ sub __format_class {
     # FIXME: extract name
     $entry->{body} = _format($entry->{body}) if 
       exists $entry->{body};
+    return 1;
 }
 
 sub __format_struct {
@@ -77,17 +88,160 @@ sub __format_struct {
     # FIXME: extract name
     $entry->{body} = _format_in_struct($entry->{body}) if 
       exists $entry->{body};
+    return 1;
 }
 
 sub __format_function {
     my $entry = shift;
     
+    #print STDERR $entry->{name}, "\n";
     # FIXME: extract prototype
-    my ( $name, $params ) = 
+    my ( $fname_with_prefix, $fparams ) = 
       $entry->{name} =~ m/^((?>[^(]+))\((.*)\)\s*$/io;
-    $entry->{name} = $name;
-    $entry->{param} = $params;
+    # filter out keywords from name
+    my @fvalues = split /\s*\b\s*/, $fname_with_prefix;
+    my $properties = [];
+    my @fname        = ();
+    my @freturn_type = ();
+    # get function name
+    # pre-scan for operator function
+    my $is_operator_function = 0;
+    FN_OPERATOR_LOOP:
+    for (my $i = $#fvalues; $i >= 0; $i--) {
+        if ($fvalues[$i] eq 'operator') {
+            # store as function name starting by operator keyword
+            @fname = splice @fvalues, $i;
+            $is_operator_function = 1;
+            last FN_OPERATOR_LOOP;
+        }
+    }
+    unshift @fname, pop @fvalues unless $is_operator_function;
+    FN_LOOP:
+    for (my $i = $#fvalues; $i >= 0; ) {
+        if ($fvalues[$i] eq '::') {
+            # namespace
+            unshift @fname, pop @fvalues;
+            unshift @fname, pop @fvalues;
+            $i -= 2;
+        }
+        elsif ($fvalues[$i] eq '~') {
+            # C++ destructor
+            unshift @fname, pop @fvalues;
+            $i--;
+        }
+        elsif ($fvalues[$i] eq '::~') {
+            # destructor within namespace ;-(
+            unshift @fname, pop @fvalues;
+            $i--;
+        }
+        else {
+            last FN_LOOP;
+        }
+    }
+    # get return type
+    # filter out properties 
+    foreach my $v (@fvalues) {
+        if (exists $FUNCTION_PROPERTIES->{$v}) {
+            if ($FUNCTION_PROPERTIES->{$v} & FP_KEEP) {
+                unshift @$properties, $v;
+            }
+        }
+        else {
+            push @freturn_type, $v;
+        }
+    }
+    # format return type
+    my $return_type;
+    if (@freturn_type) {
+        $return_type = shift @freturn_type;
+        for (my $i = 0; $i <= $#freturn_type; ) {
+            if ($freturn_type[$i] eq '::') {
+                $return_type .= $freturn_type[$i]. $freturn_type[$i+1];
+                $i += 2;
+            } 
+            elsif ($freturn_type[$i] eq '<') {
+                $return_type .= $freturn_type[$i];
+                $i++;
+            }
+            else {
+                $return_type .= ' '. $freturn_type[$i];
+                $i++;
+            }
+        }
+    }
+    else {
+        $return_type = '';
+    }
+    # format params
+    my $parameters = [];
+    if ($fparams) {
+        my @params = split /\s*,\s*/, $fparams;
+        foreach my $p (@params) {
+            my @parameter = split /\s*=\s*/, $p;
+            my $pname_with_type = $parameter[0];
+            my $pdefault_value   = @parameter == 2 ? $parameter[1] :
+              '';
+            $pdefault_value =~ s/\s+$//o;
+            # split param name [optional] and param type
+            my @pvalues = split /\s*\b\s*/, $pname_with_type;
+            my @pname = ();
+            my @ptype = ();
+            if (@pvalues == 1) {
+                # only one entry, be of param type
+                # noop
+            }
+            # \w may be different on different systems
+            # here strictly as an 'old' word
+            elsif ($pvalues[$#pvalues] =~ m/^[a-z_A-Z_0-9_\_]+$/o) {
+                # process param name
+                unshift @pname, pop @pvalues;
+                FP_LOOP:
+                for (my $i = $#pvalues; $i >= 0; ) {
+                    if ($pvalues[$i] eq '::') {
+                        # namespace
+                        unshift @pname, pop @pvalues;
+                        unshift @pname, pop @pvalues;
+                        $i -= 2;
+                    } 
+                    else {
+                        last FP_LOOP;
+                    }
+                }
+            }
+            # left is type
+            @ptype = @pvalues;
+            # format param name
+            my $pname = @pname ? join('', @pname) : '';
+            # format param type
+            my $ptype = '';
+            if (@ptype) {
+                $ptype = shift @ptype;
+                for (my $i = 0; $i <= $#ptype; ) {
+                    if ($ptype[$i] eq '::') {
+                        $ptype .= $ptype[$i]. $ptype[$i+1];
+                        $i += 2;
+                    } 
+                    else {
+                        $ptype .= ' '. $ptype[$i];
+                        $i++;
+                    }
+                }
+            }
+            # store param unit
+            my $p = { TYPE => $ptype };
+            $p->{NAME} = $pname if $pname;
+            $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value;
+            push @$parameters, $p;
+        }
+    }
+    # store
+    $entry->{NAME}      = join("", @fname);
+    $entry->{RETURN}    = $return_type if $return_type;
+    $entry->{PROPERTY}  = $properties if @$properties;
+    $entry->{PARAMETER} = $parameters if @$parameters;
+    delete $entry->{name};
     delete $entry->{fullname};
+    return 1;
 }
 
 sub __format_enum {
@@ -98,6 +252,7 @@ sub __format_enum {
     foreach my $v (@{$entry->{value}}) {
         $v =~ s/\s+$//o;
     }
+    return 1;
 }
 
 sub __format_accessibility {
@@ -107,12 +262,14 @@ sub __format_accessibility {
     foreach my $v (@{$entry->{value}}) {
         $v =~ s/\s+$//o;
     }
+    return 1;
 }
 
 sub __format_typedef {
     my $entry = shift;
     
     # FIXME
+    return 1;
 }
 
 sub __format_extern {
@@ -121,6 +278,7 @@ sub __format_extern {
     # FIXME: extract name
     $entry->{body} = _format($entry->{body}) if 
       exists $entry->{body};
+    return 1;
 }
 
 sub __format_namespace {
@@ -129,9 +287,11 @@ sub __format_namespace {
     # FIXME: extract name
     $entry->{body} = _format($entry->{body}) if 
       exists $entry->{body};
+    return 1;
 }
 
 sub __format_expression {
+    return 1;
 }
 
 ################ FORMAT FUNCTION ################
@@ -142,32 +302,40 @@ sub _format_primitive_loop {
     #use Data::Dumper;
     #print Dump($entry), "\n";
     if ($entry->{type} eq 'macro') {
-        __format_macro($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'class') {
-        __format_class($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'struct') {
-        __format_struct($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'extern') {
-        __format_extern($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'namespace') {
-        __format_namespace($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'function') {
-        __format_function($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'enum') {
-        __format_enum($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'accessibility') {
-        __format_accessibility($entry);
-        push @$formatted_entries, $entry;
-    } elsif ($entry->{type} eq 'typedef') {
-        __format_typedef($entry);
-        push @$formatted_entries, $entry;
+        __format_macro($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'class') {
+        __format_class($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'struct') {
+        __format_struct($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'extern') {
+        __format_extern($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'namespace') {
+        __format_namespace($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'function') {
+        __format_function($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'enum') {
+        __format_enum($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'accessibility') {
+        __format_accessibility($entry) and 
+          push @$formatted_entries, $entry;
+    } 
+    elsif ($entry->{type} eq 'typedef') {
+        __format_typedef($entry) and 
+          push @$formatted_entries, $entry;
     }
 }
 

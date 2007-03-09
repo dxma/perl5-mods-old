@@ -8,9 +8,10 @@
 # QT4 META CONFIGURATION
 _HEADER_DIR := /usr/include/qt4
 
-_HEADERS    := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,\
-                   $(wildcard $(_HEADER_DIR)/*/*.h)         \
-                   $(wildcard $(_HEADER_DIR)/*/*/*.h))
+_HEADERS    := $(filter-out $(_HEADER_DIR)/Qt/qatomic_%,         \
+                   $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%, \
+                       $(wildcard $(_HEADER_DIR)/*/*.h)          \
+                       $(wildcard $(_HEADER_DIR)/*/*/*.h)))
 
 # keep the order
 # disable QT features here
