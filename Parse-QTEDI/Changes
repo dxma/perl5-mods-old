@@ -2,6 +2,7 @@ Revision history for Perl extension Parse::QTEDI.
 
 0.01_05 20070309
     - extern body fix
+	- function body fix
 
 0.01_04 20070308
     - extern/namespace body fix

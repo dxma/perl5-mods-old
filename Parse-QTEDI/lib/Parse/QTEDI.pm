@@ -306,6 +306,7 @@ balanced_angle_bracket :
   | { $return = ''       } 
 # expression related
 # array declaration should be handled carefully
+# FIXME: __attribute__()
 expression_next_token : 
     next_bracket_or_square_bracket_or_brace_or_semicolon 
     { $return = $item[1] }
@@ -358,7 +359,7 @@ function_header_loop  :
 function_body         : 
     ';' { $return = '' } 
   | '=' '0' ';' { $return = '' }
-  | '{' balanced_brace(s) '}' { $return = '' }
+  | '{' balanced_brace(s) '}' ( ';' | ) { $return = '' }
 balanced_brace_next_token : 
     next_begin_or_end_brace { $return = $item[1] }
   | { $return = ''       } 
