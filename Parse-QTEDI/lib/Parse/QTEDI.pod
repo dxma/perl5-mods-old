@@ -11,10 +11,10 @@ Parse::QTEDI - Parse QT/KDE preprocessed headers
 
 =head1 COMMANDLINE USAGE
 
-  $cp header.h header.h.bak                            # backup
-  $sed -i -e 's/#include/ d' -e 's/#error/ d' header.h # strip
-  $gcc -E -DBLAH_BLAH header.h > header.i              # pre-process
-  $parse_qtedi_header header.i                         # parse
+  $cp header.h header.h.bak                                 # backup
+  $sed -i -e 's/#include/ d' -e 's/#error/ d' header.h      # strip
+  $gcc -E -imacros config.h -DBLAH_BLAH header.h > header.i # pre-process
+  $parse_qtedi_header header.i                              # parse
 
 =head1 DESCRIPTION
 
@@ -46,6 +46,9 @@ commandline options for later reference.
 Defining $Parse::QTEDI::DEBUG to true will enable parse-level debug
 information to STDERR.
 
+B<NOTE>: set at the BEGIN section of your code before using this
+module. 
+
 =head1 WHAT ABOUT THE NAME
 
 QTEDI is QT and QT-basEd Desktop environment Interface ;-)
@@ -54,9 +57,9 @@ QTEDI is QT and QT-basEd Desktop environment Interface ;-)
 
 An instance of Parse::RecDescent on demand
 
-=head1 BUGS AND TODO
+=head1 BUG AND TODO
 
-1. handle of __attribute__ pragma
+1. handle of __attribute__ pragma in expression
 
 =head1 SEE ALSO
 
