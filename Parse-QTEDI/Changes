@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.01_07 20070312
+	- operator() fix
+
 0.01_06 20070309
 	- new line strip fix
 

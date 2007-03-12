@@ -64,11 +64,9 @@ An instance of Parse::RecDescent on demand
 =head1 SEE ALSO
 
 output spec and other dev info
-L<http://dongxu.googlecode.com/wiki/QTEDI> 
+L<http://code.google.com/p/dongxu/wiki/QTEDI> 
 
-svn repos L<http://dongxu.googlecode.com/svn/trunk/Parse-QTEDI/> 
-
-Also check my Perl QT4 binding project page 
+my Perl QT4 binding project page 
 L<http://code.google.com/p/dongxu/wiki/PerlQT> 
 
 =head1 AUTHOR
