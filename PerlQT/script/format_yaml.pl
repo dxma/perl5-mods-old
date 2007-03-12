@@ -11,15 +11,6 @@ Format production from Parse::QTEDI into more binding-make-specific
 look. This will both strip unrelevant entry and renew the structure
 of other interested entry.
 
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
-
 =cut
 
 sub usage {
@@ -97,7 +88,7 @@ sub __format_function {
     #print STDERR $entry->{name}, "\n";
     # FIXME: extract prototype
     my ( $fname_with_prefix, $fparams ) = 
-      $entry->{name} =~ m/^((?>[^(]+))\((.*)\)\s*$/io;
+      $entry->{name} =~ m/^(.*)\((.*)\)\s*$/io;
     # filter out keywords from name
     my @fvalues = split /\s*\b\s*/, $fname_with_prefix;
     my $properties = [];
@@ -234,8 +225,20 @@ sub __format_function {
             push @$parameters, $p;
         }
     }
+    # format function name
+    my $fn_join_char = '';
+    if ($is_operator_function) {
+        if ($fname[1] =~ m/^[a-z_A-Z_0-9_\_]+$/o) {
+            # type cast operator such as 
+            # operator int
+            $fn_join_char = ' ';
+        }
+    }
+    
     # store
-    $entry->{NAME}      = join("", @fname);
+    $entry->{NAME}      = join($fn_join_char, @fname);
+    # meta info field
+    $entry->{subtype}   = $is_operator_function ? 1 : 0;
     $entry->{RETURN}    = $return_type if $return_type;
     $entry->{PROPERTY}  = $properties if @$properties;
     $entry->{PARAMETER} = $parameters if @$parameters;
@@ -275,10 +278,37 @@ sub __format_typedef {
 sub __format_extern {
     my $entry = shift;
     
+    # keep function/enum/class/C
     # FIXME: extract name
-    $entry->{body} = _format($entry->{body}) if 
-      exists $entry->{body};
-    return 1;
+    if ($entry->{subtype} eq 'function') {
+        __format_function($entry->{body});
+        return 1;
+    }
+    elsif ($entry->{subtype} eq 'enum') {
+        __format_enum($entry->{body});
+        return 1;
+    }
+    elsif ($entry->{subtype} eq 'class') {
+        if ($entry->{body}->{type} eq 'class') {
+            $entry->{body} = _format($entry->{body});
+            return 1;
+        }
+        elsif ($entry->{body}->{type} eq 'struct') {
+            $entry->{body} = _format_in_struct($entry->{body});
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    }
+    elsif ($entry->{subtype} eq 'C') {
+        # FIXME: keep expression ?
+        $entry->{body} = _format_keep_expression($entry->{body});
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub __format_namespace {
@@ -291,6 +321,7 @@ sub __format_namespace {
 }
 
 sub __format_expression {
+    # FIXME: keep expression
     return 1;
 }
 
@@ -351,7 +382,7 @@ sub _format {
     return $formatted_entries;
 }
 
-sub _format_in_struct {
+sub _format_keep_expression {
     my $entries = shift;
     my $formatted_entries = [];
     
@@ -365,6 +396,10 @@ sub _format_in_struct {
         }
     }
     return $formatted_entries;
+}
+
+sub _format_in_struct {
+    &_format_keep_expression;
 }
 
 ################ MAIN ################
@@ -397,3 +432,15 @@ sub main {
 }
 
 &main;
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut
+
