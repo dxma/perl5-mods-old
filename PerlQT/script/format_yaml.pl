@@ -226,17 +226,39 @@ sub __format_function {
         }
     }
     # format function name
-    my $fn_join_char = '';
+    my $fname = shift @fname;
     if ($is_operator_function) {
-        if ($fname[1] =~ m/^[a-z_A-Z_0-9_\_]+$/o) {
+        my $i = 0;
+        FN_FORMAT_LOOP:
+        for (; $i < @fname; $i++) {
+            $fname .= $fname[$i];
+            last FN_FORMAT_LOOP if $fname[$i] eq 'operator';
+        }
+        # FIXME
+        if ($fname[++$i] =~ m/^[a-z_A-Z_0-9_\_]+$/o) {
             # type cast operator such as 
             # operator int
-            $fn_join_char = ' ';
+            $fname .= ' '. $fname[$i++];
+        }
+        else {
+            # operator+ and like
+            $fname .= $fname[$i++];
+        }
+        for (; $i < @fname; $i++) {
+            if ($fname[$i] eq '<') {
+                # template type
+                $fname .= $fname[$i];
+            }
+            else {
+                $fname .= ' '. $fname[$i];
+            }
         }
     }
-    
+    else {
+        $fname = join('', @fname);
+    }
     # store
-    $entry->{NAME}      = join($fn_join_char, @fname);
+    $entry->{NAME}      = $fname;
     # meta info field
     $entry->{subtype}   = $is_operator_function ? 1 : 0;
     $entry->{RETURN}    = $return_type if $return_type;
