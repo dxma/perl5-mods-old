@@ -11,7 +11,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.01_07';
+$VERSION = '0.01';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -111,6 +111,15 @@ enum      :
     $return->{name} = $item[2] if $item[2];
     $return->{value} = $item[3] if $item[3];
     $return->{variable} = $item[4] if $item[4];
+    unless($item[3]) { 
+        # no enum body, possibly inside typedef or forward decl
+        # split variables from enum_name
+        my @v = split /(?<!,)\s+(?!,)/, $item[2];
+        if (@v > 1) {
+            $return->{variable} = pop @v;
+            $return->{name}     = join(" ", @v);
+        }
+    }
   }  
   { print STDERR $item[1], ": ", join(" ", $item[2], join(" ", @{$item[3]}), $item[4]), "\n" 
         if $::RD_DEBUG }
@@ -158,7 +167,7 @@ extern   :
     { print STDERR "extern: ", 
           join(" ", $return->{type}, $return->{subtype}), "\n" if $::RD_DEBUG } 
 namespace: 
-  keyword_namespace namespace_name '{' namespace_body(s?) '}'
+  keyword_namespace namespace_name '{' namespace_body(s?) '}' ( ';' | )
   { $return = { type => 'namespace', name => $item[2], body => [] } }
   { foreach my $a (@{$item[4]}) { push @{$return->{body}}, @$a }    }
   { print STDERR "namespace: ", $item[2], "\n" if $::RD_DEBUG }
@@ -170,9 +179,18 @@ class    :
     $return->{inheritance} = $item[3] if $item[3];
     $return->{body} = $item[4] if $item[4];
     $return->{variable} = $item[5] if $item[5];
+    unless($item[4]) { 
+        # no class body, possibly inside typedef or forward decl
+        # split variables from enum_name
+        my @v = split /(?<!,)\s+(?!,)/, $item[2];
+        if (@v > 1) {
+            $return->{variable} = pop @v;
+            $return->{name}     = join(" ", @v);
+        }
+    }
   } 
   { print STDERR $item[1][0], ": ", 
-        join(" ", @item[2 .. $#item-1]), "\n" if $::RD_DEBUG }
+        join(" ", @item[2 .. $#item-3]), "\n" if $::RD_DEBUG }
 # a simple trap here 
 # to prevent template function parsed as normal one
 function : 
@@ -371,7 +389,7 @@ balanced_brace            :
 
 # enum related
 enum_name          : 
-    next_begin_brace { $return = $item[1] }
+    next_brace_or_semicolon { $return = $item[1] }
   | { $return = ''       } 
 # enum_unit(s /,/) _NOT_ work here
 enum_body          : 
@@ -379,6 +397,7 @@ enum_body          :
   | '{' enum_unit(s) '}'
     { $return = $item[2] }
     #{ print STDERR "enum_body: ", join(" ", @{$item[2]}), "\n" if $::RD_DEBUG } 
+  | { $return = ''       }
 enum_unit          : 
   next_dot_or_end_brace ( ',' | )
   { $return = (split /=/, $item[1])[0] }
