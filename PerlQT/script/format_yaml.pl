@@ -449,6 +449,7 @@ sub __format_function {
                     }
                 }
             }
+            $ptype =~ s/\s+$//o;
             # store param unit
             my $p = { TYPE => $ptype };
             $p->{NAME} = $pname if $pname;
