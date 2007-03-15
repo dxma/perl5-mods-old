@@ -187,6 +187,7 @@ sub __format_class_or_struct {
             $v =~ s/\s+$//io;
             push @{$entry->{VARIABLE}}, $v;
         }
+        delete $entry->{variable};
     }
     # process body
     # strip private part
