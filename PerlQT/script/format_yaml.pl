@@ -675,10 +675,11 @@ sub __format_typedef {
         else {
             # subtype 1
             # simple
+            # NOTE: QValueList < KConfigSkeletonItem * >List
             ( $entry->{FROM}, $entry->{TO} ) = 
-              $entry->{value} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&]+)$/io;
+              $entry->{value} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;
             # pointer/reference digit be moved into FROM
-            if ($entry->{TO} =~ s/^\s*((?:\*|\&))//io) {
+            if ($entry->{TO} =~ s/^\s*((?:\*|\&|\>))//io) {
                 $entry->{FROM} .= ' '. $1;
             }
         }
@@ -723,11 +724,11 @@ sub __format_extern {
     }
     elsif ($entry->{subtype} eq 'class') {
         if ($entry->{body}->{type} eq 'class') {
-            $entry->{body} = _format_class_body($entry->{body});
+            $entry->{body} = __format_class($entry->{body});
             $rc = 1;
         }
         elsif ($entry->{body}->{type} eq 'struct') {
-            $entry->{body} = _format_struct_body($entry->{body});
+            $entry->{body} = __format_struct($entry->{body});
             $rc = 1;
         }
     }
