@@ -262,6 +262,22 @@ sub __format_struct {
 
 =over
 
+=item __format_struct
+
+Similar as __format_struct.
+
+See __format_class above regarding output spec.
+
+=back
+
+=cut
+
+sub __format_union {
+    return __format_class_or_struct($_[0], 1);
+}
+
+=over
+
 =item __format_function
 
 Format a function entry. Extract return type, function name and all
@@ -291,8 +307,18 @@ sub __format_function {
     my $entry = shift;
     
     #print STDERR $entry->{name}, "\n";
-    my ( $fname_with_prefix, $fparams ) = 
-      $entry->{name} =~ m/^(.*)\((.*)\)\s*$/io;
+    # NOTE: operator()(int) and invoke(a = A(), b = B())
+    #       perform a pre-scan is better in this case than 
+    #       computing a complex OR-ed/recursive regex
+    my ( $fname_with_prefix, $fparams );
+    if ($entry->{name} =~ m/operator\(\)\(/o) {
+        ( $fname_with_prefix, $fparams ) = 
+          $entry->{name} =~ m/^((?>[^\(]+)\(\))\((.*)\)\s*$/io;
+    }
+    else {
+        ( $fname_with_prefix, $fparams ) = 
+          $entry->{name} =~ m/^((?>[^\(]+))\((.*)\)\s*$/io;
+    }
     # filter out keywords from name
     my @fvalues = split /\s*\b\s*/, $fname_with_prefix;
     my $properties = [];
@@ -614,6 +640,10 @@ sub __format_typedef {
         # and has only one entry
         # or else something is wrong
         $entry->{TO}   = $entry->{EXTRA}->{VARIABLE}->[0];
+        # pointer/reference digit be moved into FROM
+        if ($entry->{TO} =~ s/^\s*((?:\*|\&))//io) {
+            $entry->{FROM} .= ' '. $1;
+        }
     }
     else {
         if ($entry->{value} =~ m/\(/io) {
@@ -627,9 +657,12 @@ sub __format_typedef {
             #        void ((*signal(int)))(int)
             #        nowadays it has been simplified by typedef
             my ( $to ) = 
-              $entry->{value} =~ m/^(?>[^\(]+)\(\*((?>[^\)]+))\)/io;
+              $entry->{value} =~ m/^(?>[^\(]+)\(((?>[^\)]+))\)/io;
             if (defined $to) {
                 $entry->{TO} = $to;
+                # strip * 
+                # the type is marked by subtype
+                $entry->{TO} =~ s/\*//o;
             }
             else {
                 warn "couldnot extract function pointer type name";
@@ -640,14 +673,11 @@ sub __format_typedef {
         else {
             # subtype 1
             # simple
-            my @values = split /(?<!(?:\<|,))\s+(?!(?:\>|\*\>))/, 
-              $entry->{value};
-            if (@values == 2) {
-                $entry->{FROM} = $values[0];
-                $entry->{TO}   = $values[1];
-            }
-            else {
-                warn "couldnot extract simple typedef name";
+            ( $entry->{FROM}, $entry->{TO} ) = 
+              $entry->{value} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&]+)$/io;
+            # pointer/reference digit be moved into FROM
+            if ($entry->{TO} =~ s/^\s*((?:\*|\&))//io) {
+                $entry->{FROM} .= ' '. $1;
             }
         }
     }
@@ -806,6 +836,10 @@ sub _format_primitive_loop {
         __format_struct($entry) and 
           push @$formatted_entries, $entry;
     } 
+    elsif ($entry->{type} eq 'union') {
+        __format_union($entry) and 
+          push @$formatted_entries, $entry;
+    }
     elsif ($entry->{type} eq 'extern') {
         __format_extern($entry) and 
           push @$formatted_entries, $entry;
