@@ -1,5 +1,9 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.01    20070315
+	- enum/class forward declaration and typedef fix
+    - first release
+
 0.01_07 20070312
 	- operator() fix
 

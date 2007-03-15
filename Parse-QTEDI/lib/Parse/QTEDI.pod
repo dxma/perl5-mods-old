@@ -14,7 +14,10 @@ Parse::QTEDI - Parse QT/KDE preprocessed headers
   $cp header.h header.h.bak                                 # backup
   $sed -i -e 's/#include/ d' -e 's/#error/ d' header.h      # strip
   $gcc -E -imacros config.h -DBLAH_BLAH header.h > header.i # pre-process
-  $parse_qtedi_header header.i                              # parse
+  $parse_qtedi_header header.i > production.qtedi           # parse
+  # optional 
+  # format into a binding-make-specific spec
+  $format_qtedi_production production.qtedi > formatted.txt # format
 
 =head1 DESCRIPTION
 
