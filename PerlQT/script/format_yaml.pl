@@ -296,6 +296,7 @@ parameters from function prototype line from QTEDI.
   RETURN    : [return type]
   PARAMETER : 
      - TYPE          : [param1 type]
+                       [NOTE: could be '...' in ansi]
        NAME          : [param1 name]
        DEFAULT_VALUE : [param1 default value]
      ...
@@ -397,7 +398,10 @@ sub __format_function {
     # format params
     my $parameters = [];
     if ($fparams) {
-        my @params = split /\s*,\s*/, $fparams;
+        # FIXME: complex param types 
+        # such as function pointer, array, string contains comma and 
+        # constructor default value
+        my @params = split /\s*,(?!(?:\'|\"))\s*/, $fparams;
         foreach my $p (@params) {
             my @parameter = split /\s*=\s*/, $p;
             my $pname_with_type = $parameter[0];
@@ -405,7 +409,7 @@ sub __format_function {
               '';
             $pdefault_value =~ s/\s+$//o;
             # split param name [optional] and param type
-            my @pvalues = split /\s*\b\s*/, $pname_with_type;
+            my @pvalues = split /\s*(?<!::)\b(?!::)\s*/, $pname_with_type;
             my @pname = ();
             my @ptype = ();
             if (@pvalues == 1) {
