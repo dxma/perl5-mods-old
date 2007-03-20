@@ -515,7 +515,7 @@ function_parameter_default_value_loop       :
 # parse parameters and simply consume __attribute__ 
 function_header_block : 
   (   function_header_next_token 
-      { $item[1] =~ m/\_\_attribute\_\_$/o ? 1 : undef } 
+      { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
       '(' function_header_loop(s?) ')' 
       { 
         $return = { _subtype => 1, 
@@ -554,7 +554,6 @@ function_header_loop  :
     | { $return = '' } 
   ) 
   { $return = join("", @item[1 .. $#item]) } 
-  { print "here:", $return, "\n"; }  
 function_body         : 
     ';' { $return = '' } 
   | '=' '0' ';' { $return = '' }
