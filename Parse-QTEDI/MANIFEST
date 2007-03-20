@@ -19,3 +19,4 @@ t/Parse-QTEDI.t
 lib/Parse/QTEDI.pm
 lib/Parse/QTEDI.pod
 bin/parse_qtedi_header
+bin/format_qtedi_production

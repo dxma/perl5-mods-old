@@ -11,7 +11,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.01';
+$VERSION = '0.02_01';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -197,11 +197,8 @@ function :
     keyword_template <commit> <reject>
   | class_accessibility <commit> <reject> 
   | function_header function_body
-    { 
-      $return = { type => 'function', name => $item[1][1] };
-      $return->{fullname} = $item[1];
-    } 
-    { print STDERR "function: ", $item[1][1], "\n" if $::RD_DEBUG }
+    { $return = { type => 'function', %{$item[1]} }; } 
+    { print STDERR "function: ", $item[1]->{name}, "\n" if $::RD_DEBUG }
 # QT-specific macros
 qt_macro_1 : 
   'QT_BEGIN_HEADER' | 'QT_END_HEADER' | 'Q_OBJECT' | 'Q_GADGET' 
@@ -347,16 +344,28 @@ variables : next_semicolon { $return = $item[1] } | { $return = '' }
 # function related
 # at least one '()' block should appear for a valid header
 # trap other keywords to prevent mess
-# return a structure [ attribute_prefix, function_name,
-# .., function_macro ]
-# the idea here is to make sure the second one is _ALWAYS_ function name
 function_header       : 
     (   keyword_comment | keyword_class | keyword_enum 
       | keyword_typedef ) <commit> <reject>
   | function_header_block(s) 
-    { $return = $item[1][0] !~ m/^\_\_/io ? [ '', @{$item[1]} ] : $item[1] } 
-    { if ($return->[1] =~ m/operator\(\)$/o) { 
-          $return->[1] .= splice @$return, 2, 1; }                         }
+    { 
+      $return->{name} = ''; 
+      foreach my $i (@{$item[1]}) { 
+          if ($i->{_subtype} == 1) { 
+              # attribute
+              $return->{name} .= $i->{_value}; 
+          } elsif ($i->{_subtype} == 2) { 
+              # function name with params
+              $return->{name} .= $i->{_name};
+              $return->{parameter} = $i->{_value} if 
+                  @{$i->{_value}};
+          } elsif ($i->{_subtype} == 3) { 
+              # other macros
+              push @{$return->{property}}, $i->{_value} if 
+                  $i->{_value};
+          } 
+      } 
+    } 
 function_header_next_token : 
   next_bracket_or_brace_or_semicolon 
     { $return = $item[1] } 
@@ -365,11 +374,176 @@ function_macro_99     :
     'const' 
   | qt_macro_99 
   | kde_macro_99 
+
+function_parameters : 
+    function_parameter_loop 
+
+function_parameter_loop : 
+    function_parameter 
+    (   ',' function_parameter_loop { $return = $item[2] } 
+      | { $return = [] } 
+    ) 
+    { $return = [ $item[1] ]; push @$return, @{$item[2]} if @{$item[2]} } 
+
+function_parameter  : 
+    function_parameter_declaration { $return = $item[1] } 
+
+function_parameter_declaration_next_token : 
+    /(?>[^\,\=\(\)\<\>]+)/iso { $return = $item[1] } 
+
+function_parameter_declaration            : 
+    function_parameter_declaration_next_token 
+    (   function_parameter_default_value 
+        { $return = { subtype => 1, value => $item[1] }; } 
+      | function_parameter_function_pointer 
+        { $return = { subtype => 2, value => $item[1] }; } 
+      | function_parameter_template_type 
+        { $return = { subtype => 3, value => $item[1] }; } 
+      | { $return = { subtype => 4 }; } 
+    ) 
+    { 
+      if ($item[2]->{subtype} == 4) {
+          $return = { name => $item[1], subtype => 4, };
+      } elsif ($item[2]->{subtype} == 3) { 
+          $return = { name => $item[1]. $item[2]->{value} };
+          $return->{subtype} = 3; 
+      } elsif ($item[2]->{subtype} == 2) { 
+          $return = $item[2]->{value};
+          $return->{subtype} = 2; 
+      } else {
+          $return = { name => $item[1], default => $item[2]->{value} }; 
+          $return->{subtype} = 1; 
+      } 
+    } 
+
+function_parameter_template_type_next_token : 
+    /(?>[^\<\>]+)/iso { $return = $item[1] } 
+
+function_parameter_template_type            : 
+    '<' function_parameter_template_type_loop(s) '>' 
+    (   function_parameter_declaration_next_token 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
+    { 
+      $return = join(" ", $item[1], 
+          join("", @{$item[2]}), $item[3], $item[4]); 
+    } 
+
+function_parameter_template_type_loop       : 
+    (   function_parameter_template_type_next_token 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
+    (   '<' function_parameter_template_type_loop '>' 
+        { $return = join(" ", @item[1 .. 3]); } 
+      | { $return = '';                      } 
+    ) 
+    { $return = join("", @item[1 .. 2]); } 
+
+function_parameter_function_pointer_next_token : 
+    /(?>[^\(\)]+)/iso { $return = $item[1] } 
+
+function_parameter_function_pointer            : 
+    '(' function_parameter_function_pointer_loop ')' 
+    '(' function_parameter_loop ')' 
+    { $return = { name => $item[2], param => $item[5], }; }
+
+function_parameter_function_pointer_loop       : 
+    (   function_parameter_function_pointer_next_token 
+        { $return = $item[1]; }
+      | { $return = '';       } 
+    ) 
+    (   function_parameter_function_pointer 
+        { $return = $item[1]; } 
+      | { $return = {};       } 
+    ) 
+    { 
+      $return = { name => $item[1], }; 
+      if (exists $item[2]->{name}) { 
+          $return->{name}  = $item[2]->{name}; 
+          $return->{param} = $item[2]->{param};
+      }
+    } 
+
+function_parameter_default_value_next_token : 
+    /(?>[^\(\'\"\)\,]+)/iso { $return = $item[1]; } 
+
+function_parameter_default_value            : 
+    '=' function_parameter_default_value_loop { $return = $item[2]; } 
+
+function_parameter_default_value_loop_token_dispatch : 
+    '(' ')' 
+    { $return = '()'; } 
+  | '(' function_parameter_default_value_loop2 ')' 
+    { $return = join(" ", @item[1 .. 3]); } 
+  | "'" /(?>[^\']*)/iso "'" { $return = join("", @item[1 .. 3]); } 
+  | '"' /(?>[^\"]*)/iso '"' { $return = join("", @item[1 .. 3]); } 
+
+function_parameter_default_value_loop2      : 
+    (   function_parameter_default_value_next_token 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
+    (   function_parameter_default_value_loop_token_dispatch 
+        { $return = $item[1]; } 
+      | ',' function_parameter_default_value_loop2 
+        { $return = join(" ", @item[1 .. 2]); } 
+      | { $return = '';                       } 
+    ) 
+    { $return = join("", @item[1 .. 2]); } 
+
+function_parameter_default_value_loop       : 
+    (   function_parameter_default_value_next_token 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
+    (   function_parameter_default_value_loop_token_dispatch 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
+    { $return = join('', @item[1 .. 2]); } 
+
+# old backup 
+#function_header_block_old_unused : 
+#  function_header_next_token '(' function_header_loop(s?) ')' 
+#    { $return = join("", $item[1], $item[2], @{$item[3]}, $item[4]) }
+#  | function_macro_99(s?) 
+#    { $return = join("", @{$item[1]}) } 
+
+# function parameter process
+# parse parameters and simply consume __attribute__ 
 function_header_block : 
-  function_header_next_token '(' function_header_loop(s?) ')' 
-    { $return = join("", $item[1], $item[2], @{$item[3]}, $item[4]) }
+  (   function_header_next_token 
+      { $item[1] =~ m/\_\_attribute\_\_$/o ? 1 : undef } 
+      '(' function_header_loop(s?) ')' 
+      { 
+        $return = { _subtype => 1, 
+                    _value   => join("", $item[1], $item[3], 
+                                    @{$item[4]}, $item[5]) }; 
+      } 
+    | function_header_next_token 
+      { $item[1] =~ m/^\:/o ? 1 : undef } 
+      '(' function_header_loop(s?) ')' 
+      { $return = { _subtype => 0 }; } 
+    | function_header_next_token 
+      { $item[1] =~ m/operator$/o ? 1 : undef } 
+      '(' ')' '(' ')' 
+      { 
+        $return = { _subtype => 2, _name => $item[1].'()', }; 
+        $return->{_value} = []; 
+      } 
+    | function_header_next_token 
+      '(' 
+      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
+      ')' 
+      { 
+        $return = { _subtype => 2, _name => $item[1], };  
+        $return->{_value} = $item[3]; 
+      } 
+  ) { $return = $item[1]; } 
   | function_macro_99(s?) 
-    { $return = join("", @{$item[1]}) } 
+    { $return = { _subtype => 3, _value => join("", @{$item[1]}) }; } 
 function_header_loop  : 
     function_header_next_token ( '(' function_header_loop(s) ')' 
       { $return = join("", $item[1], @{$item[2]}, $item[3]) } 
