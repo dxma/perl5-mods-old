@@ -524,7 +524,7 @@ function_header_block :
       } 
     | function_header_next_token 
       { $item[1] =~ m/^\:/o ? 1 : undef } 
-      '(' function_header_loop(s?) ')' 
+      function_header_loop(s) 
       { $return = { _subtype => 0 }; } 
     | function_header_next_token 
       { $item[1] =~ m/operator$/o ? 1 : undef } 
@@ -544,12 +544,17 @@ function_header_block :
   ) { $return = $item[1]; } 
   | function_macro_99(s?) 
     { $return = { _subtype => 3, _value => join("", @{$item[1]}) }; } 
+# TODO: loop in more elegant way
 function_header_loop  : 
-    function_header_next_token ( '(' function_header_loop(s) ')' 
+  (   function_header_next_token { $return = $item[1]; } 
+    | { $return = ''; } 
+  ) 
+  (   '(' function_header_loop(s?) ')' 
       { $return = join("", $item[1], @{$item[2]}, $item[3]) } 
-    | { $return = '' } ) 
-    { $return = join("", @item[1 .. $#item]) } 
-  | { $return = '' } 
+    | { $return = '' } 
+  ) 
+  { $return = join("", @item[1 .. $#item]) } 
+  { print "here:", $return, "\n"; }  
 function_body         : 
     ';' { $return = '' } 
   | '=' '0' ';' { $return = '' }
