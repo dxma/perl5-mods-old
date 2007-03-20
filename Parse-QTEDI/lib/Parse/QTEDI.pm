@@ -471,6 +471,7 @@ function_parameter_default_value_next_token :
 
 function_parameter_default_value            : 
     '=' function_parameter_default_value_loop { $return = $item[2]; } 
+    { print STDERR "default value:", $return, "\n" if $::RD_DEBUG; } 
 
 function_parameter_default_value_loop_token_dispatch : 
     '(' ')' 
