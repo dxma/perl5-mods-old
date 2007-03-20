@@ -63,8 +63,11 @@ An instance of Parse::RecDescent on demand
 =head1 BUG AND TODO
 
 1. handle of __attribute__ pragma in expression
+2. handle of escaped token
 
 =head1 SEE ALSO
+
+L<Parse::RecDescent|Parse::RecDescent> 
 
 output spec and other dev info
 L<http://code.google.com/p/dongxu/wiki/QTEDI> 
