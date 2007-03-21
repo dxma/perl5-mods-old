@@ -309,18 +309,7 @@ sub __format_function {
     my $entry = shift;
     
     #print STDERR $entry->{name}, "\n";
-    # NOTE: operator()(int) and invoke(a = A(), b = B())
-    #       perform a pre-scan is better in this case than 
-    #       computing a complex OR-ed/recursive regex
-    my ( $fname_with_prefix, $fparams );
-    if ($entry->{name} =~ m/operator\(\)\(/o) {
-        ( $fname_with_prefix, $fparams ) = 
-          $entry->{name} =~ m/^((?>[^\(]+)\(\))\((.*)\)\s*$/io;
-    }
-    else {
-        ( $fname_with_prefix, $fparams ) = 
-          $entry->{name} =~ m/^((?>[^\(]+))\((.*)\)\s*$/io;
-    }
+    my $fname_with_prefix = $entry->{name};
     # filter out keywords from name
     my @fvalues = split /\s*\b\s*/, $fname_with_prefix;
     my $properties = [];
@@ -397,19 +386,30 @@ sub __format_function {
     }
     # format params
     my $parameters = [];
-    if ($fparams) {
-        # FIXME: complex param types 
-        # such as function pointer, array, string contains comma and 
-        # constructor default value
-        my @params = split /\s*,(?!(?:\'|\"))\s*/, $fparams;
-        foreach my $p (@params) {
-            my @parameter = split /\s*=\s*/, $p;
-            my $pname_with_type = $parameter[0];
-            my $pdefault_value   = @parameter == 2 ? $parameter[1] :
-              '';
-            $pdefault_value =~ s/\s+$//o;
+    PARAMETER_MAIN_LOOP: 
+    foreach my $p (@{$entry->{parameter}}) {
+        next PARAMETER_MAIN_LOOP if 
+          $p->{subtype} eq 'simple' and $p->{name} eq '';
+        
+        my $pname_with_type = $p->{name};
+        my $psubtype        = $p->{subtype};
+        my $pdefault_value  = 
+          exists $p->{default} ? $p->{default} : '';
+        $pdefault_value =~ s/\s+$//o;
+        my ( $pname, $ptype );
+        
+        if ($psubtype eq 'fpointer') {
+            # FIXME: how to present the type of function pointer
+            $ptype = 'FUNCTION_POINTER';
+            # FIXME: recursive loop 
+            # $pname_with_type might be { name => '', parameter =>[] }
+            ( $pname = $pname_with_type ) =~ s/^\s*\*//gio;
+        }
+        else {
+            # simple && template
             # split param name [optional] and param type
-            my @pvalues = split /\s*(?<!::)\b(?!::)\s*/, $pname_with_type;
+            my @pvalues = 
+              split /\s*(?<!::)\b(?!::)\s*/, $pname_with_type;
             my @pname = ();
             my @ptype = ();
             if (@pvalues == 1) {
@@ -437,9 +437,9 @@ sub __format_function {
             # left is type
             @ptype = @pvalues;
             # format param name
-            my $pname = @pname ? join('', @pname) : '';
+            $pname = @pname ? join('', @pname) : '';
             # format param type
-            my $ptype = '';
+            $ptype = '';
             if (@ptype) {
                 $ptype = shift @ptype;
                 for (my $i = 0; $i <= $#ptype; ) {
@@ -454,13 +454,14 @@ sub __format_function {
                 }
             }
             $ptype =~ s/\s+$//o;
-            # store param unit
-            my $p = { TYPE => $ptype };
-            $p->{NAME} = $pname if $pname;
-            $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value;
-            push @$parameters, $p;
         }
+        # store param unit
+        my $p = { TYPE => $ptype };
+        $p->{NAME} = $pname if $pname;
+        $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value;
+        push @$parameters, $p;
     }
+    
     # format function name
     my $fname = '';
     if ($is_operator_function) {
@@ -500,7 +501,7 @@ sub __format_function {
     $entry->{PROPERTY}  = $properties if @$properties;
     $entry->{PARAMETER} = $parameters if @$parameters;
     delete $entry->{name};
-    delete $entry->{fullname};
+    delete $entry->{parameter};
     return 1;
 }
 
