@@ -370,10 +370,60 @@ function_header_next_token :
   next_bracket_or_brace_or_semicolon 
     { $return = $item[1] } 
   | { $return = ''       } 
+# old backup 
+#function_header_block_old_unused : 
+#  function_header_next_token '(' function_header_loop(s?) ')' 
+#    { $return = join("", $item[1], $item[2], @{$item[3]}, $item[4]) }
+#  | function_macro_99(s?) 
+#    { $return = join("", @{$item[1]}) } 
+
+# function parameter process
+# parse parameters and simply consume __attribute__ 
+function_header_block : 
+  (   function_header_next_token 
+      { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
+      '(' function_header_loop(s?) ')' 
+      { 
+        $return = { _subtype => 1, 
+                    _value   => join("", $item[1], $item[3], 
+                                    @{$item[4]}, $item[5]) }; 
+      } 
+    | function_header_next_token 
+      { $item[1] =~ m/^\:/o ? 1 : undef } 
+      function_header_loop(s) 
+      { $return = { _subtype => 0 }; } 
+    | function_header_next_token 
+      { $item[1] =~ m/operator$/o ? 1 : undef } 
+      '(' ')' '(' ')' 
+      { 
+        $return = { _subtype => 2, _name => $item[1].'()', }; 
+        $return->{_value} = []; 
+      } 
+    | function_header_next_token 
+      '(' 
+      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
+      ')' 
+      { 
+        $return = { _subtype => 2, _name => $item[1], };  
+        $return->{_value} = $item[3]; 
+      } 
+  ) { $return = $item[1]; } 
+  | function_macro_99(s?) 
+    { $return = { _subtype => 3, _value => join("", @{$item[1]}) }; } 
+# TODO: loop in more elegant way
+function_header_loop  : 
+  (   function_header_next_token { $return = $item[1]; } 
+    | { $return = ''; } 
+  ) 
+  (   '(' ')' { $return = '()'; } 
+    | '(' function_header_loop(s?) ')' 
+      { $return = join("", $item[1], @{$item[2]}, $item[3]) } 
+    | { $return = '' } 
+  ) 
+  { $return = join("", @item[1 .. $#item]) } 
+
 function_macro_99     : 
-    'const' 
-  | qt_macro_99 
-  | kde_macro_99 
+    'const' | qt_macro_99 | kde_macro_99 
 
 function_parameters : 
     function_parameter_loop 
@@ -386,33 +436,32 @@ function_parameter_loop :
     { $return = [ $item[1] ]; push @$return, @{$item[2]} if @{$item[2]} } 
 
 function_parameter  : 
-    function_parameter_declaration { $return = $item[1] } 
+    function_parameter_declaration function_parameter_default_value(?) 
+    { 
+      $return = $item[1]; 
+      $return->{default} = $item[2]->[0] if @{$item[2]}; 
+    } 
 
 function_parameter_declaration_next_token : 
     /(?>[^\,\=\(\)\<\>]+)/iso { $return = $item[1] } 
 
 function_parameter_declaration            : 
     function_parameter_declaration_next_token 
-    (   function_parameter_default_value 
-        { $return = { subtype => 1, value => $item[1] }; } 
-      | function_parameter_function_pointer 
-        { $return = { subtype => 2, value => $item[1] }; } 
+    (   function_parameter_function_pointer 
+        { $return = { subtype => 'fpointer', value => $item[1] }; } 
       | function_parameter_template_type 
-        { $return = { subtype => 3, value => $item[1] }; } 
-      | { $return = { subtype => 4 }; } 
+        { $return = { subtype => 'template', value => $item[1] }; } 
+      | { $return = { subtype => 'simple' }; } 
     ) 
     { 
-      if ($item[2]->{subtype} == 4) {
-          $return = { name => $item[1], subtype => 4, };
-      } elsif ($item[2]->{subtype} == 3) { 
+      if ($item[2]->{subtype} eq 'simple') {
+          $return = { name => $item[1], subtype => 'simple', };
+      } elsif ($item[2]->{subtype} eq 'template') { 
           $return = { name => $item[1]. $item[2]->{value} };
-          $return->{subtype} = 3; 
-      } elsif ($item[2]->{subtype} == 2) { 
+          $return->{subtype} = 'template'; 
+      } elsif ($item[2]->{subtype} eq 'fpointer') { 
           $return = $item[2]->{value};
-          $return->{subtype} = 2; 
-      } else {
-          $return = { name => $item[1], default => $item[2]->{value} }; 
-          $return->{subtype} = 1; 
+          $return->{subtype} = 'fpointer'; 
       } 
     } 
 
@@ -505,56 +554,6 @@ function_parameter_default_value_loop       :
     ) 
     { $return = join('', @item[1 .. 2]); } 
 
-# old backup 
-#function_header_block_old_unused : 
-#  function_header_next_token '(' function_header_loop(s?) ')' 
-#    { $return = join("", $item[1], $item[2], @{$item[3]}, $item[4]) }
-#  | function_macro_99(s?) 
-#    { $return = join("", @{$item[1]}) } 
-
-# function parameter process
-# parse parameters and simply consume __attribute__ 
-function_header_block : 
-  (   function_header_next_token 
-      { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
-      '(' function_header_loop(s?) ')' 
-      { 
-        $return = { _subtype => 1, 
-                    _value   => join("", $item[1], $item[3], 
-                                    @{$item[4]}, $item[5]) }; 
-      } 
-    | function_header_next_token 
-      { $item[1] =~ m/^\:/o ? 1 : undef } 
-      function_header_loop(s) 
-      { $return = { _subtype => 0 }; } 
-    | function_header_next_token 
-      { $item[1] =~ m/operator$/o ? 1 : undef } 
-      '(' ')' '(' ')' 
-      { 
-        $return = { _subtype => 2, _name => $item[1].'()', }; 
-        $return->{_value} = []; 
-      } 
-    | function_header_next_token 
-      '(' 
-      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
-      ')' 
-      { 
-        $return = { _subtype => 2, _name => $item[1], };  
-        $return->{_value} = $item[3]; 
-      } 
-  ) { $return = $item[1]; } 
-  | function_macro_99(s?) 
-    { $return = { _subtype => 3, _value => join("", @{$item[1]}) }; } 
-# TODO: loop in more elegant way
-function_header_loop  : 
-  (   function_header_next_token { $return = $item[1]; } 
-    | { $return = ''; } 
-  ) 
-  (   '(' function_header_loop(s?) ')' 
-      { $return = join("", $item[1], @{$item[2]}, $item[3]) } 
-    | { $return = '' } 
-  ) 
-  { $return = join("", @item[1 .. $#item]) } 
 function_body         : 
     ';' { $return = '' } 
   | '=' '0' ';' { $return = '' }
