@@ -443,7 +443,7 @@ function_parameter  :
     } 
 
 function_parameter_declaration_next_token : 
-    /(?>[^\,\=\(\)\<\>]+)/iso { $return = $item[1] } 
+    /(?>[^\,\=\(\)\<\>]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_declaration            : 
     function_parameter_declaration_next_token 
@@ -466,7 +466,7 @@ function_parameter_declaration            :
     } 
 
 function_parameter_template_type_next_token : 
-    /(?>[^\<\>]+)/iso { $return = $item[1] } 
+    /(?>[^\<\>]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_template_type            : 
     '<' function_parameter_template_type_loop(s) '>' 
@@ -491,7 +491,7 @@ function_parameter_template_type_loop       :
     { $return = join("", @item[1 .. 2]); } 
 
 function_parameter_function_pointer_next_token : 
-    /(?>[^\(\)]+)/iso { $return = $item[1] } 
+    /(?>[^\(\)]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_function_pointer            : 
     '(' function_parameter_function_pointer_loop ')' 
@@ -516,7 +516,7 @@ function_parameter_function_pointer_loop       :
     } 
 
 function_parameter_default_value_next_token : 
-    /(?>[^\(\'\"\)\,]+)/iso { $return = $item[1]; } 
+    /(?>[^\(\'\"\)\,]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_default_value            : 
     '=' function_parameter_default_value_loop { $return = $item[2]; } 
