@@ -152,7 +152,7 @@ An instance of Parse::RecDescent on demand
                        { name => '', parameter => [] } entry 
                        for recursive function pointer such as 
                        int ((*signal)(int))(int)              ]
-           type    : simple/fpointer/template
+           subtype : simple/fpointer/template
            default : [default value declared                  ]
          ...
   
