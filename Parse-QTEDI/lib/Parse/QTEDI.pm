@@ -496,7 +496,7 @@ function_parameter_function_pointer_next_token :
 function_parameter_function_pointer            : 
     '(' function_parameter_function_pointer_loop ')' 
     '(' function_parameter_loop ')' 
-    { $return = { name => $item[2], param => $item[5], }; }
+    { $return = { name => $item[2], parameter => $item[5], }; }
 
 function_parameter_function_pointer_loop       : 
     (   function_parameter_function_pointer_next_token 
@@ -511,7 +511,7 @@ function_parameter_function_pointer_loop       :
       $return = { name => $item[1], }; 
       if (exists $item[2]->{name}) { 
           $return->{name}  = $item[2]->{name}; 
-          $return->{param} = $item[2]->{param};
+          $return->{parameter} = $item[2]->{parameter};
       }
     } 
 
