@@ -60,10 +60,15 @@ QTEDI is QT and QT-basEd Desktop environment Interface ;-)
 
 An instance of Parse::RecDescent on demand
 
+=head1 PITFALL
+
+1. Performance... Slower than before since function parameter parsing
+loop involved. Precompile could help a little bit; 
+
 =head1 BUG AND TODO
 
-1. handle of __attribute__ pragma in expression
-2. handle of escaped token
+1. Handle of __attribute__ pragma in expression;
+2. Handle of escaped token;
 
 =head1 OUTPUT SPEC
 
@@ -143,7 +148,7 @@ An instance of Parse::RecDescent on demand
   # a complete function declaration
   ---
      - type     : function
-     - name     : [ function name                                           ]
+     - name     : [ function name with return type                          ]
                   [ possibly with prefix such as macro or other C++ keyword ]
      - property : [ c++/QT/KDE-specific keywords (const and like)           ] 
      - parameter: 

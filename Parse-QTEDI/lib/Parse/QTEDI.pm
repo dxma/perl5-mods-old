@@ -446,7 +446,10 @@ function_parameter_declaration_next_token :
     /(?>[^\,\=\(\)\<\>]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_declaration            : 
-    function_parameter_declaration_next_token 
+    (   function_parameter_declaration_next_token 
+        { $return = $item[1]; } 
+      | { $return = '';       } 
+    ) 
     (   function_parameter_function_pointer 
         { $return = { subtype => 'fpointer', value => $item[1] }; } 
       | function_parameter_template_type 
@@ -461,6 +464,7 @@ function_parameter_declaration            :
           $return->{subtype} = 'template'; 
       } elsif ($item[2]->{subtype} eq 'fpointer') { 
           $return = $item[2]->{value};
+          $return->{name} = $item[1];
           $return->{subtype} = 'fpointer'; 
       } 
     } 
@@ -519,7 +523,8 @@ function_parameter_default_value_next_token :
     /(?>[^\(\'\"\)\,]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 
 
 function_parameter_default_value            : 
-    '=' function_parameter_default_value_loop { $return = $item[2]; } 
+    '=' function_parameter_default_value_loop(s) 
+    { $return = join("", @{$item[2]}); } 
     { print STDERR "default value:", $return, "\n" if $::RD_DEBUG; } 
 
 function_parameter_default_value_loop_token_dispatch : 
