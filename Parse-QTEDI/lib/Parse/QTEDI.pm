@@ -98,8 +98,8 @@ comment   :
   { print STDERR $item[1], ": ", $item[2], "\n" if $::RD_DEBUG }
 typedef   : 
   keyword_typedef 
-  (   enum { $return = $item[1] } 
-    | class { $return = $item[1] } 
+  (   enum               { $return = $item[1] } 
+    | class              { $return = $item[1] } 
     | /(?>[^;]+)/sio ';' { $return = $item[1] } 
   )  
   { $return = { type => 'typedef', value => $item[2] } }
