@@ -657,4 +657,8 @@ namespace_body : primitive_loop { $return = $item[1] }
 #typedef related
 function_pointer : 
   next_bracket_or_semicolon function_parameter_function_pointer ';'
-  { $return = $item[2]; $return->{return} = $item[1]; } 
+  { 
+    $return = $item[2]; 
+    $return->{return} = $item[1]; 
+    $return->{type}   = 'fpointer'; 
+  } 
