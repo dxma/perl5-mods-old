@@ -394,10 +394,13 @@ function_header_block :
       { $return = { _subtype => 0 }; } 
     | function_header_next_token 
       { $item[1] =~ m/operator$/o ? 1 : undef } 
-      '(' ')' '(' ')' 
+      '(' ')' 
+      '(' 
+      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
+      ')' 
       { 
         $return = { _subtype => 2, _name => $item[1].'()', }; 
-        $return->{_value} = []; 
+        $return->{_value} = $item[6]; 
       } 
     | function_header_next_token 
       '(' 
