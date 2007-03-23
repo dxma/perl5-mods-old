@@ -282,7 +282,7 @@ sub __format_union {
 =item __format_function
 
 Format a function entry. Extract return type, function name and all
-parameters from function prototype line from QTEDI.
+parameters from function entry from QTEDI.
 
   # spec 
   
@@ -399,11 +399,20 @@ sub __format_function {
         my ( $pname, $ptype );
         
         if ($psubtype eq 'fpointer') {
-            # FIXME: how to present the type of function pointer
-            $ptype = 'FUNCTION_POINTER';
-            # FIXME: recursive loop 
-            # $pname_with_type might be { name => '', parameter =>[] }
-            ( $pname = $pname_with_type ) =~ s/^\s*\*//gio;
+            # FIXME: better differentiate the type of function pointer
+            my $_FP_TYPE = 'FUNCTION_POINTER';
+            $ptype = $_FP_TYPE;
+            # TODO: should keep all interface info here ???
+            # FIXME: better presenting special fpointer
+            if (ref $pname_with_type eq 'HASH') {
+                # okay, probably a function pointer
+                # which returns another function pointer
+                ( $pname = $pname_with_type->{name} ) =~
+                  s/^\s*\*//gio;
+            }
+            else {
+                ( $pname = $pname_with_type ) =~ s/^\s*\*//gio;
+            }
         }
         else {
             # simple && template
@@ -615,6 +624,7 @@ Value entry could be of type:
   1. typedef simple type C<< typedef A B; >>
   2. typedef (anonymous) class/struct/enum/union C<< typdef enum A { } B; >> 
   3. typedef function pointer C<< typedef void (*P)(int, uint); >>
+  4. typedef an array C<< typedef unsigned char Digest[16]; >> 
 
   # spec 
   
@@ -681,6 +691,8 @@ sub __format_typedef {
             # subtype 1
             # simple
             # NOTE: QValueList < KConfigSkeletonItem * >List
+            # strip tail space(s)
+            $entry->{value} =~ s/\s+$//io;
             ( $entry->{FROM}, $entry->{TO} ) = 
               $entry->{value} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;
             # pointer/reference digit be moved into FROM
