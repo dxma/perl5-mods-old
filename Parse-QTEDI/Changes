@@ -1,7 +1,9 @@
 Revision history for Perl extension Parse::QTEDI.
 
-0.02_02 
+0.02_02 20070324
 	- operator() with parameter fix
+	- typedef function pointer fix
+	- function pointer return structure update
 
 0.02_01 20070321
 	- function parameter parsing loop integration

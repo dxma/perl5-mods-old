@@ -100,9 +100,10 @@ typedef   :
   keyword_typedef 
   (   enum               { $return = $item[1] } 
     | class              { $return = $item[1] } 
+    | function_pointer   { $return = $item[1] } 
     | /(?>[^;]+)/sio ';' { $return = $item[1] } 
   )  
-  { $return = { type => 'typedef', value => $item[2] } }
+  { $return = { type => 'typedef', body => $item[2] } }
   { print STDERR $item[1], ": ", $item[2], "\n" if $::RD_DEBUG }
 enum      : 
   keyword_enum enum_name enum_body variables ';'
@@ -287,6 +288,8 @@ next_begin_bracket :
   /(?>[^\(]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_end_bracket : 
   /(?>[^\)]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
+next_bracket_or_semicolon : 
+  /(?>[^\(\)\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_begin_or_end_bracket : 
   /(?>[^\(\)]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_bracket_or_brace_or_semicolon : 
@@ -515,11 +518,13 @@ function_parameter_function_pointer_loop       :
       | { $return = {};       } 
     ) 
     { 
-      $return = { name => $item[1], }; 
       if (exists $item[2]->{name}) { 
           $return->{name}  = $item[2]->{name}; 
           $return->{parameter} = $item[2]->{parameter};
       }
+      else {
+          $return = $item[1];
+      } 
     } 
 
 function_parameter_default_value_next_token : 
@@ -649,3 +654,7 @@ namespace_name :
   next_begin_brace { $return = $item[1] } | { $return = '' } 
 namespace_body : primitive_loop { $return = $item[1] }
 
+#typedef related
+function_pointer : 
+  next_bracket_or_semicolon function_parameter_function_pointer ';'
+  { $return = $item[2]; $return->{return} = $item[1]; } 

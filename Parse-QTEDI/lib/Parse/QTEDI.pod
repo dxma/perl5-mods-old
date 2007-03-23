@@ -89,9 +89,9 @@ will cause a similar case as waiting a spin lock;
   # a typedef line
   ---
      - type     : typedef
-     - value    : [ content of typedef, could be of enum/class/struct/union/simple type. ]
-                  [ will be a complete hashref entry in case of enum/class/struct/union, 
-                    refer to spec of those types below.                                  ]
+     - body     : [ content of typedef, could be of enum/class/struct/union/fpointer/simple type. ]
+                  [ will be a complete hashref entry in case of enum/class/struct/union/fpointer, 
+                    refer to spec of those types below.                                           ]
   
   # a standard C++ one-line comment
   # multiline style comment (/* */) is stripped by C++ preprocessor
