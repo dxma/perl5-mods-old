@@ -365,7 +365,8 @@ sub __format_function {
     }
     if (exists $entry->{property}) {
         foreach my $p (@{$entry->{property}}) {
-            if ($FUNCTION_PROPERTIES->{$p} & KEEP) {
+            if (exists $FUNCTION_PROPERTIES->{$p} and 
+                  $FUNCTION_PROPERTIES->{$p} & KEEP) {
                 unshift @$properties, $p;
             }
         }
