@@ -71,6 +71,7 @@ my $FUNCTION_PROPERTIES = {
     inline                              => 0,
     static                              => KEEP,
     friend                              => KEEP,
+    const                               => KEEP, 
     %$QT_PROPERTIES, 
     %$KDE_PROPERTIES, 
 };
@@ -362,6 +363,13 @@ sub __format_function {
             push @freturn_type, $v;
         }
     }
+    if (exists $entry->{property}) {
+        foreach my $p (@{$entry->{property}}) {
+            if ($FUNCTION_PROPERTIES->{$p} & KEEP) {
+                unshift @$properties, $p;
+            }
+        }
+    }
     # format return type
     my $return_type;
     if (@freturn_type) {
@@ -511,6 +519,7 @@ sub __format_function {
     $entry->{PARAMETER} = $parameters if @$parameters;
     delete $entry->{name};
     delete $entry->{parameter};
+    delete $entry->{property};
     return 1;
 }
 
@@ -630,11 +639,11 @@ Value entry could be of type:
   
   ---
   type    : typedef
-  subtype : 1/2/3
-  FROM    : [from type name]
+  subtype : class/struct/enum/union/fpointer/simple
+  FROM    : [from type name for simple typedef    ]
+            [a hashref for class/struct/enum/union]
+            ['FUNCTION_POINTER' for fpointer      ]
   TO      : [to type name]
-  EXTRA   : [subtype 2, formatted class/struct/enum/union entry   ] 
-            [subtype 3, raw typedef line without leading 'typedef']
 
 =back
 
@@ -643,65 +652,63 @@ Value entry could be of type:
 sub __format_typedef {
     my $entry = shift;
     
-    # extract value entry
-    if (ref $entry->{value} eq 'HASH') {
-        # subtype 2
-        # container class type
-        $entry->{subtype} = 2;
-        my $temp = [];
-        _format_primitive_loop($entry->{value}, $temp);
-        $entry->{EXTRA} = $temp->[0];
-        $entry->{FROM} = $entry->{EXTRA}->{NAME} if 
-          exists $entry->{EXTRA}->{NAME};
-        # $entry->{EXTRA}->{VARIABLE} should exist this case
-        # and has only one entry
-        # or else something is wrong
-        $entry->{TO}   = $entry->{EXTRA}->{VARIABLE}->[0];
-        # pointer/reference digit be moved into FROM
-        if ($entry->{TO} =~ s/^\s*((?:\*|\&))//io) {
-            $entry->{FROM} .= ' '. $1;
+    # extract body entry
+    if (ref $entry->{body} eq 'HASH') {
+        $entry->{subtype} = $entry->{body}->{type};
+        if ($entry->{subtype} eq 'fpointer') {
+            # fpointer
+            # keep typedefed name
+            # FIXME: should keep hash entry ???
+            $entry->{FROM} = 'FUNCTION_POINTER';
+            if (ref $entry->{body}->{name} eq 'HASH') {
+                # okay, probably a function pointer
+                # which returns another function pointer
+                ( $entry->{TO} = $entry->{body}->{name}->{name} ) =~
+                  s/^\s*\*//gio;
+            }
+            else {
+                ( $entry->{TO} = $entry->{body}->{name} ) =~ 
+                  s/^\s*\*//gio;
+            }
+        }
+        else {
+            # other container type
+            my $temp = [];
+            _format_primitive_loop($entry->{body}, $temp);
+            my $body = $temp->[0];
+            $entry->{FROM} = $body->{NAME} if exists $body->{NAME};
+            # $body->{VARIABLE} should exist this case
+            # and has only one entry
+            # or else something is wrong
+            $entry->{TO}   = $body->{VARIABLE}->[0];
+            # pointer/reference digit be moved into FROM
+            if ($entry->{TO} =~ s/^\s*((?:\*|\&))//io) {
+                $entry->{FROM} .= ' '. $1;
+            }
         }
     }
     else {
-        if ($entry->{value} =~ m/\(/io) {
-            # subtype 3
-            # function pointer
-            $entry->{subtype} = 3;
-            # FIXME: function pointer typedef could be more complex 
-            #        than something as void (*P)(int)
-            #        a classic case is linux signal function
-            #        old declaration is something like
-            #        void ((*signal(int)))(int)
-            #        nowadays it has been simplified by typedef
-            my ( $to ) = 
-              $entry->{value} =~ m/^(?>[^\(]+)\(((?>[^\)]+))\)/io;
-            if (defined $to) {
-                $entry->{TO} = $to;
-                # strip * 
-                # the type is marked by subtype
-                $entry->{TO} =~ s/\*//o;
-            }
-            else {
-                warn "couldnot extract function pointer type name";
-            }
-            # for reference
-            $entry->{EXTRA} = $entry->{value};
+        # simple
+        $entry->{subtype} = 'simple';
+        if ($entry->{body} =~ m/^(.*)\b(\w+)((?:\[\d+\])+)$/io) {
+            # array typedef
+            $entry->{TO}   = $2;
+            $entry->{FROM} = $1. $3;
         }
         else {
-            # subtype 1
-            # simple
+            # other simple typedef
             # NOTE: QValueList < KConfigSkeletonItem * >List
-            # strip tail space(s)
-            $entry->{value} =~ s/\s+$//io;
+            # strip tail space
+            $entry->{body} =~ s/\s+$//io;
             ( $entry->{FROM}, $entry->{TO} ) = 
-              $entry->{value} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;
+              $entry->{body} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;
             # pointer/reference digit be moved into FROM
             if ($entry->{TO} =~ s/^\s*((?:\*|\&|\>))//io) {
                 $entry->{FROM} .= ' '. $1;
             }
         }
     }
-    delete $entry->{value};
+    delete $entry->{body};
     return 1;
 }
 
