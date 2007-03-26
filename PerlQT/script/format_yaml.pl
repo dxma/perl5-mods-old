@@ -829,6 +829,8 @@ sub __format_namespace {
 
 Format expression.
 
+B<NOTE>: currently expression is stripped. 
+
   # spec 
   
   ---
