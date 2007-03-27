@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.02    20070328
+	- destructor function name fix
+
 0.02_02 20070324
 	- operator() with parameter fix
 	- typedef function pointer fix
