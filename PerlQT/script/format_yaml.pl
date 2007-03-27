@@ -345,7 +345,8 @@ sub __format_function {
         elsif ($fvalues[$i] eq '::~') {
             # destructor within namespace ;-(
             unshift @fname, pop @fvalues;
-            $i--;
+            unshift @fname, pop @fvalues;
+            $i -= 2;
         }
         else {
             last FN_LOOP;
