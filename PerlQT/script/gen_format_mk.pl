@@ -36,6 +36,7 @@ sub main {
     local ( *IN, );
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
+    close IN;
     $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.h:\s*$}
               {$out_format_dir$1.yaml: $in_format_dir$1.yaml
 \t\$(_Q)echo generating \$@

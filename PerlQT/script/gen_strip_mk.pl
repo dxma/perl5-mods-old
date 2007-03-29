@@ -36,6 +36,7 @@ sub main {
     local ( *IN, );
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
+    close IN;
     $cont =~ s{^\Q$in_noinc_dir\E((?>[^:]+)):\s*$}
               {$out_noinc_dir$1: $in_noinc_dir$1
 \t\$(_Q)echo generating \$@

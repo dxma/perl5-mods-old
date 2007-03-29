@@ -983,11 +983,8 @@ sub main {
     
     local ( *INPUT );
     open INPUT, '<', $in or die "cannot open file: $!";
-    my $cont;
-    {
-        local $/;
-        $cont = <INPUT>;
-    }
+    my $cont = do { local $/; <INPUT>; };
+    close INPUT;
     my ( $entries ) = Load($cont);
     $cont = Dump(_format($entries));
     

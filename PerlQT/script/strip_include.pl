@@ -33,11 +33,8 @@ sub main {
     
     local ( *HEADER );
     open HEADER, '<', $in or die "cannot open file: $!";
-    my $cont;
-    {
-        local $/;
-        $cont = <HEADER>;
-    }
+    my $cont = do { local $/; <HEADER>; };
+    close HEADER;
     $cont =~ s{^\s*#\s*include\s.+$}{}igmo;
     $cont =~ s{^\s*#\s*error\s.+$}{}igmo;
     if (defined $out) {
