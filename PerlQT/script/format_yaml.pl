@@ -264,7 +264,7 @@ sub __format_struct {
 
 =over
 
-=item __format_struct
+=item __format_union
 
 Similar as __format_struct.
 
@@ -275,6 +275,7 @@ See __format_class above regarding output spec.
 =cut
 
 sub __format_union {
+    # FIXME: how to deal with union
     return __format_class_or_struct($_[0], 1);
 }
 
@@ -845,7 +846,7 @@ B<NOTE>: currently expression is stripped.
 sub __format_expression {
     # FIXME: how to use such information
     #        for now just skip
-    return 0;
+    0;
 }
 
 ################ FORMAT FUNCTION ################

@@ -10,13 +10,16 @@ use File::Spec ();
 
 Split formatted QTEDI production according to namespace.
 
-For each namespace there will be 2 files generated:
+For each namespace there will be files generated as below:
 
   1. <namespace_name>.typemap
-  2. <namespace_name>.function
+  2. <namespace_name>.public
+  3. <namespace_name>.protected
+  4. <namespace_name>.signal
+  5. <namespace_name>.slot
 
 B<NOTE>: 'namespace' here, as a generic form, stands for any
-full-qualified class/struct/namespace name in C. 
+full-qualified class/struct/namespace name in C/CXX. 
 
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
@@ -57,7 +60,7 @@ namespace string as its name.
 =cut
 
 sub write_to_file {
-    my ( $cont, $root_dir, @namespace ) = @_;
+    my ( $hcont, $root_dir, @namespace ) = @_;
     
     my $NS_DELIMITER = q(::);
     my $FN_DELIMITER = q(__);
@@ -72,15 +75,59 @@ sub write_to_file {
         $filename = $FN_DEFAULT;
     }
     $filename = File::Spec::->catfile($root_dir, $filename);
-    foreach my $k (keys %$cont) {
+    foreach my $k (keys %$hcont) {
         local ( *OUT );
         sysopen OUT, $filename. '.'. lc($k), O_CREAT|O_WRONLY or 
           die "cannot open file to write: $!";
         until (flock OUT, LOCK_EX) { sleep 3; }
         seek OUT, 0, 2;
-        my $cont_dump = Dump($cont->{$k});
+        my $cont_dump = Dump($hcont->{$k});
         print OUT $cont_dump;
         close OUT or die "cannot write to file: $!";
+    }
+}
+
+=over
+
+=item _process_and_split
+
+Split current content into seperate namespace parts. Meanwhile
+generate typemap entries accordingly. 
+
+B<NOTE>: Create a new typemap entry for raw function pointer parameter
+in function declaration. 
+
+B<NOTE>: Function parameter name is stripped in this phase. 
+
+B<NOTE>: Function PROPERTY field is stripped in this phase. 
+
+=back
+
+=cut
+
+sub _process_and_split {
+    my ( $entries, $root_dir ) = @_;
+    
+    foreach my $entry (@$entries) {
+        if ($entry->{type} eq 'typedef') {
+        }
+        elsif ($entry->{type} eq 'function') {
+        }
+        elsif ($entry->{type} eq 'class') {
+        }
+        elsif ($entry->{type} eq 'struct') {
+        }
+        elsif ($entry->{type} eq 'union') {
+            # union stays untouched
+        }
+        elsif ($entry->{type} eq 'extern') {
+        }
+        elsif ($entry->{type} eq 'namespace') {
+        }
+        else {
+            # default
+            # drop it in <namespace_name>.unknown
+        }
     }
 }
 
@@ -95,6 +142,7 @@ sub main {
     my $cont = do { local $/; <HEADER>; };
     close HEADER;
     my ( $entries ) = Load($cont);
+    _process_and_split($entries, $out);
     
     exit 0;
 }
