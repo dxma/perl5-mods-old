@@ -85,7 +85,7 @@ CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)   \
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
 CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
-CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_yaml.pl
+CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_qtedi_production.pl
 CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk

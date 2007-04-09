@@ -8,15 +8,17 @@ use File::Spec ();
 
 =head1 DESCIPTION
 
-Split formatted QTEDI production according to namespace.
+Group formatted QTEDI production by namespace.
 
 For each namespace there will be files generated as below:
 
   1. <namespace_name>.typemap
-  2. <namespace_name>.public
-  3. <namespace_name>.protected
-  4. <namespace_name>.signal
-  5. <namespace_name>.slot
+  2. <namespace_name>.enum
+  3. <namespace_name>.function.public
+  4. <namespace_name>.function.protected
+  5. <namespace_name>.signal
+  6. <namespace_name>.slot.public
+  7. <namespace_name>.slot.protected
 
 B<NOTE>: 'namespace' here, as a generic form, stands for any
 full-qualified class/struct/namespace name in C/CXX. 
@@ -43,6 +45,17 @@ sub usage {
 usage: $0 <formatted_qtedi_output.yaml> <output_directory>
 EOU
     exit 1;
+}
+
+# private consts
+sub NAMESPACE_DEFAULT { 'std' }
+
+sub VISIBILITY_PUBLIC { 
+    +{ type => 'accessibility', VALUE => [ 'public' ], } 
+}
+
+sub VISIBILITY_PRIVATE {
+    +{ type => 'accessibility', VALUE => [ 'private' ], }
 }
 
 =over
@@ -89,10 +102,77 @@ sub write_to_file {
 
 =over
 
-=item _process_and_split
+=item __process_accessibility
 
-Split current content into seperate namespace parts. Meanwhile
-generate typemap entries accordingly. 
+Adapt content of @$types accordingly. Invoked by _process.
+
+=back
+
+=cut
+
+sub __process_accessibility {
+    my ( $entry, $entries, $namespaces, $types ) = @_;
+    
+    # update $types, others left untouched
+    splice @$types, 0, scalar(@$types);
+    foreach my $t (@{$entry->{VALUE}}) {
+        if ($t eq 'Q_SIGNALS' or $t eq 'signals') {
+            # Q_SIGNALS/signals
+            push @$types, 'signal';
+        }
+        elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
+            # Q_SLOTS/slots
+            push @$types, 'slot';
+        }
+        else {
+            # public/private/protected
+            push @$types, $t;
+        }
+    }
+}
+
+=over
+
+=item 
+
+Internal use only. Generate a simple typedef entry.
+
+=back
+
+=cut
+
+sub __gen_simple_typedef {
+    my ( $from, $to ) = @_;
+    
+    return +{ type    => 'typedef', 
+              subtype => 'simple',
+              FROM    => $from, 
+              TO      => $to, };
+}
+
+=over
+
+=item __process_typedef 
+
+Push a new entry into either <namespace_name>.typedef or std.typedef 
+
+=back
+
+=cut
+
+sub __process_typedef {
+    my ( $entry, $entries, $namespaces, $types ) = @_;
+    
+    # subtype:
+    # class/struct/enum/union/fpointer/simple
+    
+}
+
+=over 
+
+=item _process
+
+Re-group current content by namespace, store as on-disk files. 
 
 B<NOTE>: Create a new typemap entry for raw function pointer parameter
 in function declaration. 
@@ -105,28 +185,55 @@ B<NOTE>: Function PROPERTY field is stripped in this phase.
 
 =cut
 
-sub _process_and_split {
+sub _process {
     my ( $entries, $root_dir ) = @_;
     
+    my $namespaces = [];
+    my $types      = [];
+    my $entries    = [];
+    
     foreach my $entry (@$entries) {
-        if ($entry->{type} eq 'typedef') {
+        if ($entry->{type} eq 'accessibility') {
+            __process_accessibility(
+                $entry, $entries, $namespaces, $types);
+        }
+#        elsif ($entry->{type} eq 'macro') {
+#            __process_macro(
+#                $entry, $entries, $namespaces, $types);
+#        }
+        elsif ($entry->{type} eq 'typedef') {
+            __process_typedef(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'function') {
+            __process_function(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'class') {
+            __process_class(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'struct') {
+            __process_struct(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'union') {
             # union stays untouched
+            __process_union(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'extern') {
+            __process_extern(
+                $entry, $entries, $namespaces, $types);
         }
         elsif ($entry->{type} eq 'namespace') {
+            __process_namespace(
+                $entry, $entries, $namespaces, $types);
         }
         else {
-            # default
-            # drop it in <namespace_name>.unknown
+            # drop in <namespace_name>.unknown
+            __process_unknown(
+                $entry, $entries, $namespaces, $types);
         }
     }
 }
@@ -142,7 +249,7 @@ sub main {
     my $cont = do { local $/; <HEADER>; };
     close HEADER;
     my ( $entries ) = Load($cont);
-    _process_and_split($entries, $out);
+    _process($entries, $out);
     
     exit 0;
 }
