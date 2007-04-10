@@ -165,7 +165,33 @@ sub __process_typedef {
     
     # subtype:
     # class/struct/enum/union/fpointer/simple
-    
+    my $entries_to_create = [];
+    if ($entry->{subtype} eq 'simple') {
+        push @$entries_to_create, 
+          [$entry->{FROM}, $entry->{TO}]);
+    }
+    elsif ($entry->{subtype} eq 'fpointer') {
+        push @$entries_to_create, 
+          ['T_FUNCTION_POINTER', $entry->{TO}]);
+    }
+    else {
+        # container types
+        if (exists $entry->{FROM}->{NAME}) {
+            # typedef enum FROM TO;
+            # has explicit name
+            push @$entries_to_create, 
+              [$entry->{FROM}->{NAME}, $entry->{TO}];
+        }
+        push @$entries_to_create, 
+          ['T_'. uc($entry->{subtype}), $entry->{FROM}->{NAME}];
+        # typedef permits self-define of container type within
+        # <code>typedef enum FROM {} TO;</code>
+        # will: 
+        #     1. define enum itself
+        #     2. map enum FROM to TO
+        if (exists $entry->{FROM}->) {
+        }
+    }
 }
 
 =over 
