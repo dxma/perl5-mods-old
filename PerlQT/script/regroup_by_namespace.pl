@@ -189,7 +189,26 @@ sub __process_typedef {
         # will: 
         #     1. define enum itself
         #     2. map enum FROM to TO
-        if (exists $entry->{FROM}->) {
+        # fill name for anonymous enum/class/struct/union typedef
+        $entry->{FROM}->{NAME} = $entry->{TO} unless 
+          exists $entry->{FROM}->{NAME};
+        if ($entry->{subtype} eq 'enum' and 
+              exists $entry->{FROM}->{VALUE}) {
+            __process_enum(
+                $entry->{FROM}, $entries, $namespaces, $types);
+        }
+        elsif ($entry->{subtype} eq 'class' and 
+                 exists $entry->{FROM}->{BODY}) {
+            __process_class(
+                $entry->{FROM}, $entries, $namespaces, $types);
+        }
+        elsif ($entry->{subtype} eq 'struct' and 
+                 exists $entry->{FROM}->{BODY}) {
+            __process_struct(
+                $entry->{FROM}, $entries, $namespaces, $types);
+        }
+        else {
+            # TODO: union
         }
     }
 }
