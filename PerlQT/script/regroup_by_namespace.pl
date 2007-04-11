@@ -211,6 +211,10 @@ sub __process_typedef {
             # TODO: union
         }
     }
+    # store
+    foreach my $p (@$entries_to_create) {
+        
+    }
 }
 
 =over 
