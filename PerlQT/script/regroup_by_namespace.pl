@@ -104,29 +104,31 @@ sub write_to_file {
 
 =item __process_accessibility
 
-Adapt content of @$types accordingly. Invoked by _process.
+Adapt content of @$type and @$visibility accordingly. Invoked by _process.
 
 =back
 
 =cut
 
 sub __process_accessibility {
-    my ( $entry, $entries, $namespaces, $types ) = @_;
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
-    # update $types, others left untouched
-    splice @$types, 0, scalar(@$types);
+    # update $type and $visibility, others left untouched
     foreach my $t (@{$entry->{VALUE}}) {
         if ($t eq 'Q_SIGNALS' or $t eq 'signals') {
             # Q_SIGNALS/signals
-            push @$types, 'signal';
+            pop @$type;
+            push @$type, 'signal';
         }
         elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
             # Q_SLOTS/slots
+            pop @$type;
             push @$types, 'slot';
         }
         else {
             # public/private/protected
-            push @$types, $t;
+            pop @$visibility;
+            push @$visibility, $t;
         }
     }
 }
@@ -161,7 +163,7 @@ Push a new entry into either <namespace_name>.typedef or std.typedef
 =cut
 
 sub __process_typedef {
-    my ( $entry, $entries, $namespaces, $types ) = @_;
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
     # subtype:
     # class/struct/enum/union/fpointer/simple
@@ -235,54 +237,62 @@ B<NOTE>: Function PROPERTY field is stripped in this phase.
 =cut
 
 sub _process {
-    my ( $entries, $root_dir ) = @_;
+    my ( $list, $root_dir ) = @_;
     
-    my $namespaces = [];
-    my $types      = [];
-    my $entries    = [];
+    # namespace stack
+    my $namespace       = [];
+    # type stack
+    # differentiate normal function/signal/slot
+    my $type            = [];
+    # visibility stack
+    # differentiate public/protected
+    my $visibility      = [];
+    # entries to store, grouped by <namespace>.<type>[.<accessibility>]
+    my $entries         = [];
     
-    foreach my $entry (@$entries) {
+    foreach my $entry (@$list) {
         if ($entry->{type} eq 'accessibility') {
             __process_accessibility(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespace, $type, $visibility);
         }
-#        elsif ($entry->{type} eq 'macro') {
-#            __process_macro(
-#                $entry, $entries, $namespaces, $types);
-#        }
+        elsif ($entry->{type} eq 'macro') {
+            # macro stripped
+            #__process_macro(
+            #    $entry, $entries, $namespaces, $type, $visibility);
+        }
         elsif ($entry->{type} eq 'typedef') {
             __process_typedef(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'function') {
             __process_function(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'class') {
             __process_class(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'struct') {
             __process_struct(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'union') {
-            # union stays untouched
-            __process_union(
-                $entry, $entries, $namespaces, $types);
+            # union stripped
+            #__process_union(
+            #    $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'extern') {
             __process_extern(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         elsif ($entry->{type} eq 'namespace') {
             __process_namespace(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
         else {
             # drop in <namespace_name>.unknown
             __process_unknown(
-                $entry, $entries, $namespaces, $types);
+                $entry, $entries, $namespaces, $type, $visibility);
         }
     }
 }
