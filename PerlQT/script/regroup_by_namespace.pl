@@ -2,7 +2,7 @@
 
 use strict;
 #use English qw( -no_match_vars );
-use Fcntl qw(O_WRONLY O_TRUNC O_CREAT :flock);
+use Fcntl qw(O_RDWR O_TRUNC O_CREAT :flock);
 use YAML;
 use File::Spec ();
 
@@ -48,7 +48,7 @@ EOU
 }
 
 # private consts
-sub NAMESPACE_DEFAULT { 'std' }
+sub NAMESPACE_DEFAULT { 'universe' }
 
 sub VISIBILITY_PUBLIC { 
     +{ type => 'accessibility', VALUE => [ 'public' ], } 
@@ -73,29 +73,39 @@ namespace string as its name.
 =cut
 
 sub write_to_file {
-    my ( $hcont, $root_dir, @namespace ) = @_;
+    my ( $hcont, $root_dir ) = @_;
     
     my $NS_DELIMITER = q(::);
     my $FN_DELIMITER = q(__);
-    my $FN_DEFAULT   = q(std);
-    die "root directory not found" unless -d $root_dir;
+    #die "root directory not found" unless -d $root_dir;
     my $filename;
-    if (@namespace) {
-        $filename = join($NS_DELIMITER, @namespace);
-        $filename =~ s/(?:\Q$NS_DELIMITER\E)+/$FN_DELIMITER/ge;
-    }
-    else {
-        $filename = $FN_DEFAULT;
-    }
-    $filename = File::Spec::->catfile($root_dir, $filename);
     foreach my $k (keys %$hcont) {
+        ( $filename = $k ) =~
+          s/(?:\Q$NS_DELIMITER\E)+/$FN_DELIMITER/ge;
+        $filename = File::Spec::->catfile($root_dir, $filename);
+        #print STDERR $filename, "\n";
         local ( *OUT );
-        sysopen OUT, $filename. '.'. lc($k), O_CREAT|O_WRONLY or 
-          die "cannot open file to write: $!";
+        sysopen OUT, $filename, O_CREAT|O_RDWR or 
+          die "cannot open file to read/write: $!";
         until (flock OUT, LOCK_EX) { sleep 3; }
-        seek OUT, 0, 2;
-        my $cont_dump = Dump($hcont->{$k});
-        print OUT $cont_dump;
+        seek OUT, 0, 0;
+        my $old = do { local $/; <OUT>};
+        seek OUT, 0, 0;
+        truncate OUT, length($old);
+        if ($old) {
+            # merge with existing entries
+            if (ref $hcont->{$k} eq 'HASH') {
+                print OUT Dump(
+                    { %{ (Load($old))[0] }, %{ $hcont->{$k} } });
+            }
+            else {
+                print OUT Dump(
+                    [ @{ (Load($old))[0] }, @{ $hcont->{$k} } ]);
+            }
+        }
+        else {
+            print OUT Dump($hcont->{$k});
+        }
         close OUT or die "cannot write to file: $!";
     }
 }
@@ -123,7 +133,7 @@ sub __process_accessibility {
         elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
             # Q_SLOTS/slots
             pop @$type;
-            push @$types, 'slot';
+            push @$type, 'slot';
         }
         else {
             # public/private/protected
@@ -170,11 +180,11 @@ sub __process_typedef {
     my $entries_to_create = [];
     if ($entry->{subtype} eq 'simple') {
         push @$entries_to_create, 
-          [$entry->{FROM}, $entry->{TO}]);
+          [$entry->{FROM}, $entry->{TO}];
     }
     elsif ($entry->{subtype} eq 'fpointer') {
         push @$entries_to_create, 
-          ['T_FUNCTION_POINTER', $entry->{TO}]);
+          ['T_FUNCTION_POINTER', $entry->{TO}];
     }
     else {
         # container types
@@ -197,26 +207,59 @@ sub __process_typedef {
         if ($entry->{subtype} eq 'enum' and 
               exists $entry->{FROM}->{VALUE}) {
             __process_enum(
-                $entry->{FROM}, $entries, $namespaces, $types);
+                $entry->{FROM}, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{subtype} eq 'class' and 
                  exists $entry->{FROM}->{BODY}) {
             __process_class(
-                $entry->{FROM}, $entries, $namespaces, $types);
+                $entry->{FROM}, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{subtype} eq 'struct' and 
                  exists $entry->{FROM}->{BODY}) {
             __process_struct(
-                $entry->{FROM}, $entries, $namespaces, $types);
+                $entry->{FROM}, $entries, $namespace, $type, $visibility);
         }
         else {
             # TODO: union
         }
     }
     # store
+    my $TYPE = 'typedef';
     foreach my $p (@$entries_to_create) {
-        
+        my ( $f, $t ) = @$p;
+        if (@$namespace) {
+            # explicit namespace
+            $entries->{$namespace->[-1]. '.'. $TYPE}->{$t} = $f;
+        }
+        else {
+            # global typedef
+            $entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}->{$t} = $f;
+        }
     }
+}
+
+sub __process_function {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
+sub __process_class {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
+sub __process_struct {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
+sub __process_extern {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
+sub __process_namespace {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
+sub __process_unkown {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
 
 =over 
@@ -248,7 +291,7 @@ sub _process {
     # differentiate public/protected
     my $visibility      = [];
     # entries to store, grouped by <namespace>.<type>[.<accessibility>]
-    my $entries         = [];
+    my $entries         = {};
     
     foreach my $entry (@$list) {
         if ($entry->{type} eq 'accessibility') {
@@ -258,47 +301,49 @@ sub _process {
         elsif ($entry->{type} eq 'macro') {
             # macro stripped
             #__process_macro(
-            #    $entry, $entries, $namespaces, $type, $visibility);
+            #    $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'typedef') {
             __process_typedef(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'function') {
             __process_function(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'class') {
             __process_class(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'struct') {
             __process_struct(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'union') {
             # union stripped
             #__process_union(
-            #    $entry, $entries, $namespaces, $type, $visibility);
+            #    $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'extern') {
             __process_extern(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'namespace') {
             __process_namespace(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
         else {
             # drop in <namespace_name>.unknown
             __process_unknown(
-                $entry, $entries, $namespaces, $type, $visibility);
+                $entry, $entries, $namespace, $type, $visibility);
         }
     }
+    # actual write
+    write_to_file($entries, $root_dir);
 }
 
 sub main {
-    usage() unless @ARGV = 2;
+    usage() unless @ARGV == 2;
     my ( $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
     die "directory not found" unless -d $out;
