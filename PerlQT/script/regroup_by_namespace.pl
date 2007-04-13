@@ -238,6 +238,10 @@ sub __process_typedef {
     }
 }
 
+sub __process_enum {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+}
+
 sub __process_function {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
@@ -305,6 +309,10 @@ sub _process {
         }
         elsif ($entry->{type} eq 'typedef') {
             __process_typedef(
+                $entry, $entries, $namespace, $type, $visibility);
+        }
+        elsif ($entry->{type} eq 'enum') {
+            __process_enum(
                 $entry, $entries, $namespace, $type, $visibility);
         }
         elsif ($entry->{type} eq 'function') {
