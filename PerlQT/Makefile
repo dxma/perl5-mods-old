@@ -76,12 +76,12 @@ CMD_RMDIR       := rm -rf
 
 OPT_CC_INPUT    := $(empty)$(empty)
 OPT_CC_OUTPUT   := -o
+OPT_PREPRO_HD   := $(_CMD_PREPRO_HD_OPTS)
 
 CMD_STRIP_INC   := $(SCRIPT_DIR)/strip_include.pl
 CMD_STRIP_MK    := $(SCRIPT_DIR)/gen_strip_mk.pl
-CMD_PREPRO_HD_OPTS := $(_CMD_PREPRO_HD_OPTS)
 CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)   \
-                       $(CMD_PREPRO_HD_OPTS) -I$(HEADER_DIR)
+                       $(OPT_PREPRO_HD) -I$(HEADER_DIR)
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
 CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
