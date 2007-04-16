@@ -53,6 +53,9 @@ OUT_PARSE_DIR   := $(MAKE_ROOT)/02parsed
 IN_FORMAT_DIR   := $(OUT_PARSE_DIR)
 OUT_FORMAT_DIR  := $(MAKE_ROOT)/03formatted
 
+IN_GROUP_DIR    := $(OUT_FORMAT_DIR)
+OUT_GROUP_DIR   := $(MAKE_ROOT)/04grouped
+
 #################### MAKE TOOLS ################################
 
 # DEBUG echos all shell commands
@@ -87,12 +90,15 @@ CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
 CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_qtedi_production.pl
 CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
+CMD_GROUP_MK    := $(SCRIPT_DIR)/gen_group_mk.pl 
+CMD_GROUP_YML   := $(SCRIPT_DIR)/group_by_namespace.pl
 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
 PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
 PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
 FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
+GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
 
 _R              := $(shell $(CMD_ECHO) "\n")
 
@@ -108,9 +114,15 @@ PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
+GROUP_YAMLS     := $(addprefix $(OUT_GROUP_DIR)/,\
+                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 
 #################### SUBROUTINES ###############################
 
+_remove_file = echo removing $1; \
+               if [[ -f $1 ]] ; then $(CMD_RM) $1 ; fi
+_remove_dir  = echo removing $1; \
+               if [[ -d $1 ]] ; then $(CMD_RMDIR) $1 ; fi
 
 #################### PHONY and FRIENDS #########################
 
@@ -128,6 +140,7 @@ ifneq ($(MAKECMDGOALS),"clean")
 -include $(PREPRO_DOT_MK)
 -include $(PARSE_DOT_MK)
 -include $(FORMAT_DOT_MK)
+-include $(GROUP_DOT_MK)
 endif
 
 #################### META RULES and PATTERNS ###################
@@ -164,48 +177,47 @@ $(FORMAT_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)$(CMD_FORMAT_MK) $< $(IN_STRIP_DIR) $(IN_FORMAT_DIR) \
         $(OUT_FORMAT_DIR) $@
 
+# group formatted yaml 
+$(GROUP_DOT_MK): $(HEADER_DOT_MK)
+	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
+        $(OUT_GROUP_DIR) $@
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk:
-	$(_Q)echo removing $(HEADER_DOT_MK)
-	$(_Q)[[ -f $(HEADER_DOT_MK) ]] && $(CMD_RM) $(HEADER_DOT_MK)
-	$(_Q)echo removing $(STRIP_DOT_MK)
-	$(_Q)[[ -f $(STRIP_DOT_MK) ]] && $(CMD_RM) $(STRIP_DOT_MK)
-	$(_Q)echo removing $(PREPRO_DOT_MK)
-	$(_Q)[[ -f $(PREPRO_DOT_MK) ]] && $(CMD_RM) $(PREPRO_DOT_MK)
-	$(_Q)echo removing $(PARSE_DOT_MK)
-	$(_Q)[[ -f $(PARSE_DOT_MK) ]] && $(CMD_RM) $(PARSE_DOT_MK)
-	$(_Q)echo removing $(FORMAT_DOT_MK)
-	$(_Q)[[ -f $(FORMAT_DOT_MK) ]] && $(CMD_RM) $(FORMAT_DOT_MK)
+	$(_Q)$(call _remove_file,$(HEADER_DOT_MK))
+	$(_Q)$(call _remove_file,$(STRIP_DOT_MK))
+	$(_Q)$(call _remove_file,$(PREPRO_DOT_MK))
+	$(_Q)$(call _remove_file,$(PARSE_DOT_MK))
+	$(_Q)$(call _remove_file,$(FORMAT_DOT_MK))
+	$(_Q)$(call _remove_file,$(GROUP_DOT_MK))
 .PHONY: clean_dot_mk
 
-gen_strip: $(STRIP_HEADERS)
-.PHONY: gen_strip
+gen_strip  : $(STRIP_HEADERS)
 clean_strip: 
-	$(_Q)echo removing $(OUT_STRIP_DIR) 
-	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] && $(CMD_RMDIR) $(OUT_STRIP_DIR)
-.PHONY: clean_strip
+	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR)) 
+.PHONY: gen_strip clean_strip
 
-gen_prepro: $(PREPRO_HEADERS)
-.PHONY: gen_prepro
+gen_prepro  : $(PREPRO_HEADERS)
 clean_prepro:
-	$(_Q)echo removing $(OUT_PREPRO_DIR)
-	$(_Q)[[ -d $(OUT_PREPRO_DIR) ]] && $(CMD_RMDIR) $(OUT_PREPRO_DIR)
-.PHONY: clean_prepro
+	$(_Q)$(call _remove_dir,$(OUT_PREPRO_DIR))
+.PHONY: gen_prepro clean_prepro
 
 gen_parse: $(PARSE_HEADERS)
 .PHONY: gen_parse
 clean_parse:
-	$(_Q)echo removing $(OUT_PARSE_DIR)
-	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] && $(CMD_RMDIR) $(OUT_PARSE_DIR)
+	$(_Q)$(call _remove_dir,$(OUT_PARSE_DIR))
 .PHONY: clean_parse
 
-gen_format: $(FORMAT_YAMLS)
-.PHONY: gen_format
+gen_format  : $(FORMAT_YAMLS)
 clean_format: 
-	$(_Q)echo removing $(OUT_FORMAT_DIR)
-	$(_Q)[[ -d $(OUT_FORMAT_DIR) ]] && $(CMD_RMDIR) $(OUT_FORMAT_DIR)
-.PHONY: clean_format
+	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
+.PHONY: gen_format clean_format
+
+gen_group  : _GROUP_DOT_MK
+clean_group:
+	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
+.PHONY: gen_group clean_group
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
