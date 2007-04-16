@@ -223,4 +223,5 @@ clean_group:
 clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
 .PHONY: clean
 
-all: gen_format
+all: gen_group
+

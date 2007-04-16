@@ -12,7 +12,7 @@ Group formatted QTEDI production by namespace.
 
 For each namespace there will be files generated as below:
 
-  1. <namespace_name>.typemap
+  1. <namespace_name>.typedef
   2. <namespace_name>.enum
   3. <namespace_name>.function.public
   4. <namespace_name>.function.protected
@@ -26,8 +26,8 @@ full-qualified class/struct/namespace name in C/CXX.
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
 
-B<NOTE>: a special namespace - std, will hold any entry which doesn't
-belong to other namespace. 
+B<NOTE>: a special namespace - universe, will hold any entry which
+doesn't belong to other namespace. 
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -62,7 +62,7 @@ sub VISIBILITY_PRIVATE {
 
 =item write_to_file
 
-A configurable hook to save content into a file. How/where to
+A configurable hook to save content into file(s). How/where to
 create such file and the file name is totally blind for caller. 
 
 B<NOTE>: Currently create the file with a full-qualified
@@ -147,7 +147,7 @@ sub __process_accessibility {
 
 =item 
 
-Internal use only. Generate a simple typedef entry.
+Internal use only. Generate a simple typedef entry. 
 
 =back
 
@@ -166,7 +166,10 @@ sub __gen_simple_typedef {
 
 =item __process_typedef 
 
-Push a new entry into either <namespace_name>.typedef or std.typedef 
+Push new entries into either <namespace_name>.typedef or
+eniverse.typedef accordingly. 
+
+B<NOTE>: typedef might define new container type as side-effect. 
 
 =back
 
@@ -188,39 +191,51 @@ sub __process_typedef {
     }
     else {
         # container types
-        if (exists $entry->{FROM}->{NAME}) {
-            # typedef enum FROM TO;
-            # has explicit name
-            push @$entries_to_create, 
-              [$entry->{FROM}->{NAME}, $entry->{TO}];
-        }
-        push @$entries_to_create, 
-          ['T_'. uc($entry->{subtype}), $entry->{FROM}->{NAME}];
         # typedef permits self-define of container type within
-        # <code>typedef enum FROM {} TO;</code>
+        # typedef enum FROM {} TO;
         # will: 
         #     1. define enum itself
         #     2. map enum FROM to TO
-        # fill name for anonymous enum/class/struct/union typedef
-        $entry->{FROM}->{NAME} = $entry->{TO} unless 
-          exists $entry->{FROM}->{NAME};
-        if ($entry->{subtype} eq 'enum' and 
-              exists $entry->{FROM}->{VALUE}) {
-            __process_enum(
-                $entry->{FROM}, $entries, $namespace, $type, $visibility);
-        }
-        elsif ($entry->{subtype} eq 'class' and 
-                 exists $entry->{FROM}->{BODY}) {
-            __process_class(
-                $entry->{FROM}, $entries, $namespace, $type, $visibility);
-        }
-        elsif ($entry->{subtype} eq 'struct' and 
-                 exists $entry->{FROM}->{BODY}) {
-            __process_struct(
-                $entry->{FROM}, $entries, $namespace, $type, $visibility);
+        my $gen_type = sub { 'T_'. uc($entry->{subtype}) };
+        if (ref $entry->{FROM} eq 'HASH') {
+            if (exists $entry->{FROM}->{NAME}) {
+                # typedef enum FROM {} TO;
+                # has explicit name
+                push @$entries_to_create, 
+                  [$entry->{FROM}->{NAME}, $entry->{TO}];
+                push @$entries_to_create, 
+                  [$gen_type->(), $entry->{FROM}->{NAME}];
+            }
+            else {
+                # typedef enum {} TO;
+                push @$entries_to_create, 
+                  [$gen_type->(), $entry->{TO}];
+                # fill name for anonymous enum/class/struct/union typedef
+                $entry->{FROM}->{NAME} = $entry->{TO};
+            }
         }
         else {
-            # TODO: union
+            # typedef enum FROM TO;
+            push @$entries_to_create, 
+              [$gen_type->(), $entry->{FROM}];
+        }
+        # push built-in define
+        if (ref $entry->{FROM} eq 'HASH') {
+            if ($entry->{subtype} eq 'enum' and 
+                  exists $entry->{FROM}->{VALUE}) {
+                __process_enum(
+                    $entry->{FROM}, $entries, $namespace, $type, $visibility);
+            } elsif ($entry->{subtype} eq 'class' and 
+                       exists $entry->{FROM}->{BODY}) {
+                __process_class(
+                    $entry->{FROM}, $entries, $namespace, $type, $visibility);
+            } elsif ($entry->{subtype} eq 'struct' and 
+                       exists $entry->{FROM}->{BODY}) {
+                __process_struct(
+                    $entry->{FROM}, $entries, $namespace, $type, $visibility);
+            } else {
+                # TODO: union
+            }
         }
     }
     # store
@@ -238,9 +253,42 @@ sub __process_typedef {
     }
 }
 
+=over
+
+=item __process_enum
+
+Push a new enum entry into either <namespace>.enum or universe.enum
+
+=back
+
+=cut
+
 sub __process_enum {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    my $entry_to_create = {};
+    $entry_to_create->{NAME}  = $entry->{NAME} if 
+      exists $entry->{NAME};
+    $entry_to_create->{VALUE} = $entry->{VALUE};
+    # store
+    my $TYPE = 'enum';
+    if (@$namespace) {
+        push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry_to_create;
+    }
+    else {
+        push @{$entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}}, $entry_to_create;
+    }
 }
+
+=over
+
+=item __process_function
+
+
+
+=back
+
+=cut 
 
 sub __process_function {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
@@ -250,17 +298,57 @@ sub __process_class {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
 
+=over
+
+=item __process_struct
+
+
+
+=back
+
+=cut
+
 sub __process_struct {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
+
+=over
+
+=item __process_extern
+
+
+
+=back
+
+=cut
 
 sub __process_extern {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
 
+=over
+
+=item __process_namespace
+
+
+
+=back
+
+=cut
+
 sub __process_namespace {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
 }
+
+=over
+
+=item __process_unkown
+
+
+
+=back
+
+=cut
 
 sub __process_unkown {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;

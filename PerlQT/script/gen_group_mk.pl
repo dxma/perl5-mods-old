@@ -40,13 +40,16 @@ sub main {
     my $group_dot_mk = '';
     $group_dot_mk .= ".PHONY: _GROUP_DOT_MK\n";
     $group_dot_mk .= '_GROUP_DOT_MK: $(FORMAT_YAMLS)'. "\n";
-    $group_dot_mk .= "\t\$(_Q)[[ -d \$(OUT_GROUP_DIR) ]] " .
-      "|| \$(CMD_MKDIR) \$(OUT_GROUP_DIR)\n";
+    $group_dot_mk .= "\t\$(_Q)". 
+      "\$(call _remove_dir,\$(OUT_GROUP_DIR))\n";
+    $group_dot_mk .= "\t\$(_Q)". 
+      "\$(CMD_MKDIR) \$(OUT_GROUP_DIR)\n";
     
     foreach (@cont) {
         chomp;
         if (s/\Q$in_noinc_dir\E/$in_group_dir/ge) {
-            s/\:\s*$//gio;
+            s/\.h\s*\:\s*$/.yaml/gio;
+            $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= 
               "\t\$(_Q)\$(CMD_GROUP_YML) $_ \$(OUT_GROUP_DIR)\n";
         }

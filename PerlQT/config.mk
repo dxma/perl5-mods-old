@@ -8,10 +8,19 @@
 # QT4 META CONFIGURATION
 _HEADER_DIR := /usr/include/qt4
 
-_HEADERS    := $(filter-out $(_HEADER_DIR)/Qt/qatomic_%,         \
-                   $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%, \
-                       $(wildcard $(_HEADER_DIR)/*/*.h)          \
-                       $(wildcard $(_HEADER_DIR)/*/*/*.h)))
+# QT = QtCore   + QtGui + 
+#      QtOpenGL + QtSvg + QtNetwork + QtSql + QtXml + 
+#      Qt3Support
+_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
+               Qt3Support 
+
+# QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
+_QT_EXTRA   := QtAssistant QtDBus QtUiTools QtDesigner QtTest
+
+_HEADERS    := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,     \
+                   $(wildcard                                    \
+                       $(addprefix $(_HEADER_DIR)/,              \
+                           $(addsuffix /*.h, $(_QT)))))
 
 # keep the order
 # disable QT features here
