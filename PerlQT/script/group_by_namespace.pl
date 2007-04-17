@@ -284,7 +284,18 @@ sub __process_enum {
 
 =item __process_function
 
+Push a function entry into possible files: 
 
+  1. <namespace>.function.public
+  2. <namespace>.function.protected
+  3. <namespace>.slot.public
+  4. <namespace>.slot.protected
+  5. <namespace>.function
+  6. universe.function
+
+B<NOTE>: One of the most important missions in this phase is to gather
+overload functions. Since overload functions might be pushed from
+different header files. 
 
 =back
 
@@ -292,7 +303,41 @@ sub __process_enum {
 
 sub __process_function {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    delete $entry->{type};
+    $entry->{operator} = $entry->{subtype};
+    delete $entry->{subtype};
+    
+    # store
+    my $TYPE = 'function';
+    if (@$namespace) {
+        my $k = join('.', $namespace->[-1], 
+                     scalar(@$type) ? $type->[-1] : $TYPE, 
+                     scalar(@$visibility) ? $visibility->[-1] : ());
+        push @{$entries->{$k}}, $entry;
+    }
+    else {
+        if ($entry->{NAME} =~ m/\:\:/io) {
+            # namespace delimiter found
+            # push into specific namespace
+            my ( @e ) = split /\:\:/, $entry->{NAME};
+            $entry->{NAME} = pop @e;
+            push @{$entries->{join('::', @e) . '.'. $TYPE}}, $entry;
+        }
+        else {
+            push @{$entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}},
+              $entry;
+        }
+    }
 }
+
+=over 
+
+=item __process_class
+
+=back
+
+=cut
 
 sub __process_class {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
