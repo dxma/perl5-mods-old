@@ -123,21 +123,22 @@ Adapt content of @$type and @$visibility accordingly. Invoked by _process.
 sub __process_accessibility {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
-    # update $type and $visibility, others left untouched
+    # push @$type and @$visibility stacks, others left untouched
+    # empty first
+    splice @$type, 0, scalar(@$type) if @$type;
+    splice @$visibility, 0, scalar(@$visibility) if @$visibility;
     foreach my $t (@{$entry->{VALUE}}) {
         if ($t eq 'Q_SIGNALS' or $t eq 'signals') {
             # Q_SIGNALS/signals
-            pop @$type;
+            # SIGNAL HAS NO VISIBILITY IN QT
             push @$type, 'signal';
         }
         elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
             # Q_SLOTS/slots
-            pop @$type;
             push @$type, 'slot';
         }
         else {
             # public/private/protected
-            pop @$visibility;
             push @$visibility, $t;
         }
     }
@@ -270,6 +271,12 @@ sub __process_enum {
     $entry_to_create->{NAME}  = $entry->{NAME} if 
       exists $entry->{NAME};
     $entry_to_create->{VALUE} = $entry->{VALUE};
+    if (exists $entry->{NAME}) {
+        # push new typedef
+        __process_typedef(__gen_simple_typedef('T_ENUM',
+                                               $entry->{NAME}),
+                          $entries, $namespace, $type, $visibility);
+    }
     # store
     my $TYPE = 'enum';
     if (@$namespace) {
@@ -291,7 +298,8 @@ Push a function entry into possible files:
   3. <namespace>.slot.public
   4. <namespace>.slot.protected
   5. <namespace>.function
-  6. universe.function
+  6. <namespace>.signal
+  7. universe.function
 
 B<NOTE>: One of the most important missions in this phase is to gather
 overload functions. Since overload functions might be pushed from
@@ -307,7 +315,8 @@ sub __process_function {
     delete $entry->{type};
     $entry->{operator} = $entry->{subtype};
     delete $entry->{subtype};
-    
+    # FIXME: detection of friend function declaration
+    # FIXME: push new typedef for raw function pointer parameter
     # store
     my $TYPE = 'function';
     if (@$namespace) {
@@ -335,12 +344,51 @@ sub __process_function {
 
 =item __process_class
 
+Create a new file <namespace>.meta for class, keep specific
+information inside. Push new items into @$namespace, @$type and
+@$visibility stacks. 
+
+Push new typedef
+
 =back
 
 =cut
 
 sub __process_class {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    my $entry_to_create = {};
+    # keep PROPERTY for future reference
+    # FIXME: fix on detection of friend class declaration
+    $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
+      exists $entry->{PROPERTY};
+    # required class-specific meta information
+    $entry_to_create->{ISA} = $entry->{ISA} if 
+      exists $entry->{ISA};
+    $entry_to_create->{TYPE} = $entry->{type};
+    # push new typedef
+    __process_typedef(__gen_simple_typedef('T_CLASS',
+                                           $entry->{NAME}),
+                      $entries, $namespace, $type, $visibility);
+    # push new namespace
+    my $new_namespace = @$namespace ?
+      $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
+    push @$namespace, $new_namespace;
+    # store
+    my $TYPE = 'meta';    
+    push @{$entries->{$namespace->[-1]. '.'. $TYPE}},
+      $entry_to_create;
+    # process body
+    if (exists $entry->{BODY}) {
+        # push 'private' as initial visibility
+        __process_accessibility(VISIBILITY_PRIVATE(), $entries,
+                                $namespace, $type, $visibility);
+        __process_loop($entry->{BODY}, $entries, 
+                       $namespace, $type, $visibility);
+    }
+    # leave class declaration
+    # pop current namespace
+    pop @$namespace;
 }
 
 =over
@@ -401,34 +449,16 @@ sub __process_unkown {
 
 =over 
 
-=item _process
+=item __process_loop
 
-Re-group current content by namespace, store as on-disk files. 
+Internal use only. Process each entry inside current list body. 
 
-B<NOTE>: Create a new typemap entry for raw function pointer parameter
-in function declaration. 
-
-B<NOTE>: Function parameter name is stripped in this phase. 
-
-B<NOTE>: Function PROPERTY field is stripped in this phase. 
-
-=back
+=over
 
 =cut
 
-sub _process {
-    my ( $list, $root_dir ) = @_;
-    
-    # namespace stack
-    my $namespace       = [];
-    # type stack
-    # differentiate normal function/signal/slot
-    my $type            = [];
-    # visibility stack
-    # differentiate public/protected
-    my $visibility      = [];
-    # entries to store, grouped by <namespace>.<type>[.<accessibility>]
-    my $entries         = {};
+sub __process_loop {
+    my ( $list, $entries, $namespace, $type, $visibility ) = @_;
     
     foreach my $entry (@$list) {
         if ($entry->{type} eq 'accessibility') {
@@ -479,6 +509,41 @@ sub _process {
                 $entry, $entries, $namespace, $type, $visibility);
         }
     }
+}
+
+=over 
+
+=item _process
+
+Re-group current content by namespace, store as on-disk files. 
+
+B<NOTE>: Create a new typemap entry for raw function pointer parameter
+in function declaration. 
+
+B<NOTE>: Function parameter name is stripped in this phase. 
+
+B<NOTE>: Function PROPERTY field is stripped in this phase. 
+
+=back
+
+=cut
+
+sub _process {
+    my ( $list, $root_dir ) = @_;
+    
+    # internal stacks
+    # namespace stack
+    my $namespace       = [];
+    # type stack
+    # differentiate normal function/signal/slot
+    my $type            = [];
+    # visibility stack
+    # differentiate public/protected
+    my $visibility      = [];
+    # entries to store, grouped by <namespace>.<type>[.<accessibility>]
+    my $entries         = {};
+    # recursively process each entry inside list body
+    __process_loop($list, $entries, $namespace, $type, $visibility);
     # actual write
     write_to_file($entries, $root_dir);
 }

@@ -615,10 +615,10 @@ B<NOTE>: private type should not appear here since being stripped.
 sub __format_accessibility {
     my $entry = shift;
     
-    # normalize value entries
-    foreach my $v (@{$entry->{value}}) {
-        $v =~ s/\s+$//o;
-    }
+#    # normalize value entries
+#    foreach my $v (@{$entry->{value}}) {
+#        $v =~ s/\s+$//o;
+#    }
     if (@{$entry->{value}}) {
         $entry->{VALUE} = $entry->{value};
         delete $entry->{value};
@@ -922,10 +922,23 @@ sub _format_with_accessibility {
     foreach my $entry (@$entries) {
         #print STDERR $entry->{type}, "\n";
         if (not $private) {
-            if ($entry->{type} eq 'accessibility' and 
-                  $entry->{value}->[-1] eq 'private') {
-                $private = 1;
-                next LOOP_BODY;
+            if ($entry->{type} eq 'accessibility') {
+                my $is_private = 0;
+                VALUE_LOOP:
+                foreach my $v (@{$entry->{value}}) {
+                    if ($v eq 'private') {
+                        # private function/slot(s) begin
+                        $is_private = 1;
+                        last VALUE_LOOP;
+                    }
+                }
+                if ($is_private) {
+                    $private = 1;
+                }
+                else {
+                    __format_accessibility($entry) and 
+                      push @$formatted_entries, $entry;
+                }
             }
             elsif ($entry->{type} eq 'expression') {
                 __format_expression($entry) and 
@@ -937,12 +950,24 @@ sub _format_with_accessibility {
         }
         else {
             # private scope
-            if ($entry->{type} eq 'accessibility' and 
-                  $entry->{value}->[-1] ne 'private') {
-                $private = 0;
-                __format_accessibility($entry) and 
-                  push @$formatted_entries, $entry;
-                next LOOP_BODY;
+            # mask until get another non-private function/singal/slot
+            # begin declaration
+            if ($entry->{type} eq 'accessibility') {
+                my $is_private = 0;
+                VALUE_LOOP:
+                foreach my $v (@{$entry->{value}}) {
+                    if ($v eq 'private') { 
+                        # another private function/slot(s) begin
+                        $is_private = 1;
+                        last VALUE_LOOP;
+                    }
+                }
+                unless ($is_private) {
+                    # non-private function/signal/slot begin
+                    $private = 0;
+                    __format_accessibility($entry) and 
+                      push @$formatted_entries, $entry;
+                }
             }
         }
     }
