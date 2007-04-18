@@ -71,7 +71,8 @@ my $FUNCTION_PROPERTIES = {
     inline                              => 0,
     static                              => KEEP,
     friend                              => KEEP,
-    const                               => KEEP, 
+    # const belongs to return type
+    #const                               => KEEP, 
     %$QT_PROPERTIES, 
     %$KDE_PROPERTIES, 
 };
