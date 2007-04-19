@@ -474,7 +474,7 @@ function_parameter_declaration            :
           $return->{subtype} = 'template'; 
       } elsif ($item[2]->{subtype} eq 'fpointer') { 
           $return = $item[2]->{value};
-          $return->{name} = $item[1];
+          $return->{return}  = $item[1];
           $return->{subtype} = 'fpointer'; 
       } 
     } 
