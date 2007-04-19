@@ -332,7 +332,7 @@ sub __format_fpointer {
     # make new function pointer name
     # and cat function prototype string
     my $FP_TYPE_PREFIX = 'T_FPOINTER_';
-    my $fpname = $FP_TYPE_PREFIX;
+    my $fpname;
     my $fproto = $fpreturn_type. ' ';
     
     my $get_parameters = sub {
@@ -347,7 +347,8 @@ sub __format_fpointer {
                 }
                 push @$params, $proto;
             }
-            else {
+            elsif ($p->{name}) {
+                # skip $p->{name} is ''
                 my $param = $p->{name};
                 if (exists $p->{default}) {
                     $param .= ' = '. $p->{default};
@@ -356,23 +357,35 @@ sub __format_fpointer {
             }
         }
     };
+    my $patch_fpointer_name = sub {
+        # add $FP_TYPE_PREFIX at the right place
+        # change name into upper case
+        # keep namespace prefix untouched
+        my $fullname = shift;
+        my @n = split /\:\:/, $fullname;
+        ( my $n = $n[-1] ) =~ s/^(\*+)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
+        $n[-1] = $n;
+        return join('::', @n);
+    };
     
     if (ref $entry->{name} eq 'HASH') {
         # well, a function pointer which will return 
         # another function pointer
-        ( my $name = $entry->{name}->{name} ) =~ s/^\s*\*//gio;
-        $fpname .= uc($name);
-        $fproto .= '((*'. $fpname. ')(';
+        my $name = $entry->{name}->{name};
+        $fpname = $patch_fpointer_name->($name);
+        $fproto .= '(('. $fpname. ')(';
         # process inner params
         my $params = [];
         $get_parameters->($entry->{name}->{parameter}, $params);
         $fproto .= join(', ', @$params). '))';
     }
     else {
-        ( my $name = $entry->{name} ) =~ s/^\s*\*//gio;
-        $fpname .= uc($name);
-        $fproto .= '(*'. $fpname. ')';
+        my $name = $entry->{name};
+        $fpname = $patch_fpointer_name->($name);
+        $fproto .= '('. $fpname. ')';
     }
+    # strip * inside $fpname
+    $fpname =~ s/\*+//io;
     # process outer params
     my $params = [];
     $get_parameters->($entry->{parameter}, $params);
@@ -747,7 +760,7 @@ Value entry could be of type:
   subtype : class/struct/enum/union/fpointer/simple
   FROM    : [from type name for simple typedef    ]
             [a hashref for class/struct/enum/union]
-            ['FUNCTION_POINTER' for fpointer      ]
+            [prototype string for fpointer        ]
   TO      : [to type name]
 
 =back
@@ -762,19 +775,9 @@ sub __format_typedef {
         $entry->{subtype} = $entry->{body}->{type};
         if ($entry->{subtype} eq 'fpointer') {
             # fpointer
-            # keep typedefed name
-            # FIXME: should keep hash entry ???
-            $entry->{FROM} = 'FUNCTION_POINTER';
-            if (ref $entry->{body}->{name} eq 'HASH') {
-                # okay, probably a function pointer
-                # which returns another function pointer
-                ( $entry->{TO} = $entry->{body}->{name}->{name} ) =~
-                  s/^\s*\*//gio;
-            }
-            else {
-                ( $entry->{TO} = $entry->{body}->{name} ) =~ 
-                  s/^\s*\*//gio;
-            }
+            __format_fpointer($entry->{body});
+            $entry->{FROM} = $entry->{body}->{PROTOTYPE};
+            $entry->{TO}   = $entry->{body}->{NAME};
         }
         else {
             # other container type

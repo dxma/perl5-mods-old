@@ -188,7 +188,7 @@ sub __process_typedef {
     }
     elsif ($entry->{subtype} eq 'fpointer') {
         push @$entries_to_create, 
-          ['T_FUNCTION_POINTER', $entry->{TO}];
+          [$entry->{FROM}, $entry->{TO}];
     }
     else {
         # container types
@@ -248,8 +248,17 @@ sub __process_typedef {
             $entries->{$namespace->[-1]. '.'. $TYPE}->{$t} = $f;
         }
         else {
-            # global typedef
-            $entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}->{$t} = $f;
+            if ($t =~ m/\:\:/io) {
+                # namespace prefix found
+                my @t = split /\:\:/, $t;
+                $t = pop @t;
+                my $n = join('::', @t);
+                $entries->{$n. '.'. $TYPE}->{$t} = $f;
+            }
+            else {
+                # global typedef
+                $entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}->{$t} = $f;
+            }
         }
     }
 }
@@ -299,7 +308,8 @@ Push a function entry into possible files:
   4. <namespace>.slot.protected
   5. <namespace>.function
   6. <namespace>.signal
-  7. universe.function
+  7. <namespace>.friend
+  8. universe.function
 
 B<NOTE>: One of the most important missions in this phase is to gather
 overload functions. Since overload functions might be pushed from
@@ -317,35 +327,42 @@ sub __process_function {
     delete $entry->{subtype};
     # check PROPERTY
     # for static and friend declarations
-    foreach my $p (@{$entry->{PROPERTY}}) {
-        if ($p eq 'static') {
-            $entry->{static} = 1;
+    my $is_friend_decl = 0;
+    if (exists $entry->{PROPERTY}) {
+        foreach my $p (@{$entry->{PROPERTY}}) {
+            if ($p eq 'static') {
+                $entry->{static} = 1;
+            } elsif ($p eq 'friend') {
+                $is_friend_decl = 1;
+            }
         }
-        elsif ($p eq 'friend') {
-            $entry->{friend} = 1;
-        }
+        delete $entry->{PROPERTY};
     }
-    # FIXME: detection of friend function declaration
-    # FIXME: push new typedef for raw function pointer parameter
     # store
-    my $TYPE = 'function';
-    if (@$namespace) {
-        my $k = join('.', $namespace->[-1], 
-                     scalar(@$type) ? $type->[-1] : $TYPE, 
-                     scalar(@$visibility) ? $visibility->[-1] : ());
+    if ($is_friend_decl) {
+        # friend function declaration pushed into <namespace>.friend
+        my $TYPE = 'friend';
+        my $k = $namespace->[-1]. '.'. $TYPE;
         push @{$entries->{$k}}, $entry;
     }
     else {
-        if ($entry->{NAME} =~ m/\:\:/io) {
-            # namespace delimiter found
-            # push into specific namespace
-            my ( @e ) = split /\:\:/, $entry->{NAME};
-            $entry->{NAME} = pop @e;
-            push @{$entries->{join('::', @e) . '.'. $TYPE}}, $entry;
-        }
-        else {
-            push @{$entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}},
-              $entry;
+        my $TYPE = 'function';
+        if (@$namespace) {
+            my $k = join('.', $namespace->[-1], 
+                         scalar(@$type) ? $type->[-1] : $TYPE, 
+                         scalar(@$visibility) ? $visibility->[-1] : ());
+            push @{$entries->{$k}}, $entry;
+        } else {
+            if ($entry->{NAME} =~ m/\:\:/io) {
+                # namespace delimiter found
+                # push into specific namespace
+                my ( @e ) = split /\:\:/, $entry->{NAME};
+                $entry->{NAME} = pop @e;
+                push @{$entries->{join('::', @e) . '.'. $TYPE}}, $entry;
+            } else {
+                push @{$entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}},
+                  $entry;
+            }
         }
     }
 }
@@ -358,7 +375,7 @@ Create a new file <namespace>.meta for class, keep specific
 information inside. Push new items into @$namespace, @$type and
 @$visibility stacks. 
 
-Push new typedef
+Create new typedef entry. 
 
 =back
 
@@ -488,6 +505,11 @@ sub __process_loop {
             __process_enum(
                 $entry, $entries, $namespace, $type, $visibility);
         }
+        elsif ($entry->{type} eq 'fpointer') {
+            # fpointer stripped
+            #__process_fpointer(
+            #    $entry, $entries, $namespace, $type, $visibility);
+        }
         elsif ($entry->{type} eq 'function') {
             __process_function(
                 $entry, $entries, $namespace, $type, $visibility);
@@ -513,11 +535,11 @@ sub __process_loop {
             __process_namespace(
                 $entry, $entries, $namespace, $type, $visibility);
         }
-        else {
-            # drop in <namespace_name>.unknown
-            __process_unknown(
-                $entry, $entries, $namespace, $type, $visibility);
-        }
+        #else {
+        #    # drop in <namespace_name>.unknown
+        #    __process_unknown(
+        #        $entry, $entries, $namespace, $type, $visibility);
+        #}
     }
 }
 
