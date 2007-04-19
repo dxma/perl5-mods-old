@@ -282,6 +282,118 @@ sub __format_union {
 
 =over
 
+=item __format_fpointer
+
+Format a function pointer entry. 
+
+  # spec
+
+  ---
+  type          : fpointer
+  PROPERTY      : 
+     - [function property1]
+     ...
+  NAME          : [T_FPOINTER_BLAH]
+  PROTOTYPE     : [prototype string]
+  DEFAULT_VALUE : [default value, mostly 0]
+
+=back
+
+=cut
+
+sub __format_fpointer {
+    my $entry = shift;
+    
+    # grep function property from return field
+    my $properties = [];
+    my $fpreturn   = [];
+    my @return = split /\s*\b\s*/, $entry->{return};
+    foreach my $e (@return) {
+        if (exists $FUNCTION_PROPERTIES->{$e} and 
+              $FUNCTION_PROPERTIES->{$e} == KEEP) {
+            push @$properties, $e;
+        }
+        else {
+            push @$fpreturn, $e;
+        }
+    }
+    # cat return type string
+    my $fpreturn_type = shift @$fpreturn;
+    for (my $i = 0; $i < @$fpreturn; ) {
+        if ($fpreturn->[$i] eq '::') {
+            $fpreturn_type .= $fpreturn->[$i]. $fpreturn->[$i+1];
+            $i += 2;
+        }
+        else {
+            $fpreturn_type .= ' '. $fpreturn->[$i];
+            $i++;
+        }
+    }
+    # make new function pointer name
+    # and cat function prototype string
+    my $FP_TYPE_PREFIX = 'T_FPOINTER_';
+    my $fpname = $FP_TYPE_PREFIX;
+    my $fproto = $fpreturn_type. ' ';
+    
+    my $get_parameters = sub {
+        my ( $plist, $params ) = @_;
+        
+        foreach my $p (@{$plist}) {
+            if ($p->{subtype} eq 'fpointer') {
+                __format_fpointer($p);
+                my $proto = $p->{PROTOTYPE};
+                if (exists $p->{DEFAULT_VALUE}) {
+                    $proto .= ' = '. $p->{DEFAULT_VALUE};
+                }
+                push @$params, $proto;
+            }
+            else {
+                my $param = $p->{name};
+                if (exists $p->{default}) {
+                    $param .= ' = '. $p->{default};
+                }
+                push @$params, $param;
+            }
+        }
+    };
+    
+    if (ref $entry->{name} eq 'HASH') {
+        # well, a function pointer which will return 
+        # another function pointer
+        ( my $name = $entry->{name}->{name} ) =~ s/^\s*\*//gio;
+        $fpname .= uc($name);
+        $fproto .= '((*'. $fpname. ')(';
+        # process inner params
+        my $params = [];
+        $get_parameters->($entry->{name}->{parameter}, $params);
+        $fproto .= join(', ', @$params). '))';
+    }
+    else {
+        ( my $name = $entry->{name} ) =~ s/^\s*\*//gio;
+        $fpname .= uc($name);
+        $fproto .= '(*'. $fpname. ')';
+    }
+    # process outer params
+    my $params = [];
+    $get_parameters->($entry->{parameter}, $params);
+    $fproto .= '('. join(', ', @$params). ')';
+    
+    # store
+    delete $entry->{name};
+    delete $entry->{return};
+    delete $entry->{parameter} if exists $entry->{parameter};
+    $entry->{NAME} = $fpname;
+    $entry->{PROTOTYPE} = $fproto;
+    $entry->{PROPERTY} = $properties if @$properties;
+    if (exists $entry->{default}) {
+        $entry->{DEFAULT_VALUE} = $entry->{default};
+        delete $entry->{default};
+    }
+    return 1;
+}
+
+=over
+
 =item __format_function
 
 Format a function entry. Extract return type, function name and all
@@ -411,20 +523,9 @@ sub __format_function {
         my ( $pname, $ptype );
         
         if ($psubtype eq 'fpointer') {
-            # FIXME: better differentiate the type of function pointer
-            my $_FP_TYPE = 'FUNCTION_POINTER';
-            $ptype = $_FP_TYPE;
-            # TODO: should keep all interface info here ???
-            # FIXME: better presenting special fpointer
-            if (ref $pname_with_type eq 'HASH') {
-                # okay, probably a function pointer
-                # which returns another function pointer
-                ( $pname = $pname_with_type->{name} ) =~
-                  s/^\s*\*//gio;
-            }
-            else {
-                ( $pname = $pname_with_type ) =~ s/^\s*\*//gio;
-            }
+            __format_fpointer($p);
+            $pname = $p->{PROTOTYPE};
+            $ptype = $p->{NAME};
         }
         else {
             # simple && template
@@ -885,6 +986,10 @@ sub _format_primitive_loop {
         __format_function($entry) and 
           push @$formatted_entries, $entry;
     } 
+    elsif ($entry->{type} eq 'fpointer') {
+        __format_fpointer($entry) and 
+          push @$formatted_entries, $entry;
+    }
     elsif ($entry->{type} eq 'enum') {
         __format_enum($entry) and 
           push @$formatted_entries, $entry;

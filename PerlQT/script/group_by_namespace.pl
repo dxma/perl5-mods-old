@@ -315,6 +315,16 @@ sub __process_function {
     delete $entry->{type};
     $entry->{operator} = $entry->{subtype};
     delete $entry->{subtype};
+    # check PROPERTY
+    # for static and friend declarations
+    foreach my $p (@{$entry->{PROPERTY}}) {
+        if ($p eq 'static') {
+            $entry->{static} = 1;
+        }
+        elsif ($p eq 'friend') {
+            $entry->{friend} = 1;
+        }
+    }
     # FIXME: detection of friend function declaration
     # FIXME: push new typedef for raw function pointer parameter
     # store
