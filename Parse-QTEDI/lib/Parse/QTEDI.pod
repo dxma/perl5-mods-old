@@ -165,6 +165,13 @@ will cause a similar case as waiting a spin lock;
            default : [default value declared                  ]
          ...
   
+  # a function pointer declaration
+  ---
+     - type     : fpointer
+     - name     : [ function pointer name prefixed with '*'       ]
+     - property : [ similar as in function                        ]
+     - parameter: [ similar as in function                        ] 
+     
   # a code expression entry
   ---
      - type : expression

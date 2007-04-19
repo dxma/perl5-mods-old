@@ -1,5 +1,9 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.03    20070419
+	- function pointer detection fix
+    - update of bin/format_qtedi_production
+
 0.02    20070328
 	- destructor function name fix
 
