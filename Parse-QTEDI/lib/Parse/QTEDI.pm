@@ -14,7 +14,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.03';
+$VERSION = '0.04';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -512,8 +512,9 @@ function_parameter_function_pointer_next_token :
 
 function_parameter_function_pointer            : 
     '(' function_parameter_function_pointer_loop ')' 
+    { $item[2] ? 1 : undef }
     '(' function_parameter_loop ')' 
-    { $return = { name => $item[2], parameter => $item[5], }; }
+    { $return = { name => $item[2], parameter => $item[6], }; }
 
 function_parameter_function_pointer_loop       : 
     (   function_parameter_function_pointer_next_token 
