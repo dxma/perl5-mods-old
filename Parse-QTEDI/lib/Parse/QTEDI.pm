@@ -1,5 +1,8 @@
 package Parse::QTEDI;
 
+# Author: Dongxu Ma <dongxu@cpan.org>
+# License: Artistic 2007
+
 use 5.005;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $parser $DEBUG);
