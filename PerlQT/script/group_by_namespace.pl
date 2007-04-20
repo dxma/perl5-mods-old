@@ -384,38 +384,52 @@ Create new typedef entry.
 sub __process_class {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
-    my $entry_to_create = {};
-    # keep PROPERTY for future reference
-    # FIXME: fix on detection of friend class declaration
-    $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
-      exists $entry->{PROPERTY};
-    # required class-specific meta information
-    $entry_to_create->{ISA} = $entry->{ISA} if 
-      exists $entry->{ISA};
-    $entry_to_create->{TYPE} = $entry->{type};
-    # push new typedef
-    __process_typedef(__gen_simple_typedef('T_CLASS',
-                                           $entry->{NAME}),
-                      $entries, $namespace, $type, $visibility);
-    # push new namespace
-    my $new_namespace = @$namespace ?
-      $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
-    push @$namespace, $new_namespace;
-    # store
-    my $TYPE = 'meta';    
-    push @{$entries->{$namespace->[-1]. '.'. $TYPE}},
-      $entry_to_create;
-    # process body
-    if (exists $entry->{BODY}) {
+    if (exists $entry->{PROPERTY} and 
+          grep { $_ eq 'friend'} @{$entry->{PROPERTY}}) {
+        # friend decl
+        delete $entry->{PROPERTY};
+        # store
+        my $TYPE = 'friend';
+        push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
+    }
+    elsif (not exists $entry->{BODY}) {
+        # forward decl
+        # push new typedef only
+        __process_typedef(__gen_simple_typedef('T_CLASS', 
+                                               $entry->{NAME}), 
+                          $entries, $namespace, $type, $visibility);
+    }
+    else {
+        # normal class decl
+        my $entry_to_create = {};
+        # keep PROPERTY for future reference
+        $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
+          exists $entry->{PROPERTY};
+        # required class-specific meta information
+        $entry_to_create->{ISA} = $entry->{ISA} if 
+          exists $entry->{ISA};
+        $entry_to_create->{TYPE} = $entry->{type};
+        # push new typedef
+        __process_typedef(__gen_simple_typedef('T_CLASS',
+                                               $entry->{NAME}),
+                          $entries, $namespace, $type, $visibility);
+        # push new namespace
+        my $new_namespace = @$namespace ?
+          $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
+        push @$namespace, $new_namespace;
+        # store
+        my $TYPE = 'meta';    
+        $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
+        # process body
         # push 'private' as initial visibility
         __process_accessibility(VISIBILITY_PRIVATE(), $entries,
                                 $namespace, $type, $visibility);
         __process_loop($entry->{BODY}, $entries, 
                        $namespace, $type, $visibility);
+        # leave class declaration
+        # pop current namespace
+        pop @$namespace;
     }
-    # leave class declaration
-    # pop current namespace
-    pop @$namespace;
 }
 
 =over
