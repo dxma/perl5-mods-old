@@ -367,6 +367,70 @@ sub __process_function {
     }
 }
 
+# get QT-specific module info from file path
+sub __get_qt_module_name {
+    return (File::Spec::->splitdir($ARGV[0]))[-2];
+}
+
+# internal 
+# process a class or struct entry
+sub __process_class_or_struct {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    if (exists $entry->{PROPERTY} and 
+          grep { $_ eq 'friend'} @{$entry->{PROPERTY}}) {
+        # friend decl
+        delete $entry->{PROPERTY};
+        # store
+        my $TYPE = 'friend';
+        push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
+    }
+    elsif (not exists $entry->{BODY}) {
+        # forward decl
+        # push new typedef only
+        __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}), 
+                                               $entry->{NAME}), 
+                          $entries, $namespace, $type, $visibility);
+    }
+    elsif (@{$entry->{BODY}} and not exists $entry->{VARIABLE}) {
+        # normal full decl 
+        # make sure not an anymous struct/class variable like
+        # struct { int i; } d;
+        my $entry_to_create = {};
+        # keep PROPERTY for future reference
+        $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
+          exists $entry->{PROPERTY};
+        # required class-specific meta information
+        $entry_to_create->{ISA} = $entry->{ISA} if 
+          exists $entry->{ISA};
+        $entry_to_create->{TYPE} = $entry->{type};
+        # push new typedef
+        __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}),
+                                               $entry->{NAME}),
+                          $entries, $namespace, $type, $visibility);
+        # push new namespace
+        my $new_namespace = @$namespace ?
+          $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
+        push @$namespace, $new_namespace;
+        # get QT module info 
+        $entry_to_create->{MODULE} = __get_qt_module_name();
+        # store
+        my $TYPE = 'meta';    
+        $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
+        # process body
+        # push 'private' as initial visibility
+        __process_accessibility($entry->{type} eq 'class' ?
+                                  VISIBILITY_PRIVATE() :
+                                    VISIBILITY_PUBLIC(), $entries, 
+                                $namespace, $type, $visibility);
+        __process_loop($entry->{BODY}, $entries, 
+                       $namespace, $type, $visibility);
+        # leave class declaration
+        # pop current namespace
+        pop @$namespace;
+    }
+}
+
 =over 
 
 =item __process_class
@@ -382,75 +446,30 @@ Create new typedef entry.
 =cut
 
 sub __process_class {
-    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
-    if (exists $entry->{PROPERTY} and 
-          grep { $_ eq 'friend'} @{$entry->{PROPERTY}}) {
-        # friend decl
-        delete $entry->{PROPERTY};
-        # store
-        my $TYPE = 'friend';
-        push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
-    }
-    elsif (not exists $entry->{BODY}) {
-        # forward decl
-        # push new typedef only
-        __process_typedef(__gen_simple_typedef('T_CLASS', 
-                                               $entry->{NAME}), 
-                          $entries, $namespace, $type, $visibility);
-    }
-    else {
-        # normal class decl
-        my $entry_to_create = {};
-        # keep PROPERTY for future reference
-        $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
-          exists $entry->{PROPERTY};
-        # required class-specific meta information
-        $entry_to_create->{ISA} = $entry->{ISA} if 
-          exists $entry->{ISA};
-        $entry_to_create->{TYPE} = $entry->{type};
-        # push new typedef
-        __process_typedef(__gen_simple_typedef('T_CLASS',
-                                               $entry->{NAME}),
-                          $entries, $namespace, $type, $visibility);
-        # push new namespace
-        my $new_namespace = @$namespace ?
-          $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
-        push @$namespace, $new_namespace;
-        # store
-        my $TYPE = 'meta';    
-        $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
-        # process body
-        # push 'private' as initial visibility
-        __process_accessibility(VISIBILITY_PRIVATE(), $entries,
-                                $namespace, $type, $visibility);
-        __process_loop($entry->{BODY}, $entries, 
-                       $namespace, $type, $visibility);
-        # leave class declaration
-        # pop current namespace
-        pop @$namespace;
-    }
+    &__process_class_or_struct;
 }
 
 =over
 
 =item __process_struct
 
-
+Similar as __process_class. See above. 
 
 =back
 
 =cut
 
 sub __process_struct {
-    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    &__process_class_or_struct;
 }
 
 =over
 
 =item __process_extern
 
-
+Currently pay no attention to extern stuff. Normally it is used to
+import C symbols into C++ code or to bridge an existing variable in 
+another namespace. 
 
 =back
 
@@ -458,13 +477,17 @@ sub __process_struct {
 
 sub __process_extern {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    # noop but warn
+    print STDERR "TODO: got an extern keyword inside: ", $ARGV[0],
+      "\n";
 }
 
 =over
 
 =item __process_namespace
 
-
+Recursively process namespace body. While no <namespace>.meta
+created. 
 
 =back
 
@@ -472,20 +495,15 @@ sub __process_extern {
 
 sub __process_namespace {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-}
-
-=over
-
-=item __process_unkown
-
-
-
-=back
-
-=cut
-
-sub __process_unkown {
-    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    # push new namespace
+    push @$namespace, $entry->{NAME};
+    # process body
+    __process_loop($entry->{BODY}, $entries, 
+                   $namespace, $type, $visibility);
+    # leave namespace declaration
+    # pop current namespace
+    pop @$namespace;
 }
 
 =over 
@@ -494,7 +512,7 @@ sub __process_unkown {
 
 Internal use only. Process each entry inside current list body. 
 
-=over
+=back
 
 =cut
 
@@ -549,11 +567,6 @@ sub __process_loop {
             __process_namespace(
                 $entry, $entries, $namespace, $type, $visibility);
         }
-        #else {
-        #    # drop in <namespace_name>.unknown
-        #    __process_unknown(
-        #        $entry, $entries, $namespace, $type, $visibility);
-        #}
     }
 }
 
