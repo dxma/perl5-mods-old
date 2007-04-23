@@ -48,7 +48,7 @@ EOU
 }
 
 # private consts
-sub NAMESPACE_DEFAULT { 'universe' }
+sub NAMESPACE_DEFAULT { 'QT' }
 
 sub VISIBILITY_PUBLIC { 
     +{ type => 'accessibility', VALUE => [ 'public' ], } 

@@ -4,6 +4,7 @@ use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use File::Spec ();
+use YAML ();
 
 =head1 DESCIPTION
 
@@ -24,26 +25,49 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <out_group_dir> [<output_file>]
+usage: $0 <in_xscode_dir> <out_xscode_dir> [<output_file>]
 EOU
     exit 1;
 }
 
 sub main {
-    usage if @ARGV < 1;
+    usage if @ARGV < 2;
     
-    my ( $out_group_dir, $out, ) = @ARGV;
-    die "directory $out_group_dir not found!" unless 
-      -d $out_group_dir; 
+    my ( $in_xscode_dir, $out_xscode_dir, $out, ) = @ARGV;
+    die "directory $in_xscode_dir not found!" unless 
+      -d $in_xscode_dir; 
     
     my $xscode_dot_mk = '';
-    foreach my $m (glob(File::Spec::->catfile($out_group_dir, '*.meta'))) {
+    foreach my $m (glob(File::Spec::->catfile(
+        $in_xscode_dir, '*.meta'))) {
+        # get module name from .meta
+        local ( *META );
+        open META, "<", $m or die "cannot open file $m: $!";
+        my $hcont = do { local $/; <META> };
+        close META;
+        my $entry = YAML::Load($hcont);
+        my $module = $entry->{MODULE};
+        
         my $meta = (File::Spec::->splitdir($m))[-1];
         ( my $classname = $meta ) =~ s/\.meta$//io;
         my @deps = glob(File::Spec::->catfile(
-            $out_group_dir, "$classname.*"));
-        $xscode_dot_mk .= "$classname.xs: ". join(" ", @deps). "\n\n";
-        $xscode_dot_mk .= "$classname.pm: $m\n\n";
+            $in_xscode_dir, "$classname.*"));
+        # deps for module.xs
+        $xscode_dot_mk .= File::Spec::->catfile(
+            $out_xscode_dir, "xs", "$classname.xs"). 
+              ": ". join(" ", @deps). "\n";
+        # rule for module.xs
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
+        
+        # deps for module.pm
+        $xscode_dot_mk .= File::Spec::->catfile(
+            $out_xscode_dir, "pm", $module, 
+            split /\_\_/, "$classname.pm"). 
+              ": $m ". File::Spec::->catfile(
+                  $in_xscode_dir,
+                  "$classname.function.public"). "\n"; 
+        # rule for module.pm
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
     }
     
     if (defined $out) {

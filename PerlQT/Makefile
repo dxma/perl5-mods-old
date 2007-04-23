@@ -56,6 +56,9 @@ OUT_FORMAT_DIR  := $(MAKE_ROOT)/03formatted
 IN_GROUP_DIR    := $(OUT_FORMAT_DIR)
 OUT_GROUP_DIR   := $(MAKE_ROOT)/04grouped
 
+IN_XSCODE_DIR   := $(OUT_GROUP_DIR)
+OUT_XSCODE_DIR  := $(MAKE_ROOT)/99xscode
+
 #################### MAKE TOOLS ################################
 
 # DEBUG echos all shell commands
@@ -92,6 +95,10 @@ CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_qtedi_production.pl
 CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
 CMD_GROUP_MK    := $(SCRIPT_DIR)/gen_group_mk.pl 
 CMD_GROUP_YML   := $(SCRIPT_DIR)/group_by_namespace.pl
+CMD_GROUP_CHECK := $(SCRIPT_DIR)/check_class_consistency.sh
+CMD_XSCODE_MK   := $(SCRIPT_DIR)/gen_xscode_mk.pl
+CMD_CREAT_XS    := $(SCRIPT_DIR)/create_xs_code.pl
+CMD_CREAT_PM    := $(SCRIPT_DIR)/create_pm_code.pl
 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
@@ -99,6 +106,7 @@ PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
 PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
 FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
 GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
+XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
 
 _R              := $(shell $(CMD_ECHO) "\n")
 
@@ -130,7 +138,7 @@ _remove_dir  = echo removing $1; \
 all: 
 .PHONY: all
 
-.SUFFIXES: .pre .h .cpp
+.SUFFIXES: .pre .h .i .meta .yaml
 
 FORCE:
 
@@ -182,6 +190,9 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $@
 
+# generate xs && pm code
+$(XSCODE_DOT_MK): _GROUP_DOT_MK
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk:
@@ -191,6 +202,7 @@ clean_dot_mk:
 	$(_Q)$(call _remove_file,$(PARSE_DOT_MK))
 	$(_Q)$(call _remove_file,$(FORMAT_DOT_MK))
 	$(_Q)$(call _remove_file,$(GROUP_DOT_MK))
+	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: clean_dot_mk
 
 gen_strip  : $(STRIP_HEADERS)
@@ -217,7 +229,12 @@ clean_format:
 gen_group  : _GROUP_DOT_MK
 clean_group:
 	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
+	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_group clean_group
+
+class_sanity_check:
+	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
+.PHONY: check_group_sanity
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format

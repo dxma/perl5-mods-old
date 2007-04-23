@@ -55,6 +55,10 @@ sub main {
         }
     }
     
+    # generate xscode.mk
+    $group_dot_mk .= "\t\$(_Q)\$(CMD_XSCODE_MK) ". 
+      "\$(IN_XSCODE_DIR) \$(OUT_XSCODE_DIR) \$(XSCODE_DOT_MK)\n";
+    
     if (defined $out) {
         local ( *OUT, );
         sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
