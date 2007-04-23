@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.05    20070423
+	- function attribute stripped
+
 0.04    20070420
 	- fix on treating operator() as a function pointer 
 

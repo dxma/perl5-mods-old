@@ -14,7 +14,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -363,7 +363,8 @@ function_header       :
       foreach my $i (@{$item[1]}) { 
           if ($i->{_subtype} == 1) { 
               # attribute
-              $return->{name} .= $i->{_value}; 
+              # stripped currently
+              #$return->{name} .= " ". $i->{_value}; 
           } elsif ($i->{_subtype} == 2) { 
               # function name with params
               $return->{name} .= $i->{_name};
