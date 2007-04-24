@@ -26,7 +26,7 @@ full-qualified class/struct/namespace name in C/CXX.
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
 
-B<NOTE>: a special namespace - universe, will hold any entry which
+B<NOTE>: a special namespace - QT, will hold any entry which
 doesn't belong to other namespace. 
 
 =head1 COPYRIGHT AND LICENSE
@@ -603,6 +603,8 @@ sub _process {
     my $entries         = {};
     # recursively process each entry inside list body
     __process_loop($list, $entries, $namespace, $type, $visibility);
+    # make QT.meta
+    $entries->{'QT.meta'} = { type => 'default', MODULE => '', };
     # actual write
     write_to_file($entries, $root_dir);
 }

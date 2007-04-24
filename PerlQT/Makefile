@@ -236,6 +236,11 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: check_group_sanity
 
+# internal use only
+_gen_xscode_dot_mk:
+	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
+        $(XSCODE_DOT_MK)
+
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
 .PHONY: clean
