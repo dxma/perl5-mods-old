@@ -582,6 +582,10 @@ sub __format_function {
                         $ptype .= $ptype[$i]. $ptype[$i+1];
                         $i += 2;
                     } 
+                    elsif ($ptype[$i] eq '<') {
+                        $ptype .= $ptype[$i];
+                        $i++;
+                    }
                     else {
                         $ptype .= ' '. $ptype[$i];
                         $i++;
