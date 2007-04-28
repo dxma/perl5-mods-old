@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.10    20070429
+	- fix on formatting template type
+
 0.05    20070423
 	- function attribute stripped
 
