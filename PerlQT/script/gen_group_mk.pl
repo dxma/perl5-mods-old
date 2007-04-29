@@ -58,6 +58,11 @@ sub main {
     # generate xscode.mk
     $group_dot_mk .= "\t\$(_Q)\$(CMD_XSCODE_MK) ". 
       "\$(IN_XSCODE_DIR) \$(OUT_XSCODE_DIR) \$(XSCODE_DOT_MK)\n";
+    # sort and uniq template file
+    # FIXME: better way to sync with NAMESPACE_TEMPLATE inside 
+    # script/group_by_namespace.pl 
+    $group_dot_mk .= "\t\$(_Q)sort \$(IN_XSCODE_DIR)/template | ". 
+      "uniq > \$(IN_XSCODE_DIR)/template.uniq\n";
     
     if (defined $out) {
         local ( *OUT, );

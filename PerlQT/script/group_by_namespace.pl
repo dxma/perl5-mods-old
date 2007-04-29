@@ -26,8 +26,11 @@ full-qualified class/struct/namespace name in C/CXX.
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
 
-B<NOTE>: a special namespace - QT, will hold any entry which
-doesn't belong to other namespace. 
+B<NOTE>: a special namespace - <NAMESPACE_DEFAULT>, will hold any
+entry which doesn't belong to other namespace. 
+
+B<NOTE>: a special file - <NAMESPACE_TEMPLATE> here, will hold all
+involved C++ template type names. 
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -57,6 +60,8 @@ sub VISIBILITY_PUBLIC {
 sub VISIBILITY_PRIVATE {
     +{ type => 'accessibility', VALUE => [ 'private' ], }
 }
+
+sub NAMESPACE_TEMPLATE { 'template' }
 
 =over
 
@@ -168,7 +173,7 @@ sub __gen_simple_typedef {
 =item __process_typedef 
 
 Push new entries into either <namespace_name>.typedef or
-eniverse.typedef accordingly. 
+<NAMESPACE_DEFAULT>.typedef accordingly. 
 
 B<NOTE>: typedef might define new container type as side-effect. 
 
@@ -185,10 +190,14 @@ sub __process_typedef {
     if ($entry->{subtype} eq 'simple') {
         push @$entries_to_create, 
           [$entry->{FROM}, $entry->{TO}];
+        # collect template type
+        push @{ $entries->{NAMESPACE_TEMPLATE()} }, $entry->{FROM} if 
+          $entry->{FROM} =~ m/\</io;
     }
     elsif ($entry->{subtype} eq 'fpointer') {
         push @$entries_to_create, 
           [$entry->{FROM}, $entry->{TO}];
+        # TODO: template type inside fpointer
     }
     else {
         # container types
@@ -220,7 +229,7 @@ sub __process_typedef {
             push @$entries_to_create, 
               [$gen_type->(), $entry->{FROM}];
         }
-        # push built-in define
+        # push built-in anonymous define
         if (ref $entry->{FROM} eq 'HASH') {
             if ($entry->{subtype} eq 'enum' and 
                   exists $entry->{FROM}->{VALUE}) {
@@ -267,7 +276,8 @@ sub __process_typedef {
 
 =item __process_enum
 
-Push a new enum entry into either <namespace>.enum or universe.enum
+Push a new enum entry into either <namespace>.enum or
+<NAMESPACE_DEFAULT>.enum 
 
 =back
 
@@ -309,7 +319,7 @@ Push a function entry into possible files:
   5. <namespace>.function
   6. <namespace>.signal
   7. <namespace>.friend
-  8. universe.function
+  8. <NAMESPACE_DEFAULT>.function
 
 B<NOTE>: One of the most important missions in this phase is to gather
 overload functions. Since overload functions might be pushed from
@@ -337,6 +347,11 @@ sub __process_function {
             }
         }
         delete $entry->{PROPERTY};
+    }
+    # collect template types in function parameters
+    foreach my $p (@{$entry->{PARAMETER}}) {
+        push @{ $entries->{NAMESPACE_TEMPLATE()} }, $p->{TYPE} if 
+          $p->{TYPE} =~ m/\</io;
     }
     # store
     if ($is_friend_decl) {
