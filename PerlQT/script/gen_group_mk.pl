@@ -3,6 +3,7 @@
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
+use YAML ();
 
 =head1 DESCIPTION
 
@@ -21,17 +22,18 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <header.mk> <in_noinc_dir> <in_group_dir> <out_group_dir> [<output_file>]
+usage: $0 <header.mk> <in_noinc_dir> <in_group_dir> <out_group_dir> <module.conf> [<output_file>]
 EOU
     exit 1;
 }
 
 sub main {
-    usage if @ARGV < 4;
+    usage if @ARGV < 5;
     
     my ( $in, $in_noinc_dir, $in_group_dir, $out_group_dir, 
-         $out, ) = @ARGV;
+         $module_dot_conf, $out ) = @ARGV;
     die "header.mk not found!" unless -f $in;
+    die "module.conf not found!" unless -f $module_dot_conf;
     
     local ( *IN, );
     open IN, "<", $in or die "cannot open $in: $!";
@@ -45,13 +47,25 @@ sub main {
     $group_dot_mk .= "\t\$(_Q)". 
       "\$(CMD_MKDIR) \$(OUT_GROUP_DIR)\n";
     
+    # get default_namespace, template_filename from module.conf
+    local ( *CONF );
+    open CONF, "<", $module_dot_conf or 
+      die "cannot open module.conf: $!";
+    my $conf = do { local $/; <CONF> };
+    close CONF;
+    ( my $hconf ) = YAML::Load($conf);
+    my $default_namespace       = $hconf->{default_namespace};
+    my $template_filename       = $hconf->{template_filename};
+    my $template_filename_final = $hconf->{template_filename_final};
+    
     foreach (@cont) {
         chomp;
         if (s/\Q$in_noinc_dir\E/$in_group_dir/ge) {
             s/\.h\s*\:\s*$/.yaml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
-            $group_dot_mk .= 
-              "\t\$(_Q)\$(CMD_GROUP_YML) $_ \$(OUT_GROUP_DIR)\n";
+            $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
+              "'$default_namespace' '$template_filename' ". 
+                "$_ \$(OUT_GROUP_DIR)\n";
         }
     }
     
@@ -59,10 +73,9 @@ sub main {
     $group_dot_mk .= "\t\$(_Q)\$(CMD_XSCODE_MK) ". 
       "\$(IN_XSCODE_DIR) \$(OUT_XSCODE_DIR) \$(XSCODE_DOT_MK)\n";
     # sort and uniq template file
-    # FIXME: better way to sync with NAMESPACE_TEMPLATE inside 
-    # script/group_by_namespace.pl 
-    $group_dot_mk .= "\t\$(_Q)sort \$(IN_XSCODE_DIR)/template | ". 
-      "uniq > \$(IN_XSCODE_DIR)/template.uniq\n";
+    $group_dot_mk .= "\t\$(_Q)sort ". 
+      "\$(IN_XSCODE_DIR)/$template_filename | ".  
+        "uniq > \$(IN_XSCODE_DIR)/$template_filename_final\n";
     
     if (defined $out) {
         local ( *OUT, );

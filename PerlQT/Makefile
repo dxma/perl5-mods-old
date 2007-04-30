@@ -100,6 +100,7 @@ CMD_XSCODE_MK   := $(SCRIPT_DIR)/gen_xscode_mk.pl
 CMD_CREAT_XS    := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_CREAT_PM    := $(SCRIPT_DIR)/create_pm_code.pl
 
+MODULE_DOT_CONF := $(MAKE_ROOT)/module.conf 
 HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
 PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
@@ -186,9 +187,9 @@ $(FORMAT_DOT_MK): $(HEADER_DOT_MK)
         $(OUT_FORMAT_DIR) $@
 
 # group formatted yaml 
-$(GROUP_DOT_MK): $(HEADER_DOT_MK)
+$(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
-        $(OUT_GROUP_DIR) $@
+        $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
 # generate xs && pm code
 $(XSCODE_DOT_MK): _GROUP_DOT_MK

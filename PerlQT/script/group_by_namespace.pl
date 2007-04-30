@@ -26,10 +26,10 @@ full-qualified class/struct/namespace name in C/CXX.
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
 
-B<NOTE>: a special namespace - <NAMESPACE_DEFAULT>, will hold any
+B<NOTE>: a special namespace - <NAMESPACE_DEFAULT()>, will hold any
 entry which doesn't belong to other namespace. 
 
-B<NOTE>: a special file - <NAMESPACE_TEMPLATE> here, will hold all
+B<NOTE>: a special file - <NAMESPACE_TEMPLATE()> here, will hold all
 involved C++ template type names. 
 
 =head1 COPYRIGHT AND LICENSE
@@ -45,13 +45,19 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <formatted_qtedi_output.yaml> <output_directory>
+usage: $0 <default_namespace> <template_filename> <formatted_qtedi_output.yaml> <output_directory>
 EOU
     exit 1;
 }
 
 # private consts
-sub NAMESPACE_DEFAULT { 'QT' }
+# TODO: Getopt::Long
+sub ARGV_INDEX_NAMESPACE_DEFAULT() { 0 }
+sub ARGV_INDEX_NAMESPACE_TEMPLATE() { 1 }
+# see __qt_get_module_name
+sub ARGV_INDEX_FILE_INPUT() { 2 }
+
+sub NAMESPACE_DEFAULT { $ARGV[ARGV_INDEX_NAMESPACE_DEFAULT] }
 
 sub VISIBILITY_PUBLIC { 
     +{ type => 'accessibility', VALUE => [ 'public' ], } 
@@ -61,7 +67,7 @@ sub VISIBILITY_PRIVATE {
     +{ type => 'accessibility', VALUE => [ 'private' ], }
 }
 
-sub NAMESPACE_TEMPLATE { 'template' }
+sub NAMESPACE_TEMPLATE { $ARGV[ARGV_INDEX_NAMESPACE_TEMPLATE] }
 
 =over
 
@@ -384,7 +390,7 @@ sub __process_function {
 
 # get QT-specific module info from file path
 sub __get_qt_module_name {
-    return (File::Spec::->splitdir($ARGV[0]))[-2];
+    return (File::Spec::->splitdir($ARGV[ARGV_INDEX_FILE_INPUT]))[-2];
 }
 
 # internal 
@@ -625,8 +631,8 @@ sub _process {
 }
 
 sub main {
-    usage() unless @ARGV == 2;
-    my ( $in, $out ) = @ARGV;
+    usage() unless @ARGV == 4;
+    my ( undef, undef, $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
     die "directory not found" unless -d $out;
     
