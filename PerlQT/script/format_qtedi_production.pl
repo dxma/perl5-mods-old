@@ -929,8 +929,10 @@ sub __format_namespace {
     delete $entry->{name};
     delete $entry->{property};
     # format body
-    $entry->{body} = _format($entry->{body}) if 
-      exists $entry->{body};
+    if (exists $entry->{body}) {
+        $entry->{BODY} = _format($entry->{body});
+        delete $entry->{body};
+    }
     return 1;
 }
 
