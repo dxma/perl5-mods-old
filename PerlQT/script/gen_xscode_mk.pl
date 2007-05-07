@@ -46,7 +46,8 @@ sub main {
         my $hcont = do { local $/; <META> };
         close META;
         my $entry = YAML::Load($hcont);
-        my $module = $entry->{MODULE};
+        my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
+        my @module = split /\:\:/, $module;
         
         my $meta = (File::Spec::->splitdir($m))[-1];
         ( my $classname = $meta ) =~ s/\.meta$//io;
@@ -61,7 +62,7 @@ sub main {
         
         # deps for module.pm
         $xscode_dot_mk .= File::Spec::->catfile(
-            $out_xscode_dir, "pm", $module, 
+            $out_xscode_dir, "pm", @module, 
             split /\_\_/, "$classname.pm"). 
               ": $m ". File::Spec::->catfile(
                   $in_xscode_dir,

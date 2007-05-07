@@ -292,6 +292,7 @@ Push a new enum entry into either <namespace>.enum or
 sub __process_enum {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
+    #print "enum found: ", $entry->{NAME}, "\n";
     my $entry_to_create = {};
     $entry_to_create->{NAME}  = $entry->{NAME} if 
       exists $entry->{NAME};
@@ -517,8 +518,19 @@ created.
 sub __process_namespace {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
+    #print "namespace found: ", $entry->{NAME}, "\n";
+    my $entry_to_create = {};
+    $entry_to_create->{NAME}   = $entry->{NAME};
+    $entry_to_create->{TYPE}   = $entry->{type};
+    $entry_to_create->{MODULE} = '';
     # push new namespace
-    push @$namespace, $entry->{NAME};
+    # namespace could _ONLY_ be nested in another namespace
+    my $new_namespace = @$namespace ?
+      $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
+    push @$namespace, $new_namespace;
+    # store
+    my $TYPE = 'meta';
+    $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
     # process body
     __process_loop($entry->{BODY}, $entries, 
                    $namespace, $type, $visibility);
@@ -624,8 +636,9 @@ sub _process {
     my $entries         = {};
     # recursively process each entry inside list body
     __process_loop($list, $entries, $namespace, $type, $visibility);
-    # make QT.meta
-    $entries->{'QT.meta'} = { type => 'default', MODULE => '', };
+    # make <NAMESPACE_DEFAULT>.meta
+    $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
+        type => 'namespace', MODULE => '', };
     # actual write
     write_to_file($entries, $root_dir);
 }
