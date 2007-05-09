@@ -55,8 +55,11 @@ sub main {
         
         my $meta = (File::Spec::->splitdir($m))[-1];
         ( my $classname = $meta ) =~ s/\.meta$//io;
-        my @deps = glob(File::Spec::->catfile(
-            $in_xscode_dir, "$classname.*"));
+        # no need for classname.function
+        # which has member function implementations
+        my @deps = grep { $_ ne "$classname.function" } 
+          glob(File::Spec::->catfile(
+              $in_xscode_dir, "$classname.*"));
         # deps for module.xs
         $xscode_dot_mk .= File::Spec::->catfile(
             $out_xscode_dir, "xs", "$classname.xs"). 
