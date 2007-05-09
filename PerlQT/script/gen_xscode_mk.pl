@@ -38,8 +38,12 @@ sub main {
       -d $in_xscode_dir; 
     
     my $xscode_dot_mk = '';
+    my $excl_std_dot_meta = File::Spec::->catfile(
+        $in_xscode_dir, 'std.meta');
     foreach my $m (glob(File::Spec::->catfile(
         $in_xscode_dir, '*.meta'))) {
+        next if $m eq $excl_std_dot_meta;
+        
         # get module name from .meta
         local ( *META );
         open META, "<", $m or die "cannot open file $m: $!";
