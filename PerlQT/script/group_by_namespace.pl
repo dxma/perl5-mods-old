@@ -30,9 +30,6 @@ normally this should not be an issue.
 B<NOTE>: a special namespace - <NAMESPACE_DEFAULT()>, will hold any
 entry which doesn't belong to other namespace. 
 
-B<NOTE>: a special file - <NAMESPACE_TEMPLATE()> here, will hold all
-involved C++ template type names. 
-
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
@@ -46,7 +43,7 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <default_namespace> <template_filename> <formatted_qtedi_output.yaml> <output_directory>
+usage: $0 <default_namespace> <formatted_qtedi_output.yaml> <output_directory>
 EOU
     exit 1;
 }
@@ -54,9 +51,8 @@ EOU
 # private consts
 # TODO: Getopt::Long
 sub ARGV_INDEX_NAMESPACE_DEFAULT() { 0 }
-sub ARGV_INDEX_NAMESPACE_TEMPLATE() { 1 }
 # see __qt_get_module_name
-sub ARGV_INDEX_FILE_INPUT() { 2 }
+sub ARGV_INDEX_FILE_INPUT() { 1 }
 
 sub NAMESPACE_DEFAULT { $ARGV[ARGV_INDEX_NAMESPACE_DEFAULT] }
 
@@ -67,8 +63,6 @@ sub VISIBILITY_PUBLIC {
 sub VISIBILITY_PRIVATE {
     +{ type => 'accessibility', VALUE => [ 'private' ], }
 }
-
-sub NAMESPACE_TEMPLATE { $ARGV[ARGV_INDEX_NAMESPACE_TEMPLATE] }
 
 =over
 
@@ -197,9 +191,6 @@ sub __process_typedef {
     if ($entry->{subtype} eq 'simple') {
         push @$entries_to_create, 
           [$entry->{FROM}, $entry->{TO}];
-        # collect template type
-        push @{ $entries->{NAMESPACE_TEMPLATE()} }, $entry->{FROM} if 
-          $entry->{FROM} =~ m/\</io;
     }
     elsif ($entry->{subtype} eq 'fpointer') {
         push @$entries_to_create, 
@@ -355,11 +346,6 @@ sub __process_function {
             }
         }
         delete $entry->{PROPERTY};
-    }
-    # collect template types in function parameters
-    foreach my $p (@{$entry->{PARAMETER}}) {
-        push @{ $entries->{NAMESPACE_TEMPLATE()} }, $p->{TYPE} if 
-          $p->{TYPE} =~ m/\</io;
     }
     # store
     if ($is_friend_decl) {
@@ -645,8 +631,8 @@ sub _process {
 }
 
 sub main {
-    usage() unless @ARGV == 4;
-    my ( undef, undef, $in, $out ) = @ARGV;
+    usage() unless @ARGV == 3;
+    my ( undef, $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
     die "directory not found" unless -d $out;
     

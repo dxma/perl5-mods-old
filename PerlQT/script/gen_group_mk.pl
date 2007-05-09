@@ -55,8 +55,6 @@ sub main {
     close CONF;
     ( my $hconf ) = YAML::Load($conf);
     my $default_namespace       = $hconf->{default_namespace};
-    my $template_filename       = $hconf->{template_filename};
-    my $template_filename_final = $hconf->{template_filename_final};
     
     foreach (@cont) {
         chomp;
@@ -64,18 +62,12 @@ sub main {
             s/\.h\s*\:\s*$/.yaml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
-              "'$default_namespace' '$template_filename' ". 
-                "$_ \$(OUT_GROUP_DIR)\n";
+              "'$default_namespace' $_ \$(OUT_GROUP_DIR)\n";
         }
     }
-    
     # generate xscode.mk
     $group_dot_mk .= "\t\$(_Q)\$(CMD_XSCODE_MK) ". 
       "\$(IN_XSCODE_DIR) \$(OUT_XSCODE_DIR) \$(XSCODE_DOT_MK)\n";
-    # sort and uniq template file
-    $group_dot_mk .= "\t\$(_Q)sort ". 
-      "\$(IN_XSCODE_DIR)/$template_filename | grep -v -- '---' | ". 
-        "uniq > \$(IN_XSCODE_DIR)/$template_filename_final\n";
     
     if (defined $out) {
         local ( *OUT, );
