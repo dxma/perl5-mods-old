@@ -12,13 +12,14 @@ Group formatted QTEDI production by namespace.
 
 For each namespace there will be files generated as below:
 
-  1. <namespace_name>.typedef
-  2. <namespace_name>.enum
-  3. <namespace_name>.function.public
-  4. <namespace_name>.function.protected
-  5. <namespace_name>.signal
-  6. <namespace_name>.slot.public
-  7. <namespace_name>.slot.protected
+  1. <namespace_name>.typedef            : all typedefs
+  2. <namespace_name>.enum               : all enums
+  3. <namespace_name>.function.public    : all public member functions
+  4. <namespace_name>.function.protected : all protected member functions
+  5. <namespace_name>.signal             : all signals
+  6. <namespace_name>.slot.public        : all public slots
+  7. <namespace_name>.slot.protected     : all protected slots
+  8. <namespace_name>.function           : no use
 
 B<NOTE>: 'namespace' here, as a generic form, stands for any
 full-qualified class/struct/namespace name in C/CXX. 
