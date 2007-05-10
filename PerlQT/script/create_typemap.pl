@@ -6,8 +6,10 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 =head1 DESCRIPTION
 
-Create <module>.xs accordingly to <module>.{meta, function.public,
-function.protected, signal, slot.public, slot.protected} 
+Create typemap accordingly to all relevant source: 
+
+<module>.{function.public, function.protected, signal, slot.public,
+slot.protected} and <module>.typedef
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -22,13 +24,13 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <module.xs> <module>.meta ...
+usage: $0 <module>.function.public ... <module>.typedef
 EOU
     exit 1;
 }
 
 sub main {
-    usage() unless @ARGV;
+    usage() unless @ARGV < 2;
     exit 0;
 }
 

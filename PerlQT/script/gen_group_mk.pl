@@ -40,7 +40,7 @@ sub main {
     my @cont = <IN>;
     close IN;
     my $group_dot_mk = '';
-    $group_dot_mk .= ".PHONY: _GROUP_DOT_MK\n";
+#    $group_dot_mk .= ".PHONY: _GROUP_DOT_MK\n";
     $group_dot_mk .= '_GROUP_DOT_MK: $(FORMAT_YAMLS)'. "\n";
     $group_dot_mk .= "\t\$(_Q)". 
       "\$(call _remove_dir,\$(OUT_GROUP_DIR))\n";
@@ -65,9 +65,9 @@ sub main {
               "'$default_namespace' $_ \$(OUT_GROUP_DIR)\n";
         }
     }
-    # generate xscode.mk
-    $group_dot_mk .= "\t\$(_Q)\$(CMD_XSCODE_MK) ". 
-      "\$(IN_XSCODE_DIR) \$(OUT_XSCODE_DIR) \$(XSCODE_DOT_MK)\n";
+    # command to create grouplist.mk
+    $group_dot_mk .= "\t\$(CMD_GROUPLIST_MK) ". 
+      "\$(OUT_GROUP_DIR) \$(GROUPLIST_DOT_MK)\n\n";
     
     if (defined $out) {
         local ( *OUT, );

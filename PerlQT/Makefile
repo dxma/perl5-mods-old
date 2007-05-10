@@ -96,7 +96,9 @@ CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
 CMD_GROUP_MK    := $(SCRIPT_DIR)/gen_group_mk.pl 
 CMD_GROUP_YML   := $(SCRIPT_DIR)/group_by_namespace.pl
 CMD_GROUP_CHECK := $(SCRIPT_DIR)/check_class_consistency.sh
+CMD_GROUPLIST_MK:= $(SCRIPT_DIR)/gen_grouplist_mk.pl 
 CMD_XSCODE_MK   := $(SCRIPT_DIR)/gen_xscode_mk.pl
+CMD_CREAT_TP    := $(SCRIPT_DIR)/create_typemap.pl 
 CMD_CREAT_XS    := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_CREAT_PM    := $(SCRIPT_DIR)/create_pm_code.pl
 
@@ -107,6 +109,7 @@ PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
 PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
 FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
 GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
+GROUPLIST_DOT_MK:= $(MAKE_ROOT)/grouplist.mk
 XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
 
 _R              := $(shell $(CMD_ECHO) "\n")
@@ -123,8 +126,8 @@ PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
-GROUP_YAMLS     := $(addprefix $(OUT_GROUP_DIR)/,\
-                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
+# initially empty, re-defined inside group_list.mk
+GROUP_YAMLS     := $(empty)$(empty)
 
 #################### SUBROUTINES ###############################
 
@@ -191,8 +194,15 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
+# grouped file list produced by gen_group
+$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) _GROUP_DOT_MK
+
 # generate xs && pm code
-$(XSCODE_DOT_MK): _GROUP_DOT_MK
+$(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK)                        \
+                  $(eval $(shell cat $(GROUPLIST_DOT_MK)))   \
+                  $(GROUP_YAMLS)
+	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
+        $(XSCODE_DOT_MK)
 
 #################### GENERIC RULES #############################
 
@@ -235,15 +245,14 @@ clean_group:
 
 class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
-.PHONY: check_group_sanity
+.PHONY: class_sanity_check
 
-# internal use only
-_gen_xscode_dot_mk:
-	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
-        $(XSCODE_DOT_MK)
+gen_xscode : $(GROUPLIST_DOT_MK) $(XSCODE_DOT_MK)
+.PHONY: gen_xscode
 
 # final assignment
-clean: clean_dot_mk clean_strip clean_prepro clean_parse clean_format
+clean: clean_dot_mk clean_strip clean_prepro clean_parse     \
+       clean_format clean_group
 .PHONY: clean
 
 all: gen_group

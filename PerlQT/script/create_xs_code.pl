@@ -4,7 +4,7 @@ use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
-=head1 DESCIPTION
+=head1 DESCRIPTION
 
 Create <module>.pm accordingly to <module>.{meta, function.public} 
 

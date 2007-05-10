@@ -6,7 +6,7 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use File::Spec ();
 use YAML ();
 
-=head1 DESCIPTION
+=head1 DESCRIPTION
 
 Create xscode.mk
 
@@ -40,43 +40,52 @@ sub main {
     my $xscode_dot_mk = '';
     my $excl_std_dot_meta = File::Spec::->catfile(
         $in_xscode_dir, 'std.meta');
+    my @typemap_deps = ();
+    
     foreach my $m (glob(File::Spec::->catfile(
         $in_xscode_dir, '*.meta'))) {
-        next if $m eq $excl_std_dot_meta;
-        
-        # get module name from .meta
-        local ( *META );
-        open META, "<", $m or die "cannot open file $m: $!";
-        my $hcont = do { local $/; <META> };
-        close META;
-        my $entry = YAML::Load($hcont);
-        my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
-        my @module = split /\:\:/, $module;
-        
         my $meta = (File::Spec::->splitdir($m))[-1];
         ( my $classname = $meta ) =~ s/\.meta$//io;
-        # no need for classname.function
+        # no need to include classname.function
         # which has member function implementations
-        my @deps = grep { $_ ne "$classname.function" } 
+        my @deps = grep { not m/\.function$/io } 
           glob(File::Spec::->catfile(
               $in_xscode_dir, "$classname.*"));
-        # deps for module.xs
-        $xscode_dot_mk .= File::Spec::->catfile(
-            $out_xscode_dir, "xs", "$classname.xs"). 
-              ": ". join(" ", @deps). "\n";
-        # rule for module.xs
-        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
+        # no need to include classname.meta
+        push @typemap_deps, grep { not m/\.meta$/io } @deps;
+        # skip namespace std
+        unless ($m eq $excl_std_dot_meta) {
+            # deps for module.xs
+            $xscode_dot_mk .= File::Spec::->catfile(
+                $out_xscode_dir, "xs", "$classname.xs"). 
+                  ": ". join(" ", @deps). "\n";
+            # rule for module.xs
+            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
         
-        # deps for module.pm
-        $xscode_dot_mk .= File::Spec::->catfile(
-            $out_xscode_dir, "pm", @module, 
-            split /\_\_/, "$classname.pm"). 
-              ": $m ". File::Spec::->catfile(
-                  $in_xscode_dir,
-                  "$classname.function.public"). "\n"; 
-        # rule for module.pm
-        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
+            # get module name from .meta
+            local ( *META );
+            open META, "<", $m or die "cannot open file $m: $!";
+            my $hcont = do { local $/; <META> };
+            close META;
+            my $entry = YAML::Load($hcont);
+            my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
+            my @module = split /\:\:/, $module;
+        
+            # deps for module.pm
+            $xscode_dot_mk .= File::Spec::->catfile(
+                $out_xscode_dir, "pm", @module, 
+                split /\_\_/, "$classname.pm"). 
+                  ": $m ". File::Spec::->catfile(
+                      $in_xscode_dir,
+                      "$classname.function.public"). "\n"; 
+            # rule for module.pm
+            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
+        }
     }
+    # deps for typemap
+    my $typemap = File::Spec::->catfile($out_xscode_dir, 'typemap');
+    $xscode_dot_mk .= "$typemap: ". join(" ", @typemap_deps). "\n";
+    $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_TP) \$@\n\n";
     
     if (defined $out) {
         local ( *OUT, );
