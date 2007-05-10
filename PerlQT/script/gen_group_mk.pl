@@ -40,8 +40,9 @@ sub main {
     my @cont = <IN>;
     close IN;
     my $group_dot_mk = '';
-#    $group_dot_mk .= ".PHONY: _GROUP_DOT_MK\n";
-    $group_dot_mk .= '_GROUP_DOT_MK: $(FORMAT_YAMLS)'. "\n";
+    # update of group.mk also triggers a complete rebuild
+    $group_dot_mk .= "\$(GROUPLIST_DOT_MK): ". 
+      "\$(GROUP_DOT_MK) \$(FORMAT_YAMLS)". "\n";
     $group_dot_mk .= "\t\$(_Q)". 
       "\$(call _remove_dir,\$(OUT_GROUP_DIR))\n";
     $group_dot_mk .= "\t\$(_Q)". 
@@ -66,7 +67,8 @@ sub main {
         }
     }
     # command to create grouplist.mk
-    $group_dot_mk .= "\t\$(CMD_GROUPLIST_MK) ". 
+    $group_dot_mk .= "\t\$(_Q)echo generating \$(GROUPLIST_DOT_MK)\n";
+    $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUPLIST_MK) ". 
       "\$(OUT_GROUP_DIR) \$(GROUPLIST_DOT_MK)\n\n";
     
     if (defined $out) {

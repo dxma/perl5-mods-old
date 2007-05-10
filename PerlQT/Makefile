@@ -126,7 +126,7 @@ PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
-# initially empty, re-defined inside group_list.mk
+# initially empty, re-defined inside grouplist.mk
 GROUP_YAMLS     := $(empty)$(empty)
 
 #################### SUBROUTINES ###############################
@@ -146,7 +146,7 @@ all:
 
 FORCE:
 
-ifneq ($(MAKECMDGOALS),"clean")
+ifndef $(filter clean%,$(MAKECMDGOALS))
 -include $(HEADER_DOT_MK)
 -include $(STRIP_DOT_MK)
 -include $(PREPRO_DOT_MK)
@@ -157,7 +157,6 @@ endif
 
 #################### META RULES and PATTERNS ###################
 
-# ponny
 # FIXME: great performance issue
 $(HEADER_DOT_MK): $(HEADERS)
 	$(shell echo > $@)
@@ -194,10 +193,20 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
-# grouped file list produced by gen_group
-$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) _GROUP_DOT_MK
-
 # generate xs && pm code
+# GROUP_YAMLS from grouplist.mk
+# in case grouplist.mk doesn't exist
+# shell will complain, eval will have nothing to bless
+# grouplist.mk be rebuilt finally
+# priority:
+# group.mk > grouplist.mk > files under OUT_GROUP_DIR
+# on the other hand, grouplist.mk behaves like a 
+# checksum of staff under OUT_GROUP_DIR
+# removal of any file which is produced by latest 
+# $(GROUPLIST_DOT_MK) triggers rebuild of all so-called 
+# 'standard' files
+# TODO: `$(shell ls $(OUT_XSCODE_DIR)/*)' as extra dependency
+#       which enables custom insertion of new class files
 $(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK)                        \
                   $(eval $(shell cat $(GROUPLIST_DOT_MK)))   \
                   $(GROUP_YAMLS)
@@ -237,23 +246,24 @@ clean_format:
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
 
-gen_group  : _GROUP_DOT_MK
+gen_group  : $(GROUPLIST_DOT_MK)
 clean_group:
 	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
-	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
+	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 .PHONY: gen_group clean_group
 
 class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-gen_xscode : $(GROUPLIST_DOT_MK) $(XSCODE_DOT_MK)
-.PHONY: gen_xscode
+gen_xscode  : $(GROUPLIST_DOT_MK) $(XSCODE_DOT_MK) 
+clean_xscode: 
+	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
+.PHONY: gen_xscode clean_xscode
 
 # final assignment
-clean: clean_dot_mk clean_strip clean_prepro clean_parse     \
+clean: clean_dot_mk clean_strip clean_prepro clean_parse \
        clean_format clean_group
 .PHONY: clean
 
-all: gen_group
-
+all: gen_xscode

@@ -32,11 +32,11 @@ EOU
 }
 
 sub main {
-    usage() unless @ARGV < 1;
+    usage() if @ARGV < 1;
     my ( $out_group_dir, $out ) = @ARGV;
     die "directory $out_group_dir not found: $!" unless 
       -e $out_group_dir;
-    local ( *DIR, *FILE );
+    local ( *DIR, );
     opendir DIR, $out_group_dir or die "cannot open dir: $!";
     my @f = map { File::Spec::->catfile($out_group_dir, $_) } 
       grep { not m/^\./io } 
@@ -44,7 +44,8 @@ sub main {
     closedir DIR;
     my $grouplist_dot_mk = 
       "GROUP_YAMLS := ". join(" ", @f). "\n\n";
-    $grouplist_dot_mk .= "\$(GROUP_YAMLS): _GROUP_DOT_MK\n\n";
+    # FIXME: multiple target patterns error
+    #$grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUP_DOT_MK)\n\n";
     
     if (defined $out) {
         local ( *OUT, );
