@@ -112,8 +112,6 @@ GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
 GROUPLIST_DOT_MK:= $(MAKE_ROOT)/grouplist.mk
 XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
 
-_R              := $(shell $(CMD_ECHO) "\n")
-
 #################### TARGETS ###################################
 
 HEADERS         := $(_HEADERS)
@@ -142,7 +140,8 @@ _remove_dir  = echo removing $1; \
 all: 
 .PHONY: all
 
-.SUFFIXES: .pre .h .i .meta .yaml
+.SUFFIXES: .h .i .yaml .meta .function .public .protected .signal \
+                       .typedef .enum
 
 FORCE:
 
@@ -159,17 +158,20 @@ endif
 
 # FIXME: great performance issue
 $(HEADER_DOT_MK): $(HEADERS)
+	$(_Q)echo generating $@
 	$(shell echo > $@)
 	$(foreach i,$(HEADERS),$(shell $(CMD_ECHO) "$i: \n" >> $@))
 
 # strip include directives
 # or preprocessor will croak
 $(STRIP_DOT_MK): $(HEADER_DOT_MK)
+	$(_Q)echo generating $@
 	$(_Q)[[ -d $(OUT_STRIP_DIR) ]] || $(CMD_MKDIR) $(OUT_STRIP_DIR)
 	$(_Q)$(CMD_STRIP_MK) $< $(IN_STRIP_DIR) $(OUT_STRIP_DIR) $@
 
 # preprocess to omit macros
 $(PREPRO_DOT_MK): $(HEADER_DOT_MK)
+	$(_Q)echo generating $@
 	$(_Q)[[ -d $(OUT_PREPRO_DIR) ]] || $(CMD_MKDIR) $(OUT_PREPRO_DIR)
 	$(_Q)$(CMD_PREPRO_MK) $< $(IN_STRIP_DIR) $(IN_PREPRO_DIR) \
         $(OUT_PREPRO_DIR) $@
@@ -177,6 +179,7 @@ $(PREPRO_DOT_MK): $(HEADER_DOT_MK)
 # parse preprocessed headers
 # YAML output
 $(PARSE_DOT_MK): $(HEADER_DOT_MK) 
+	$(_Q)echo generating $@
 	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] || $(CMD_MKDIR) $(OUT_PARSE_DIR)
 	$(_Q)$(CMD_PARSE_MK) $< $(IN_STRIP_DIR) $(IN_PARSE_DIR) \
         $(OUT_PARSE_DIR) $@
@@ -184,12 +187,14 @@ $(PARSE_DOT_MK): $(HEADER_DOT_MK)
 # strip && format parse productions
 # YAML output
 $(FORMAT_DOT_MK): $(HEADER_DOT_MK)
+	$(_Q)echo generating $@
 	$(_Q)[[ -d $(OUT_FORMAT_DIR) ]] || $(CMD_MKDIR) $(OUT_FORMAT_DIR)
 	$(_Q)$(CMD_FORMAT_MK) $< $(IN_STRIP_DIR) $(IN_FORMAT_DIR) \
         $(OUT_FORMAT_DIR) $@
 
 # group formatted yaml 
 $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
+	$(_Q)echo generating $@
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
@@ -208,14 +213,17 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # TODO: `$(shell ls $(OUT_XSCODE_DIR)/*)' as extra dependency
 #       which enables custom insertion of new class files
 $(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK)                        \
-                  $(eval $(shell cat $(GROUPLIST_DOT_MK)))   \
+                  $(eval $(shell                             \
+                  if [[ -e $(GROUPLIST_DOT_MK) ]] ; then cat \
+                  $(GROUPLIST_DOT_MK); fi))                  \
+                  $(eval $(GROUP_YAMLS): $(GROUPLIST_DOT_MK))\
                   $(GROUP_YAMLS)
+	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
         $(XSCODE_DOT_MK)
-
 #################### GENERIC RULES #############################
 
-clean_dot_mk:
+clean_dot_mk :
 	$(_Q)$(call _remove_file,$(HEADER_DOT_MK))
 	$(_Q)$(call _remove_file,$(STRIP_DOT_MK))
 	$(_Q)$(call _remove_file,$(PREPRO_DOT_MK))
@@ -225,29 +233,28 @@ clean_dot_mk:
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: clean_dot_mk
 
-gen_strip  : $(STRIP_HEADERS)
-clean_strip: 
+gen_strip    : $(STRIP_HEADERS)
+clean_strip  : 
 	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR)) 
 .PHONY: gen_strip clean_strip
 
-gen_prepro  : $(PREPRO_HEADERS)
-clean_prepro:
+gen_prepro   : $(PREPRO_HEADERS)
+clean_prepro :
 	$(_Q)$(call _remove_dir,$(OUT_PREPRO_DIR))
 .PHONY: gen_prepro clean_prepro
 
-gen_parse: $(PARSE_HEADERS)
-.PHONY: gen_parse
-clean_parse:
+gen_parse    : $(PARSE_HEADERS)
+clean_parse  :
 	$(_Q)$(call _remove_dir,$(OUT_PARSE_DIR))
-.PHONY: clean_parse
+.PHONY: gen_parse clean_parse
 
-gen_format  : $(FORMAT_YAMLS)
-clean_format: 
+gen_format   : $(FORMAT_YAMLS)
+clean_format : 
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
 
-gen_group  : $(GROUPLIST_DOT_MK)
-clean_group:
+gen_group    : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)
+clean_group  :
 	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 .PHONY: gen_group clean_group
@@ -256,8 +263,9 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-gen_xscode  : $(GROUPLIST_DOT_MK) $(XSCODE_DOT_MK) 
-clean_xscode: 
+gen_xscode   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)       \
+               $(XSCODE_DOT_MK) 
+clean_xscode : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode
 

@@ -44,8 +44,8 @@ sub main {
     closedir DIR;
     my $grouplist_dot_mk = 
       "GROUP_YAMLS := ". join(" ", @f). "\n\n";
-    # FIXME: multiple target patterns error
-    #$grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUP_DOT_MK)\n\n";
+    # static pattern rules for staff under OUT_GROUP_DIR
+    #$grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUPLIST_DOT_MK)\n\n";
     
     if (defined $out) {
         local ( *OUT, );
