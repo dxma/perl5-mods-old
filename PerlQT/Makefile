@@ -145,7 +145,13 @@ all:
 
 FORCE:
 
-ifndef $(filter clean%,$(MAKECMDGOALS))
+ifneq ($(MAKECMDGOALS),)
+_GOALS := $(MAKECMDGOALS)
+else
+_GOALS := all
+endif
+
+ifeq ($(filter clean%,$(_GOALS)),)
 -include $(HEADER_DOT_MK)
 -include $(STRIP_DOT_MK)
 -include $(PREPRO_DOT_MK)
@@ -207,17 +213,15 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # group.mk > grouplist.mk > files under OUT_GROUP_DIR
 # on the other hand, grouplist.mk behaves like a 
 # checksum of staff under OUT_GROUP_DIR
-# removal of any file which is produced by latest 
-# $(GROUPLIST_DOT_MK) triggers rebuild of all so-called 
+# TODO: removal of any file which is produced by latest 
+# gen_group triggers rebuild of all so-called 
 # 'standard' files
-# TODO: `$(shell ls $(OUT_XSCODE_DIR)/*)' as extra dependency
-#       which enables custom insertion of new class files
-$(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK)                        \
-                  $(eval $(shell                             \
-                  if [[ -e $(GROUPLIST_DOT_MK) ]] ; then cat \
-                  $(GROUPLIST_DOT_MK); fi))                  \
-                  $(eval $(GROUP_YAMLS): $(GROUPLIST_DOT_MK))\
-                  $(GROUP_YAMLS)
+# trick to create $(GROUPLIST_DOT_MK) on demand
+# $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
+ifneq ($(filter gen_xscode all,$(_GOALS)),)
+$(eval include $(GROUPLIST_DOT_MK))
+endif
+$(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
         $(XSCODE_DOT_MK)
@@ -268,6 +272,12 @@ gen_xscode   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)       \
 clean_xscode : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode
+
+# internal use
+list_group_yamls : 
+	# $(_GOALS)
+	# $(GROUP_YAMLS)
+.PHONY: list_group_yamls
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \

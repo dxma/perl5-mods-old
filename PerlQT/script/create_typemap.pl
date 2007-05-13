@@ -6,7 +6,7 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 =head1 DESCRIPTION
 
-Create typemap accordingly to all relevant source: 
+Create typemap according to all relevant source: 
 
 <module>.{function.public, function.protected, signal, slot.public,
 slot.protected} and <module>.typedef

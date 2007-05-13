@@ -84,7 +84,11 @@ sub main {
     }
     # deps for typemap
     my $typemap = File::Spec::->catfile($out_xscode_dir, 'typemap');
-    $xscode_dot_mk .= "$typemap: ". join(" ", @typemap_deps). "\n";
+    # GROUP_YAMLS added to make sure all files produced by 
+    # gen_group are present
+    $xscode_dot_mk .= "$typemap: ". 
+      "\$(filter-out \%.meta \%.function,\$(GROUP_YAMLS)) ". 
+        join(" ", @typemap_deps). "\n";
     $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_TP) \$@\n\n";
     
     if (defined $out) {
