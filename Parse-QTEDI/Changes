@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.11    20070513
+	- fix on template type output by bin/format_qtedi_production
+
 0.10    20070429
 	- fix on formatting template type
 
