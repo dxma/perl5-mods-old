@@ -217,12 +217,12 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # TODO: removal of any file which is produced by latest 
 # gen_group triggers rebuild of all so-called 
 # 'standard' files
-# trick to create $(GROUPLIST_DOT_MK) on demand
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
 ifneq ($(filter gen_xscode all,$(_GOALS)),)
-$(eval include $(GROUPLIST_DOT_MK))
-$(eval include $(XSCODE_DOT_MK))
+-include $(GROUPLIST_DOT_MK)
+-include $(XSCODE_DOT_MK)
 endif
+$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
 $(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
@@ -245,22 +245,22 @@ clean_strip  :
 	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR)) 
 .PHONY: gen_strip clean_strip
 
-gen_prepro   : $(PREPRO_HEADERS)
+gen_prepro   : gen_strip $(PREPRO_HEADERS)
 clean_prepro :
 	$(_Q)$(call _remove_dir,$(OUT_PREPRO_DIR))
 .PHONY: gen_prepro clean_prepro
 
-gen_parse    : $(PARSE_HEADERS)
+gen_parse    : gen_prepro $(PARSE_HEADERS)
 clean_parse  :
 	$(_Q)$(call _remove_dir,$(OUT_PARSE_DIR))
 .PHONY: gen_parse clean_parse
 
-gen_format   : $(FORMAT_YAMLS)
+gen_format   : gen_parse $(FORMAT_YAMLS)
 clean_format : 
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
 
-gen_group    : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)
+gen_group    : gen_format $(GROUPLIST_DOT_MK)
 clean_group  :
 	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
@@ -272,8 +272,7 @@ class_sanity_check:
 
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)       \
-               $(XSCODE_DOT_MK) 
+gen_xscode   : gen_group $(XSCODE_DOT_MK)
 clean_xscode : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode
