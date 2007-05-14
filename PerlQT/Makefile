@@ -42,19 +42,19 @@ HEADER_DIR      := $(_HEADER_DIR)
 SCRIPT_DIR      := $(MAKE_ROOT)/script
 
 IN_STRIP_DIR    := $(HEADER_DIR)
-OUT_STRIP_DIR   := $(MAKE_ROOT)/00stripped
+OUT_STRIP_DIR   := $(MAKE_ROOT)/00strip
 
 IN_PREPRO_DIR   := $(OUT_STRIP_DIR)
-OUT_PREPRO_DIR  := $(MAKE_ROOT)/01preprocessed
+OUT_PREPRO_DIR  := $(MAKE_ROOT)/01prepro
 
 IN_PARSE_DIR    := $(OUT_PREPRO_DIR)
-OUT_PARSE_DIR   := $(MAKE_ROOT)/02parsed
+OUT_PARSE_DIR   := $(MAKE_ROOT)/02parse
 
 IN_FORMAT_DIR   := $(OUT_PARSE_DIR)
-OUT_FORMAT_DIR  := $(MAKE_ROOT)/03formatted
+OUT_FORMAT_DIR  := $(MAKE_ROOT)/03format
 
 IN_GROUP_DIR    := $(OUT_FORMAT_DIR)
-OUT_GROUP_DIR   := $(MAKE_ROOT)/04grouped
+OUT_GROUP_DIR   := $(MAKE_ROOT)/04group
 
 IN_XSCODE_DIR   := $(OUT_GROUP_DIR)
 OUT_XSCODE_DIR  := $(MAKE_ROOT)/99xscode
@@ -124,8 +124,9 @@ PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
-# initially empty, re-defined inside grouplist.mk
+# initially empty, overriden inside grouplist.mk
 GROUP_YAMLS     := $(empty)$(empty)
+TYPEMAP         := $(OUT_XSCODE_DIR)/typemap
 
 #################### SUBROUTINES ###############################
 
@@ -220,6 +221,7 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
 ifneq ($(filter gen_xscode all,$(_GOALS)),)
 $(eval include $(GROUPLIST_DOT_MK))
+$(eval include $(XSCODE_DOT_MK))
 endif
 $(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
 	$(_Q)echo generating $@
@@ -234,6 +236,7 @@ clean_dot_mk :
 	$(_Q)$(call _remove_file,$(PARSE_DOT_MK))
 	$(_Q)$(call _remove_file,$(FORMAT_DOT_MK))
 	$(_Q)$(call _remove_file,$(GROUP_DOT_MK))
+	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: clean_dot_mk
 
@@ -267,6 +270,8 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
+# TODO: support of custom-inserted class meta files detection
+#       keep a custom list in seperate file
 gen_xscode   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)       \
                $(XSCODE_DOT_MK) 
 clean_xscode : 
