@@ -111,6 +111,7 @@ FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
 GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
 GROUPLIST_DOT_MK:= $(MAKE_ROOT)/grouplist.mk
 XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
+TYPEMAP_DOT_DEP := $(MAKE_ROOT)/.typemap.dep
 
 #################### TARGETS ###################################
 
@@ -144,7 +145,7 @@ all:
 .SUFFIXES: .h .i .yaml .meta .function .public .protected .signal \
                        .typedef .enum
 
-FORCE:
+FORCE: ;
 
 ifneq ($(MAKECMDGOALS),)
 _GOALS := $(MAKECMDGOALS)
@@ -223,7 +224,7 @@ ifneq ($(filter gen_xscode all,$(_GOALS)),)
 -include $(XSCODE_DOT_MK)
 endif
 $(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
-$(XSCODE_DOT_MK): $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
+$(XSCODE_DOT_MK)   : $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
         $(XSCODE_DOT_MK)
@@ -272,7 +273,7 @@ class_sanity_check:
 
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode   : gen_group $(XSCODE_DOT_MK)
+gen_xscode   : gen_group $(XSCODE_DOT_MK) $(TYPEMAP) 
 clean_xscode : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode

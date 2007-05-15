@@ -35,39 +35,33 @@ EOU
 
 sub main {
     usage() if @ARGV < 2;
-    my ( $grouplist_dot_mk, $in_xscode_dir, $out ) = @ARGV;
-    die "file $grouplist_dot_mk not found" unless 
+    my ( $typemap_dot_dep, $in_xscode_dir, $out ) = @ARGV;
+    die "file $typemap_dot_dep not found" unless 
       -f $grouplist_dot_mk;
     die "dir $in_xscode_dir not found" unless 
       -d $in_xscode_dir;
     
-    local ( *GROUPLIST, *IN_XSCODE, );
-    open GROUPLIST, "<", $grouplist_dot_mk or 
+    local ( *TYPEMAP_DOT_DEP, );
+    open TYPEMAP_DOT_DEP, "<", $typemap_dot_dep or 
       die "cannot open file: $!";
-    # @standard holds all must-have files produced by latest gen_group
-    my @standard = ();
-    while (<GROUPLIST>) {
+    my @functions = ();
+    my @signals   = ();
+    my @slots     = ();
+    while (<TYPEMAP_DOT_DEP>) {
         chomp;
-        # filter-out .function .meta
-        # which has nothing to do with typemap generation
-        if (m/^\s*GROUP\_YAMLS\s*\:\=\s*(.*)$/o) {
-            push @standard, 
-              grep { not m/\.(?:function|meta)$/io }
-                split /\s+/, $1;
-            last;
+        if (m/\.function\.(?:public|protected)$/o) {
+            push @functions, $_;
+        }
+        elsif (m/\.signal$/o) {
+            push @signals, $_;
+        }
+        elsif (m/\.slot\.(?:public|protected)$/o) {
+            push @slots, $_;
         }
     }
-    #print STDERR join("\n", @standard), "\n";
-    opendir IN_XSCODE, $in_xscode_dir or die "cannot open dir: $!";
-    # @present holds all current-existing files under IN_XSCODE_DIR
-    # with .function .meta filtered-out too
-    my @present = grep { not m/\.(?:function|meta)$/io }
-      grep { not m/^\./io } 
-        readdir IN_XSCODE;
-    closedir IN_XSCODE;
+    close TYPEMAP_DOT_DEP;
     
     # generate typemap
-    # FIXME: support custom-patched files in @present
     
     exit 0;
 }

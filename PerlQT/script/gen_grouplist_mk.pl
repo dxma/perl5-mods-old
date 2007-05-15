@@ -44,8 +44,15 @@ sub main {
     closedir DIR;
     my $grouplist_dot_mk = 
       "GROUP_YAMLS := ". join(" ", @f). "\n\n";
-    # deps for $(GROUP_YAMLS)
+    # deps for $(GROUP_YAMLS) for the lost of grouplist.mk 
     $grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUPLIST_DOT_MK)\n\n";
+    # check lost of standard files produced by latest gen_group
+    # force re-run gen_group in that case
+    $grouplist_dot_mk .= "ifneq (\$(filter-out \$(filter ". 
+      "\$(GROUP_YAMLS),\$(addprefix \$(OUT_GROUP_DIR)/,". 
+        "\$(shell ls \$(OUT_GROUP_DIR)))),\$(GROUP_YAMLS)),)\n";
+    $grouplist_dot_mk .= "\$(GROUPLIST_DOT_MK): FORCE\n";
+    $grouplist_dot_mk .= "endif\n\n";
     
     if (defined $out) {
         local ( *OUT, );

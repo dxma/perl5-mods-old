@@ -40,7 +40,6 @@ sub main {
     my $xscode_dot_mk = '';
     my $excl_std_dot_meta = File::Spec::->catfile(
         $in_xscode_dir, 'std.meta');
-    my @typemap_deps = ();
     
     foreach my $m (glob(File::Spec::->catfile(
         $in_xscode_dir, '*.meta'))) {
@@ -51,19 +50,8 @@ sub main {
         my @deps = grep { not m/\.function$/io } 
           glob(File::Spec::->catfile(
               $in_xscode_dir, "$classname.*"));
-        # no need to include classname.meta
-        push @typemap_deps, grep { not m/\.meta$/io } @deps;
         # skip namespace std
         unless ($m eq $excl_std_dot_meta) {
-            # deps for module.xs
-            $xscode_dot_mk .= File::Spec::->catfile(
-                $out_xscode_dir, "xs", "$classname.xs"). 
-                  ": ". join(" ", @deps). "\n";
-            # rule for module.xs
-            $xscode_dot_mk .= 
-              "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
-        
             # get module name from .meta
             local ( *META );
             open META, "<", $m or die "cannot open file $m: $!";
@@ -73,6 +61,16 @@ sub main {
             my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
             my @module = split /\:\:/, $module;
         
+            # deps for module.xs
+            $xscode_dot_mk .= File::Spec::->catfile(
+                $out_xscode_dir, "xs", @module, "$classname.xs"). 
+                  ": ". join(" ", @deps). "\n";
+            # rule for module.xs
+            $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
+            $xscode_dot_mk .= 
+              "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
+            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
+        
             # deps for module.pm
             $xscode_dot_mk .= File::Spec::->catfile(
                 $out_xscode_dir, "pm", @module, 
@@ -81,21 +79,27 @@ sub main {
                       $in_xscode_dir,
                       "$classname.function.public"). "\n"; 
             # rule for module.pm
+            $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
             $xscode_dot_mk .= 
               "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
             $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
         }
     }
     # deps for typemap
-    # GROUP_YAMLS added to make sure all files produced by 
-    # gen_group are present
+    # currently strictly depends on all standard files from gen_group
     $xscode_dot_mk .= "\$(TYPEMAP): ". 
-      "\$(filter-out \%.meta \%.function,\$(GROUP_YAMLS)) ". 
-        join(" ", @typemap_deps). "\n";
+      "\$(filter-out \%.meta \%.function,\$(GROUP_YAMLS)) \n";
+    # ugly way to get deps for typemap
+    $xscode_dot_mk .= "\t\$(shell \$(CMD_RM) \$(TYPEMAP_DOT_DEP))\n";
+    $xscode_dot_mk .= "\t\$(foreach i,\$^,". 
+      "\$(shell \$(CMD_ECHO) \$(i) >> \$(TYPEMAP_DOT_DEP)))\n";
+    #$xscode_dot_mk .= "\t# \$^\n";
+    
+    $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
     $xscode_dot_mk .= 
       "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
     $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_TP) ". 
-      "\$(GROUPLIST_DOT_MK) \$(IN_XSCODE_DIR) \$@\n\n";
+      "\$(TYPEMAP_DOT_DEP) \$(IN_XSCODE_DIR) \$@\n\n";
     
     if (defined $out) {
         local ( *OUT, );
