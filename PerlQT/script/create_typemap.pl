@@ -28,7 +28,7 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <grouplist.mk> <in_xscode_dir> [<out_typemap>]
+usage: $0 <typemap.dep> <in_xscode_dir> [<out_typemap>]
 EOU
     exit 1;
 }
@@ -37,7 +37,7 @@ sub main {
     usage() if @ARGV < 2;
     my ( $typemap_dot_dep, $in_xscode_dir, $out ) = @ARGV;
     die "file $typemap_dot_dep not found" unless 
-      -f $grouplist_dot_mk;
+      -f $typemap_dot_dep;
     die "dir $in_xscode_dir not found" unless 
       -d $in_xscode_dir;
     
