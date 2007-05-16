@@ -294,6 +294,7 @@ Format a function pointer entry.
      - [function property1]
      ...
   NAME          : [T_FPOINTER_BLAH]
+  NAME_ORIGIN   : [BLAH]
   PROTOTYPE     : [prototype string]
   DEFAULT_VALUE : [default value, mostly 0]
 
@@ -333,6 +334,7 @@ sub __format_fpointer {
     # and cat function prototype string
     my $FP_TYPE_PREFIX = 'T_FPOINTER_';
     my $fpname;
+    my $fpname_origin;
     my $fproto = $fpreturn_type. ' ';
     
     my $get_parameters = sub {
@@ -363,16 +365,19 @@ sub __format_fpointer {
         # keep namespace prefix untouched
         my $fullname = shift;
         my @n = split /\:\:/, $fullname;
-        ( my $n = $n[-1] ) =~ s/^(\*+)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
-        $n[-1] = $n;
-        return join('::', @n);
+        ( my $patched = $n[-1] ) =~
+          s/^(\*+)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
+        my $origin = $2;
+        return [ join("::", @n[0 .. -1], $patched), 
+             join("::", @n[0 .. -1], $origin)];
     };
     
     if (ref $entry->{name} eq 'HASH') {
         # well, a function pointer which will return 
         # another function pointer
         my $name = $entry->{name}->{name};
-        $fpname = $patch_fpointer_name->($name);
+        ( $fpname, $fpname_origin ) = 
+          @{ $patch_fpointer_name->($name) };
         $fproto .= '(('. $fpname. ')(';
         # process inner params
         my $params = [];
@@ -381,7 +386,8 @@ sub __format_fpointer {
     }
     else {
         my $name = $entry->{name};
-        $fpname = $patch_fpointer_name->($name);
+        ( $fpname, $fpname_origin ) = 
+          @{ $patch_fpointer_name->($name) };
         $fproto .= '('. $fpname. ')';
     }
     # strip * inside $fpname
@@ -395,9 +401,10 @@ sub __format_fpointer {
     delete $entry->{name};
     delete $entry->{return};
     delete $entry->{parameter} if exists $entry->{parameter};
-    $entry->{NAME} = $fpname;
-    $entry->{PROTOTYPE} = $fproto;
-    $entry->{PROPERTY} = $properties if @$properties;
+    $entry->{NAME}        = $fpname;
+    $entry->{NAME_ORIGIN} = $fpname_origin;
+    $entry->{PROTOTYPE}   = $fproto;
+    $entry->{PROPERTY}    = $properties if @$properties;
     if (exists $entry->{default}) {
         $entry->{DEFAULT_VALUE} = $entry->{default};
         delete $entry->{default};
@@ -760,12 +767,14 @@ Value entry could be of type:
   # spec 
   
   ---
-  type    : typedef
-  subtype : class/struct/enum/union/fpointer/simple
-  FROM    : [from type name for simple typedef    ]
-            [a hashref for class/struct/enum/union]
-            [prototype string for fpointer        ]
-  TO      : [to type name]
+  type      : typedef
+  subtype   : class/struct/enum/union/fpointer/simple
+  FROM      : [from type name for simple typedef    ]
+              [a hashref for class/struct/enum/union]
+              [type alias for function pointer      ]
+  TO        : [to type name]
+              [original name of function pointer    ]
+  PROTOTYPE : [prototype string of function pointer ]
 
 =back
 
@@ -780,8 +789,9 @@ sub __format_typedef {
         if ($entry->{subtype} eq 'fpointer') {
             # fpointer
             __format_fpointer($entry->{body});
-            $entry->{FROM} = $entry->{body}->{PROTOTYPE};
-            $entry->{TO}   = $entry->{body}->{NAME};
+            $entry->{PROTOTYPE} = $entry->{body}->{PROTOTYPE};
+            $entry->{TO}        = $entry->{body}->{NAME_ORIGIN};
+            $entry->{FROM}      = $entry->{body}->{NAME};
         }
         else {
             # other container type

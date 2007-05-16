@@ -195,6 +195,9 @@ sub __process_typedef {
     elsif ($entry->{subtype} eq 'fpointer') {
         push @$entries_to_create, 
           [$entry->{FROM}, $entry->{TO}];
+        # keep prototype info for future use
+        push @$entries_to_create, 
+          [$entry->{PROTOTYPE}, $entry->{FROM}];
         # TODO: template type inside fpointer
     }
     else {
