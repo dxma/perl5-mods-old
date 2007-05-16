@@ -88,7 +88,7 @@ sub main {
     # deps for typemap
     # currently strictly depends on all standard files from gen_group
     $xscode_dot_mk .= "\$(TYPEMAP): \$(MODULE_DOT_CONF) ". 
-      "\$(filter-out \%.meta \%.function,\$(GROUP_YAMLS)) \n";
+      "\$(filter-out \%.friend \%.meta \%.function,\$(GROUP_YAMLS)) \n";
     # ugly way to get deps for typemap
     $xscode_dot_mk .= "\t\$(shell \$(CMD_RM) \$(TYPEMAP_DOT_DEP))\n";
     $xscode_dot_mk .= "\t\$(foreach i,\$^,". 

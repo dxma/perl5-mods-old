@@ -5,6 +5,9 @@ use strict;
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use YAML ();
 use File::Spec ();
+use Config;
+# make sure typemap exists
+use ExtUtils::MakeMaker ();
 
 =head1 DESCRIPTION
 
@@ -35,6 +38,25 @@ EOU
     exit 1;
 }
 
+# for AUTOLOAD
+sub PTR() { 0 }
+sub REF() { 1 }
+sub const {
+    my $entry = shift;
+    $entry->{const} = 1;
+    return $entry;
+}
+sub unsigned {
+    my $entry = shift;
+    $entry->{unsigned} = 1;
+    return $entry;
+}
+sub signed {
+    my $entry = shift;
+    $entry->{signed} = 1;
+    return $entry;
+}
+
 =over
 
 =item _load_yaml
@@ -54,6 +76,35 @@ sub _load_yaml {
     close FILE;
     my $hcont= YAML::Load($cont);
     return $hcont;
+}
+
+=over 
+
+=item _read_typemap
+
+Read supported type list inside a typemap file. Store each as a key of
+hash passed-in. 
+
+=back
+
+=cut
+
+sub _read_typemap {
+    my ($typemap_file, $typemap, ) = @_;
+    die "file $typemap_file not found" unless -f $typemap_file;
+    local ( *TYPEMAP, );
+    open TYPEMAP, "<", $typemap_file or die "cannot open file: $!";
+    while (<TYPEMAP>) {
+        chomp;
+        last if m/^INPUT\s*$/o;
+        next if m/^\#/io;
+        next if m/^\s*$/io;
+        my @t = split /\s+/, $_;
+        pop @t;
+        my $key = join(" ", @t);
+        $typemap->{$key} = 1;
+    }
+    close TYPEMAP;
 }
 
 sub main {
@@ -139,14 +190,46 @@ sub main {
             }
         }
     }
-#     foreach my $n (keys %type) {
-#         print STDERR "name: ", $n, "\n";
-#         print STDERR join("\n", @{$type{$n}}), "\n";
-#     }
     # generate typemap
+    # transform each type string into a function expression
+    # each function contribute certain information
+    # which will finally construct a self-deterministic type structure
+    # missing functions are handled by AUTOLOAD
+    # lookup into %typedef
+    # first the same namespace
+    # then default namespace by $default_namespace
     my $known   = {};
+    # in case failed lookup, push it into $unknown
     my $unknown = {};
-    
+    # locate all known types from built-in typemap
+    my $global_typemap = {};
+    my $global_typemap_file = File::Spec::->catfile(
+        $Config{privlib}, 'ExtUtils', 'typemap');
+    _read_typemap($global_typemap_file, $global_typemap);
+    foreach my $n (keys %type) {
+        #print STDERR "name: ", $n, "\n";
+        foreach my $t (@{$type{$n}}) {
+            my $type = $t;
+            # simply normalize
+            $type =~ s/^\s+//gio;
+            $type =~ s/\s+$//gio;
+            $type =~ s/\s+/ /gio;
+            #print STDERR "type: ", $type, "\n";
+            unless (exists $global_typemap->{$type}) {
+                # transform
+                # '<' => '('
+                $type =~ s/\</(/gio;
+                # '>' => ')'
+                $type =~ s/\>/)/gio;
+                # '*' => ', PTR'
+                $type =~ s/\*/, PTR/gio;
+                # '&' => ', REF'
+                $type =~ s/\&/, REF/gio;
+                #print STDERR $type, "\n";
+                $type = 'transform( '. $type .' )';
+            }
+        }
+    }
     
     exit 0;
 }

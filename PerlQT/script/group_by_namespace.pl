@@ -350,6 +350,17 @@ sub __process_function {
         }
         delete $entry->{PROPERTY};
     }
+    # check function pointer parameter
+    # push into typedef
+    if (exists $entry->{PARAMETER}) {
+        foreach my $p (@{$entry->{PARAMETER}}) {
+            if ($p->{TYPE} =~ m/^T\_FPOINTER\_/o) {
+                __process_typedef(
+                    __gen_simple_typedef($p->{NAME}, $p->{TYPE}), 
+                    $entries, $namespace, $type, $visibility);
+            }
+        }
+    }
     # store
     if ($is_friend_decl) {
         # friend function declaration pushed into <namespace>.friend
