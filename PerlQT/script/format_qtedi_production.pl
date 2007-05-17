@@ -547,6 +547,17 @@ sub __format_function {
             $pname = $p->{PROTOTYPE};
             $ptype = $p->{NAME};
         }
+        elsif ($pname_with_type =~ m/\[/io) {
+            # array pointer
+            # TODO: ugly match
+            # similar to fpointer
+            # store variable name in TYPE
+            # fall decl string    in NAME
+            $pname_with_type =~ s{^(.*?)\b(\w+)\b(\s*\[)}
+                                 {$1.'T_ARRAY_'.uc($2).$3}eio;
+            $ptype = 'T_ARRAY_'. uc($2);
+            $pname = $pname_with_type;
+        }
         else {
             # simple && template
             # split param name [optional] and param type

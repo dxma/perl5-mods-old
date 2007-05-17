@@ -1,0 +1,88 @@
+# any type could be simply marshalled goes here
+# most of which are basic C types
+# refered by script/create_typemap.pl
+
+# begin from /usr/lib/perl5/5.8.8/ExtUtils/typemap
+int                     T_IV
+unsigned                T_UV
+unsigned int            T_UV
+long                    T_IV
+unsigned long           T_UV
+short                   T_IV
+unsigned short          T_UV
+char                    T_CHAR
+unsigned char           T_U_CHAR
+char *                  T_PV
+unsigned char *         T_PV
+const char *            T_PV
+caddr_t                 T_PV
+wchar_t *               T_PV
+wchar_t                 T_IV
+# bool_t is defined in <rpc/rpc.h>
+bool_t                  T_IV
+size_t                  T_UV
+ssize_t                 T_IV
+time_t                  T_NV
+unsigned long *         T_OPAQUEPTR
+char **                 T_PACKEDARRAY
+void *                  T_PTR
+Time_t *                T_PV
+SV *                    T_SV
+SVREF                   T_SVREF
+AV *                    T_AVREF
+HV *                    T_HVREF
+CV *                    T_CVREF
+
+IV                      T_IV
+UV                      T_UV
+NV                      T_NV
+I32                     T_IV
+I16                     T_IV
+I8                      T_IV
+STRLEN                  T_UV
+U32                     T_U_LONG
+U16                     T_U_SHORT
+U8                      T_UV
+Result                  T_U_CHAR
+Boolean                 T_BOOL
+float                   T_FLOAT
+double                  T_DOUBLE
+SysRet                  T_SYSRET
+SysRetLong              T_SYSRET
+FILE *                  T_STDIO
+PerlIO *                T_INOUT
+FileHandle              T_PTROBJ
+InputStream             T_IN
+InOutStream             T_INOUT
+OutputStream            T_OUT
+bool                    T_BOOL
+# end from /usr/lib/perl5/5.8.8/ExtUtils/typemap
+
+# const char
+# uchar
+# const int
+# const uchar
+# const uint
+# const short
+# const ushort
+# const std::sting
+# const wchar_t
+# qint16
+# quint16
+# qint32
+# quint32
+# qint64
+# quint64
+# qint8
+# quint8
+# qlonglong
+# qulonglong
+# qreal
+# signed
+# signed int
+# signed long
+# signled short
+# uint
+# ulong
+# ushort
+

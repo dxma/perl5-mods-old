@@ -1,0 +1,4 @@
+# any type should be ignored declared here
+# format is the same as normal typemap
+void		T_IGNORE_ME
+...		T_IGNORE_ME

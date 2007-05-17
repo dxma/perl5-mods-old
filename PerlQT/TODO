@@ -1,3 +1,4 @@
 1. re-creation of deleted file(s) under 04grouped
 2. support of custom-inserted file(s) in each phase
+3. use GetOpt::Long to get cmdline params
 99.performance enhancement (cache parse module, etc.) 

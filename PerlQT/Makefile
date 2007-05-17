@@ -111,7 +111,12 @@ FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
 GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
 GROUPLIST_DOT_MK:= $(MAKE_ROOT)/grouplist.mk
 XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
-TYPEMAP_DOT_DEP := $(MAKE_ROOT)/.typemap.dep
+
+# temple use
+TYPEMAP_DOT_DEP    := $(MAKE_ROOT)/.typemap.dep
+# used by script/create_typemap.pl
+TYPEMAP_DOT_IGNORE := $(MAKE_ROOT)/typemap.ignore
+TYPEMAP_DOT_SIMPLE := $(MAKE_ROOT)/typemap.simple
 
 #################### TARGETS ###################################
 

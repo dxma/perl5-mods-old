@@ -33,25 +33,27 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <module.conf> <typemap.dep> <in_xscode_dir> [<out_typemap>]
+usage: $0 <module.conf> <typemap.ignore> <typemap.simple> <typemap.dep> <in_xscode_dir> [<out_typemap>]
 EOU
     exit 1;
 }
 
 # for AUTOLOAD
-sub PTR() { 0 }
-sub REF() { 1 }
-sub const {
+# prototype required
+# FIXME: ref of ptr, ptr of ref, ptr of ptr
+sub PTR(;$) { 0 }
+sub REF(;$) { 1 }
+sub const($) {
     my $entry = shift;
     $entry->{const} = 1;
     return $entry;
 }
-sub unsigned {
+sub unsigned($) {
     my $entry = shift;
     $entry->{unsigned} = 1;
     return $entry;
 }
-sub signed {
+sub signed($) {
     my $entry = shift;
     $entry->{signed} = 1;
     return $entry;
@@ -99,20 +101,28 @@ sub _read_typemap {
         last if m/^INPUT\s*$/o;
         next if m/^\#/io;
         next if m/^\s*$/io;
+        next if m/^TYPEMAP\s*$/o;
         my @t = split /\s+/, $_;
-        pop @t;
-        my $key = join(" ", @t);
-        $typemap->{$key} = 1;
+        my $v = pop @t;
+        my $k = join(" ", @t);
+        $typemap->{$k} = $v;
     }
     close TYPEMAP;
 }
 
 sub main {
-    usage() if @ARGV < 3;
-    my ( $module_dot_conf, $typemap_dot_dep, $in_xscode_dir, 
+    usage() if @ARGV < 5;
+    # FIXME: GetOpt::Long
+    #        see script/gen_xscode_mk.pl
+    my ( $module_dot_conf, $typemap_dot_ignore, $typemap_dot_simple, 
+         $typemap_dot_dep, $in_xscode_dir, 
          $out ) = @ARGV;
     die "file $module_dot_conf not found" unless 
       -f $module_dot_conf;
+    die "file $typemap_dot_ignore not found" unless 
+      -f $typemap_dot_ignore;
+    die "file $typemap_dot_simple not found" unless 
+      -f $typemap_dot_simple;
     die "file $typemap_dot_dep not found" unless 
       -f $typemap_dot_dep;
     die "dir $in_xscode_dir not found" unless 
@@ -201,11 +211,18 @@ sub main {
     my $known   = {};
     # in case failed lookup, push it into $unknown
     my $unknown = {};
-    # locate all known types from built-in typemap
+    # locate all known types from global typemap
     my $global_typemap = {};
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
     _read_typemap($global_typemap_file, $global_typemap);
+    # locate those types which should be ignored
+    my $ignore_typemap = {};
+    _read_typemap($typemap_dot_ignore, $ignore_typemap);
+    # locate simple types
+    my $simple_typemap = {};
+    _read_typemap($typemap_dot_simple, $simple_typemap);
+    
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
         foreach my $t (@{$type{$n}}) {
@@ -214,17 +231,34 @@ sub main {
             $type =~ s/^\s+//gio;
             $type =~ s/\s+$//gio;
             $type =~ s/\s+/ /gio;
-            #print STDERR "type: ", $type, "\n";
-            unless (exists $global_typemap->{$type}) {
+            unless (exists $global_typemap->{$type} or 
+                      exists $ignore_typemap->{$type}) {
                 # transform
+                # template to a function call
                 # '<' => '('
                 $type =~ s/\</(/gio;
                 # '>' => ')'
                 $type =~ s/\>/)/gio;
+                # transform rule for coutinous (two or more) 
+                # pointer ('*') or reference ('&')
+                # * (*|&) => PTR (PTR|REF)
+                # which means second will ALWAYS be a parameter of 
+                # the first
+                # for instance:
+                # '* & *' => 'PTR REF PTR' == 'PTR( REF( PTR ))'
+                # FIRST GREDDY IS IMPORTANT
+                while ($type =~ 
+                         s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
+                          {$1. ($2 eq '*' ? ' PTR' : ' REF') }gei) {
+                    1;
+                }
+                # leading or standalone pointer or reference
                 # '*' => ', PTR'
                 $type =~ s/\*/, PTR/gio;
                 # '&' => ', REF'
                 $type =~ s/\&/, REF/gio;
+                #print STDERR "orig : ", $t, "\n";
+                #print STDERR "patch: ", $type, "\n";
                 #print STDERR $type, "\n";
                 $type = 'transform( '. $type .' )';
             }

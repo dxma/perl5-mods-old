@@ -350,13 +350,20 @@ sub __process_function {
         }
         delete $entry->{PROPERTY};
     }
-    # check function pointer parameter
-    # push into typedef
     if (exists $entry->{PARAMETER}) {
         foreach my $p (@{$entry->{PARAMETER}}) {
             if ($p->{TYPE} =~ m/^T\_FPOINTER\_/o) {
+                # check function pointer parameter
+                # push into typedef
                 __process_typedef(
                     __gen_simple_typedef($p->{NAME}, $p->{TYPE}), 
+                    $entries, $namespace, $type, $visibility);
+            }
+            elsif ($p->{TYPE} =~ m/^T\_ARRAY\_/o) {
+                # check array pointer parameter
+                # push into typedef
+                __process_typedef(
+                    __gen_simple_typedef($p->{NAME}, $p->{TYPE}),
                     $entries, $namespace, $type, $visibility);
             }
         }
