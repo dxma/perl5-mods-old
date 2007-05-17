@@ -58,31 +58,49 @@ OutputStream            T_OUT
 bool                    T_BOOL
 # end from /usr/lib/perl5/5.8.8/ExtUtils/typemap
 
-# const char
-# uchar
-# const int
-# const uchar
+long long		T_IV
+signed long long	T_IV
+unsigned long long	T_UV
+# typedef inside QtCore/qglobal.h
+#qint8			T_IV
+#quint8			T_UV
+#qint16			T_IV
+#quint16			T_UV
+#qint32			T_IV
+#quint32			T_UV
+#qint64			T_IV
+#quint64			T_UV
+#qlonglong		T_IV
+#qulonglong		T_UV
+#qreal			T_DOUBLE
+#qreal			T_FLOAT
+signed int		T_IV
+signed short		T_IV
+signed long		T_IV
+uint			T_UV
+ushort			T_UV
+ulong			T_UV
+
+uchar			T_U_CHAR
+# va_list could be either char* or void*
+#va_list			T_PV
+va_list			T_PTR
+
+# FIXME
+# const char		T_C_CHAR
+# const uchar		T_C_U_CHAR
+# const int		T_C_INT
 # const uint
 # const short
 # const ushort
+# const long
+# const ulong
+# std::string
 # const std::sting
 # const wchar_t
-# qint16
-# quint16
-# qint32
-# quint32
-# qint64
-# quint64
-# qint8
-# quint8
-# qlonglong
-# qulonglong
-# qreal
-# signed
-# signed int
-# signed long
-# signled short
-# uint
-# ulong
-# ushort
 
+#INPUT
+#T_C_CHAR
+#        $var = const_cast<const char>((char)*SvPV_nolen($arg))
+#T_C_U_CHAR
+#        $var = const_cast<const unsigned char>((unsigned char)SvUV($arg))

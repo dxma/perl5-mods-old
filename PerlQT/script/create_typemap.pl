@@ -232,7 +232,8 @@ sub main {
             $type =~ s/\s+$//gio;
             $type =~ s/\s+/ /gio;
             unless (exists $global_typemap->{$type} or 
-                      exists $ignore_typemap->{$type}) {
+                      exists $simple_typemap->{$type} or 
+                        exists $ignore_typemap->{$type}) {
                 # transform
                 # template to a function call
                 # '<' => '('

@@ -587,8 +587,20 @@ sub __format_function {
                     }
                 }
             }
-            # left is type
+            # left are type items
             @ptype = @pvalues;
+            # workaround for '(un)signed' keyword
+            if ($ptype[$#ptype] eq 'signed' or 
+                  $ptype[$#ptype] eq 'unsigned') {
+                # shift one item back from @pname
+                push @ptype, shift @pname;
+            }
+            # workaround for 'long long' keyword
+            if ($ptype[$#ptype] eq 'long' and 
+                  @pname and $pname[0] eq 'long') {
+                # (un)signed long long
+                push @ptype, shift @pname;
+            }
             # format param name
             $pname = @pname ? join('', @pname) : '';
             # format param type
