@@ -9,6 +9,8 @@ use Config;
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
 
+our $AUTOLOAD;
+
 =head1 DESCRIPTION
 
 Create typemap according to all relevant source: 
@@ -246,11 +248,11 @@ sub main {
                 # which means second will ALWAYS be a parameter of 
                 # the first
                 # for instance:
-                # '* & *' => 'PTR REF PTR' == 'PTR( REF( PTR ))'
+                # '* & *' => 'PTR( REF( PTR ))'
                 # FIRST GREDDY IS IMPORTANT
                 while ($type =~ 
                          s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
-                          {$1. ($2 eq '*' ? ' PTR' : ' REF') }gei) {
+                          {$1.'('. ($2 eq '*' ? ' PTR' : ' REF'. ')') }gei) {
                     1;
                 }
                 # leading or standalone pointer or reference
@@ -260,8 +262,12 @@ sub main {
                 $type =~ s/\&/, REF/gio;
                 #print STDERR "orig : ", $t, "\n";
                 #print STDERR "patch: ", $type, "\n";
-                #print STDERR $type, "\n";
+                # FIXME: const takes one additional parameter
+                # mask bareword as a function call without any parameter
+                $type =~ s/\b(\w+)\b(?!(?:\(|\:))/$1()/gio;
                 $type = 'transform( '. $type .' )';
+                print $type, "\n";
+                eval $type;
             }
         }
     }
@@ -270,3 +276,7 @@ sub main {
 }
 
 &main;
+
+sub AUTOLOAD {
+    #print $AUTOLOAD, "\n";
+}
