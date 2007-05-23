@@ -62,6 +62,8 @@ sub signed($) {
     $entry->{signed} = 1;
     return $entry;
 }
+# mask CORE::int
+*CORE::GLOBAL::int = sub {};
 
 =over
 
@@ -230,13 +232,20 @@ sub main {
     # const takes one additional parameter
     # a tiny Parse::RecDescent grammar to work on
     # grabbing const parameter
-    # QMenuBar * const
     my $const_grammar = q{
     start : next_const const_body const_remainder 
-            { $main::TYPE = $item[1]. "( ". $item[2]. " ) ". $item[3]; } 
+            { $main::TYPE = $item[1]->[1]. "( ". $item[2]. " ) ". $item[3]; }
+            { if ($item[2] eq '') { 
+                  # something like 'QMenuBar * const'
+                  $main::TYPE = $item[1]->[0].", ".$main::TYPE;
+              } else {
+                  $main::TYPE = $item[1]->[0]. $main::TYPE;
+              }
+            }
     const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
                            | { $return = ''; }
-    next_const             : m/^(.*?\bconst)\s*(?!\()/o { $return = $1; } 
+    next_const             : m/^(.*?)\b(const)\s*(?!\()/o 
+                             { $return = [$1, $2]; } 
     const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
     next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
     const_body     : const_body_simple ...!'(' { $return = $item[1]; }
@@ -294,11 +303,13 @@ sub main {
                 # '&' => ', REF'
                 $TYPE =~ s/\&/, REF/gio;
                 
-                # mask bareword as a function call without any parameter
-                $TYPE =~ s/\b(\w+)\b(?!(?:\(|\:))/$1()/gio;
-                #print $TYPE, "\n";
+                # mask bareword as a function call without any
+                # parameter
+                # skip '(un)signed'
+                $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
+                print $TYPE, "\n";
                 $TYPE = 'transform( '. $TYPE .' )';
-                #eval $TYPE;
+                eval $TYPE;
             }
         }
     }
