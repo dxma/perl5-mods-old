@@ -10,9 +10,6 @@ use Parse::RecDescent ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
 
-our $AUTOLOAD;
-our $TYPE;
-
 =head1 DESCRIPTION
 
 Create typemap according to all relevant source: 
@@ -64,6 +61,19 @@ sub signed($) {
 }
 # mask CORE::int
 *CORE::GLOBAL::int = sub {};
+
+# internal use
+our $AUTOLOAD;
+our $TYPE;
+
+our $NAMESPACE_DELIMITER = '__';
+our $DEFAULT_NAMESPACE   = '';
+our $CURRENT_NAMESPACE   = '';
+
+our %TYPE_DICTIONARY     = ();
+our %SIMPLE_TYPEMAP      = ();
+our %GLOBAL_TYPEMAP      = ();
+our %IGNORE_TYPEMAP      = ();
 
 =over
 
@@ -156,17 +166,18 @@ sub main {
     }
     # get default namespace from module.conf
     my $hconf = _load_yaml($module_dot_conf);
-    my $default_namespace = $hconf->{default_namespace};
+    our $DEFAULT_NAMESPACE;
+    $DEFAULT_NAMESPACE = $hconf->{default_namespace};
     # pre-cache relevant source to mask the whole process 
     # a transactional look
     # pre-cache all type info
-    my %typedef = ();
+    our %TYPE_DICTIONARY;
     foreach my $f (@typedef) {
         #print STDERR $f, "\n";
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.typedef$//o;
         $n =~ s/\_\_/::/gio;
-        $typedef{$n} = _load_yaml($f);
+        $TYPE_DICTIONARY{$n} = _load_yaml($f);
     }
     # pre-cache all function info
     my %method = ();
@@ -217,17 +228,15 @@ sub main {
     my $known   = {};
     # in case failed lookup, push it into $unknown
     my $unknown = {};
+    our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP, );
     # locate all known types from global typemap
-    my $global_typemap = {};
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
-    _read_typemap($global_typemap_file, $global_typemap);
+    _read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
     # locate those types which should be ignored
-    my $ignore_typemap = {};
-    _read_typemap($typemap_dot_ignore, $ignore_typemap);
+    _read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
     # locate simple types
-    my $simple_typemap = {};
-    _read_typemap($typemap_dot_simple, $simple_typemap);
+    _read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
     
     # const takes one additional parameter
     # a tiny Parse::RecDescent grammar to work on
@@ -259,17 +268,19 @@ sub main {
     };
     my $parser = Parse::RecDescent::->new($const_grammar)
       or die "Bad grammar!";
+    our $CURRENT_NAMESPACE;
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
+        $CURRENT_NAMESPACE = $n;
         foreach my $t (@{$type{$n}}) {
             our $TYPE = $t;
             # simply normalize
             $TYPE =~ s/^\s+//gio;
             $TYPE =~ s/\s+$//gio;
             $TYPE =~ s/\s+/ /gio;
-            unless (exists $global_typemap->{$TYPE} or 
-                      exists $simple_typemap->{$TYPE} or 
-                        exists $ignore_typemap->{$TYPE}) {
+            unless (exists $GLOBAL_TYPEMAP{$TYPE} or 
+                      exists $SIMPLE_TYPEMAP{$TYPE} or 
+                        exists $IGNORE_TYPEMAP{$TYPE}) {
                 # transform
                 # template to a function call
                 # '<' => '('
@@ -277,10 +288,7 @@ sub main {
                 # '>' => ')'
                 $TYPE =~ s/\>/)/gio;
                 #print STDERR "orig : ", $t, "\n";
-                #my $i = 0;
                 while ($TYPE =~ m/\bconst\s*(?!\()/o) {
-                    #print $i++, "\n";
-                    #print $TYPE, "\n";
                     defined $parser->start($TYPE) or die "Parse failed!";
                 }
                 #print STDERR "patch: ", $TYPE, "\n";
@@ -302,13 +310,15 @@ sub main {
                 $TYPE =~ s/\*/, PTR/gio;
                 # '&' => ', REF'
                 $TYPE =~ s/\&/, REF/gio;
-                
                 # mask bareword as a function call without any
                 # parameter
                 # skip '(un)signed'
                 $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
-                print $TYPE, "\n";
-                $TYPE = 'transform( '. $TYPE .' )';
+                # '::' to $NAMESPACE_DELIMITER
+                our $NAMESPACE_DELIMITER;
+                $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
+                #print $TYPE, "\n";
+                $TYPE = '_transform( '. $TYPE .' )';
                 eval $TYPE;
             }
         }
@@ -320,5 +330,38 @@ sub main {
 &main;
 
 sub AUTOLOAD {
-    #print $AUTOLOAD, "\n";
+    our ( $DEFAULT_NAMESPACE, $NAMESPACE_DELIMITER, 
+          %TYPE_DICTIONARY, $CURRENT_NAMESPACE, 
+          %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, );
+    my $package = __PACKAGE__;
+    ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
+    my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
+    my $type = pop @namespace;
+    if (@namespace) {
+        my $namespace = join("::", @namespace);
+        if (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
+        }
+        elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
+        }
+        elsif (exists $GLOBAL_TYPEMAP{$type} or 
+                 exists $SIMPLE_TYPEMAP{$type}) {
+        }
+        else {
+            # unknown
+            print join("::", @namespace, $type), "\n";
+        }
+    }
+    else {
+        if (exists $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$type}) {
+        }
+        elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
+        }
+        elsif (exists $GLOBAL_TYPEMAP{$type} or 
+                 exists $SIMPLE_TYPEMAP{$type}) {
+        }
+        else {
+            # unknown
+            print $CURRENT_NAMESPACE, ": ", $type, "\n";
+        }
+    }
 }
