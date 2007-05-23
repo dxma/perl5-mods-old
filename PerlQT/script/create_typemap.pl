@@ -227,6 +227,29 @@ sub main {
     my $simple_typemap = {};
     _read_typemap($typemap_dot_simple, $simple_typemap);
     
+    # const takes one additional parameter
+    # a tiny Parse::RecDescent grammar to work on
+    # grabbing const parameter
+    # QMenuBar * const
+    my $const_grammar = q{
+    start : next_const const_body const_remainder 
+            { $main::TYPE = $item[1]. "( ". $item[2]. " ) ". $item[3]; } 
+    const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
+                           | { $return = ''; }
+    next_const             : m/^(.*?\bconst)\s*(?!\()/o { $return = $1; } 
+    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
+    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
+    const_body     : const_body_simple ...!'(' { $return = $item[1]; }
+                   | const_body_loop           { $return = $item[1]; } 
+                   |                           { $return = '';       }
+    const_body_loop: next_const_body_token 
+                     ( '(' <commit> const_body_loop ')' 
+                       { $return = $item[1]. $item[3]. $item[4]; } 
+                     | { $return = '' } ) 
+                     { $return = $item[1]. $item[2]; }
+    };
+    my $parser = Parse::RecDescent::->new($const_grammar)
+      or die "Bad grammar!";
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
         foreach my $t (@{$type{$n}}) {
@@ -244,33 +267,14 @@ sub main {
                 $TYPE =~ s/\</(/gio;
                 # '>' => ')'
                 $TYPE =~ s/\>/)/gio;
-                print STDERR "orig : ", $t, "\n";
-                if ($TYPE =~ m/\bconst\b/o) {
-                    # const takes one additional parameter
-                    # a tiny Parse::RecDescent grammar to work on
-                    # grabbing const parameter
-                    my $const_grammar = q{
-    start : next_const const_body const_remainder 
-            { $main::TYPE = $item[1]. "( ". $item[2]. " ), ". $item[3]; } 
-    const_remainder        : m/(.*)\Z/o      { $return = $1; } 
-                           | { $return = ''; }
-    next_const             : m/^(.*?const)/o { $return = $1; } 
-    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
-    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
-                           | { $return = ''; }
-    const_body     : const_body_simple ...!'(' { $return = $item[1]; }
-                   | const_body_loop           { $return = $item[1]; } 
-    const_body_loop: next_const_body_token 
-                     ( '(' <commit> const_body_loop ')' 
-                       { $return = $item[1]. $item[3]. $item[4]; } 
-                     | { $return = '' } ) 
-                     { $return = $item[1]. $item[2]; }
-                    };
-                    my $parser = Parse::RecDescent::->new($const_grammar)
-                      or die "Bad grammar!";
+                #print STDERR "orig : ", $t, "\n";
+                #my $i = 0;
+                while ($TYPE =~ m/\bconst\s*(?!\()/o) {
+                    #print $i++, "\n";
+                    #print $TYPE, "\n";
                     defined $parser->start($TYPE) or die "Parse failed!";
                 }
-                print STDERR "patch: ", $TYPE, "\n";
+                #print STDERR "patch: ", $TYPE, "\n";
                 # transform rule for coutinous (two or more) 
                 # pointer ('*') or reference ('&')
                 # * (*|&) => PTR (PTR|REF)
@@ -292,8 +296,8 @@ sub main {
                 
                 # mask bareword as a function call without any parameter
                 $TYPE =~ s/\b(\w+)\b(?!(?:\(|\:))/$1()/gio;
-                $TYPE = 'transform( '. $TYPE .' )';
                 #print $TYPE, "\n";
+                $TYPE = 'transform( '. $TYPE .' )';
                 #eval $TYPE;
             }
         }
