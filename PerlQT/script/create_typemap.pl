@@ -6,10 +6,12 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use YAML ();
 use File::Spec ();
 use Config;
+use Parse::RecDescent ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
 
 our $AUTOLOAD;
+our $TYPE;
 
 =head1 DESCRIPTION
 
@@ -228,20 +230,47 @@ sub main {
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
         foreach my $t (@{$type{$n}}) {
-            my $type = $t;
+            our $TYPE = $t;
             # simply normalize
-            $type =~ s/^\s+//gio;
-            $type =~ s/\s+$//gio;
-            $type =~ s/\s+/ /gio;
-            unless (exists $global_typemap->{$type} or 
-                      exists $simple_typemap->{$type} or 
-                        exists $ignore_typemap->{$type}) {
+            $TYPE =~ s/^\s+//gio;
+            $TYPE =~ s/\s+$//gio;
+            $TYPE =~ s/\s+/ /gio;
+            unless (exists $global_typemap->{$TYPE} or 
+                      exists $simple_typemap->{$TYPE} or 
+                        exists $ignore_typemap->{$TYPE}) {
                 # transform
                 # template to a function call
                 # '<' => '('
-                $type =~ s/\</(/gio;
+                $TYPE =~ s/\</(/gio;
                 # '>' => ')'
-                $type =~ s/\>/)/gio;
+                $TYPE =~ s/\>/)/gio;
+                print STDERR "orig : ", $t, "\n";
+                if ($TYPE =~ m/\bconst\b/o) {
+                    # const takes one additional parameter
+                    # a tiny Parse::RecDescent grammar to work on
+                    # grabbing const parameter
+                    my $const_grammar = q{
+    start : next_const const_body const_remainder 
+            { $main::TYPE = $item[1]. "( ". $item[2]. " ), ". $item[3]; } 
+    const_remainder        : m/(.*)\Z/o      { $return = $1; } 
+                           | { $return = ''; }
+    next_const             : m/^(.*?const)/o { $return = $1; } 
+    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
+    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
+                           | { $return = ''; }
+    const_body     : const_body_simple ...!'(' { $return = $item[1]; }
+                   | const_body_loop           { $return = $item[1]; } 
+    const_body_loop: next_const_body_token 
+                     ( '(' <commit> const_body_loop ')' 
+                       { $return = $item[1]. $item[3]. $item[4]; } 
+                     | { $return = '' } ) 
+                     { $return = $item[1]. $item[2]; }
+                    };
+                    my $parser = Parse::RecDescent::->new($const_grammar)
+                      or die "Bad grammar!";
+                    defined $parser->start($TYPE) or die "Parse failed!";
+                }
+                print STDERR "patch: ", $TYPE, "\n";
                 # transform rule for coutinous (two or more) 
                 # pointer ('*') or reference ('&')
                 # * (*|&) => PTR (PTR|REF)
@@ -250,24 +279,22 @@ sub main {
                 # for instance:
                 # '* & *' => 'PTR( REF( PTR ))'
                 # FIRST GREDDY IS IMPORTANT
-                while ($type =~ 
+                while ($TYPE =~ 
                          s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
                           {$1.'('. ($2 eq '*' ? ' PTR' : ' REF'. ')') }gei) {
                     1;
                 }
                 # leading or standalone pointer or reference
                 # '*' => ', PTR'
-                $type =~ s/\*/, PTR/gio;
+                $TYPE =~ s/\*/, PTR/gio;
                 # '&' => ', REF'
-                $type =~ s/\&/, REF/gio;
-                #print STDERR "orig : ", $t, "\n";
-                #print STDERR "patch: ", $type, "\n";
-                # FIXME: const takes one additional parameter
+                $TYPE =~ s/\&/, REF/gio;
+                
                 # mask bareword as a function call without any parameter
-                $type =~ s/\b(\w+)\b(?!(?:\(|\:))/$1()/gio;
-                $type = 'transform( '. $type .' )';
-                print $type, "\n";
-                eval $type;
+                $TYPE =~ s/\b(\w+)\b(?!(?:\(|\:))/$1()/gio;
+                $TYPE = 'transform( '. $TYPE .' )';
+                #print $TYPE, "\n";
+                #eval $TYPE;
             }
         }
     }
