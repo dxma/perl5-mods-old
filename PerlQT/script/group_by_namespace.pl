@@ -647,6 +647,13 @@ sub _process {
     # make <NAMESPACE_DEFAULT>.meta
     $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
         type => 'namespace', MODULE => '', };
+    # special patch to <NAMESPACE_DEFAULT>.function
+    # rename to <NAMESPACE_DEFAULT>.function.public
+    if (exists $entries->{NAMESPACE_DEFAULT. '.function'}) {
+        $entries->{NAMESPACE_DEFAULT. '.function.public'} = 
+          $entries->{NAMESPACE_DEFAULT. '.function'};
+        delete $entries->{NAMESPACE_DEFAULT. '.function'};
+    }
     # actual write
     write_to_file($entries, $root_dir);
 }
