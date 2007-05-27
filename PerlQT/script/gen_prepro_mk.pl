@@ -41,7 +41,7 @@ sub main {
               {$out_prepro_dir$1.i: $in_prepro_dir$1.h
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
-\t\$(_Q)\$(CMD_PREPRO_HD) \$(OPT_CC_INPUT) \$< \$(OPT_CC_OUTPUT) \$@
+\t\$(_Q)\$(CMD_PREPRO_HD) \$(call _generate_imacros,\$<) \$(OPT_CC_INPUT) \$< \$(OPT_CC_OUTPUT) \$@
 \t\$(_Q)\$(CMD_RM) \$@.h
 $out_prepro_dir$1.i: 
 }miogx;

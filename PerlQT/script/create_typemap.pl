@@ -69,11 +69,13 @@ our $TYPE;
 our $NAMESPACE_DELIMITER = '__';
 our $DEFAULT_NAMESPACE   = '';
 our $CURRENT_NAMESPACE   = '';
-
-our %TYPE_DICTIONARY     = ();
-our %SIMPLE_TYPEMAP      = ();
-our %GLOBAL_TYPEMAP      = ();
-our %IGNORE_TYPEMAP      = ();
+# hash to hold all class's meta information
+our %META_DICTIONARY = ();
+# hash to hold all class's typedef information
+our %TYPE_DICTIONARY = ();
+our %SIMPLE_TYPEMAP  = ();
+our %GLOBAL_TYPEMAP  = ();
+our %IGNORE_TYPEMAP  = ();
 
 =over
 
@@ -144,6 +146,8 @@ sub main {
     die "dir $in_xscode_dir not found" unless 
       -d $in_xscode_dir;
     
+    # categorize input files
+    my @meta    = ();
     my @typedef = ();
     my %member  = ();
     {
@@ -152,13 +156,19 @@ sub main {
           die "cannot open file: $!";
         while (<TYPEMAP_DOT_DEP>) {
             chomp;
-            if (m/\.(function)\.(?:public|protected)$/o) {
+            if (m/\.meta$/o) {
+                push @meta, $_;
+            }
+            elsif (m/\.(function)\.(?:public|protected)$/o) {
                 push @{$member{$1}}, $_;
-            } elsif (m/\.(signal)$/o) {
+            } 
+            elsif (m/\.(signal)$/o) {
                 push @{$member{$1}}, $_;
-            } elsif (m/\.(slot)\.(?:public|protected)$/o) {
+            } 
+            elsif (m/\.(slot)\.(?:public|protected)$/o) {
                 push @{$member{$1}}, $_;
-            } elsif (m/\.typedef$/o) {
+            } 
+            elsif (m/\.typedef$/o) {
                 push @typedef, $_;
             }
         }
@@ -170,10 +180,17 @@ sub main {
     $DEFAULT_NAMESPACE = $hconf->{default_namespace};
     # pre-cache relevant source to mask the whole process 
     # a transactional look
+    # pre-cache all meta info
+    our %META_DICTIONARY;
+    foreach my $f (@meta) {
+        my @f = File::Spec::->splitdir($f);
+        ( my $n = $f[-1] ) =~ s/\.meta$//o;
+        $n =~ s/\_\_/::/gio;
+        $META_DICTIONARY{$n} = _load_yaml($f);
+    }
     # pre-cache all type info
     our %TYPE_DICTIONARY;
     foreach my $f (@typedef) {
-        #print STDERR $f, "\n";
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.typedef$//o;
         $n =~ s/\_\_/::/gio;
@@ -222,9 +239,6 @@ sub main {
     # each function contribute certain information
     # which will finally construct a self-deterministic type structure
     # missing functions are handled by AUTOLOAD
-    # lookup into %typedef
-    # first the same namespace
-    # then default namespace by $default_namespace
     my $known   = {};
     # in case failed lookup, push it into $unknown
     my $unknown = {};
@@ -327,41 +341,78 @@ sub main {
     exit 0;
 }
 
-&main;
+=over
+
+=item _lookup_type_in_super
+
+Internal use only. Lookup a type throughout class' inheritance tree. 
+
+return true and write super class name in $$ref_super_name if found;
+
+return false on failure.
+
+=back
+
+=cut
+
+sub _lookup_type_in_super {
+    my ( $name, $type, $ref_super_name ) = @_;
+    our %META_DICTIONARY;
+    # recursively look into all super classes
+    # depth first
+    if (exists $META_DICTIONARY{$name} and 
+          exists $META_DICTIONARY{$name}->{ISA}) {
+        foreach my $s (@{$META_DICTIONARY{$name}->{ISA}}) {
+            my $super = $s->{NAME};
+            if (exists $TYPE_DICTIONARY{$super} and 
+                  exists $TYPE_DICTIONARY{$super}->{$type}) {
+                $$ref_super_name = $super;
+                return 1;
+            }
+            elsif (exists $META_DICTIONARY{$super} and 
+                     exists $META_DICTIONARY{$super}->{ISA}) {
+                my $result = _lookup_type_in_super(
+                    $super, $type, $ref_super_name);
+                return $result if $result;
+            }
+        }
+    }
+    return 0;
+}
 
 sub AUTOLOAD {
-    our ( $DEFAULT_NAMESPACE, $NAMESPACE_DELIMITER, 
-          %TYPE_DICTIONARY, $CURRENT_NAMESPACE, 
+    our ( $NAMESPACE_DELIMITER, 
+          $DEFAULT_NAMESPACE, $CURRENT_NAMESPACE, 
+          %META_DICTIONARY, %TYPE_DICTIONARY, 
           %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, );
     my $package = __PACKAGE__;
     ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
     my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
     my $type = pop @namespace;
-    if (@namespace) {
-        my $namespace = join("::", @namespace);
-        if (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
-        }
-        elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
-        }
-        elsif (exists $GLOBAL_TYPEMAP{$type} or 
-                 exists $SIMPLE_TYPEMAP{$type}) {
-        }
-        else {
-            # unknown
-            print join("::", @namespace, $type), "\n";
-        }
+    my $namespace = @namespace ? join("::", @namespace) : 
+      $CURRENT_NAMESPACE;
+    # lookup order:
+    # self
+    # super classes (if has)
+    # parent namespaces (experimental)
+    # default_namespace
+    # global_typemap && simple_typemap
+    my $super_name;
+    if (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
+    }
+    elsif (_lookup_type_in_super($namespace, $type, \$super_name)) {
+    }
+    # FIXME: lookup in parent namespaces
+    elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
+    }
+    elsif (exists $GLOBAL_TYPEMAP{$type} or 
+             exists $SIMPLE_TYPEMAP{$type}) {
     }
     else {
-        if (exists $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$type}) {
-        }
-        elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
-        }
-        elsif (exists $GLOBAL_TYPEMAP{$type} or 
-                 exists $SIMPLE_TYPEMAP{$type}) {
-        }
-        else {
-            # unknown
-            print $CURRENT_NAMESPACE, ": ", $type, "\n";
-        }
+        # unknown
+        print $type, ": ", $namespace, "\n";
     }
 }
+
+&main;
+

@@ -22,8 +22,8 @@ _HEADERS    := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,     \
                        $(addprefix $(_HEADER_DIR)/,              \
                            $(addsuffix /*.h, $(_QT)))))
 
+# imacros list
+# which will be passed to preprocessor
 # keep the order
 # disable QT features here
 _IMACROS            := QtCore/qfeatures.h QtCore/qconfig.h QtCore/qglobal.h
-_CMD_PREPRO_HD_OPTS := $(addprefix -imacros ,\
-                          $(addprefix $(_HEADER_DIR)/,$(_IMACROS)))

@@ -82,12 +82,12 @@ CMD_RMDIR       := rm -rf
 
 OPT_CC_INPUT    := $(empty)$(empty)
 OPT_CC_OUTPUT   := -o
-OPT_PREPRO_HD   := $(_CMD_PREPRO_HD_OPTS)
+IMACROS         := $(_IMACROS)
 
 CMD_STRIP_INC   := $(SCRIPT_DIR)/strip_include.pl
 CMD_STRIP_MK    := $(SCRIPT_DIR)/gen_strip_mk.pl
 CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)   \
-                       $(OPT_PREPRO_HD) -I$(HEADER_DIR)
+                       -I$(HEADER_DIR)
 CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
 CMD_PARSE_HD    := $(CMD_PARSE)
 CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
@@ -140,6 +140,12 @@ _remove_file = echo removing $1; \
                if [[ -f $1 ]] ; then $(CMD_RM) $1 ; fi
 _remove_dir  = echo removing $1; \
                if [[ -d $1 ]] ; then $(CMD_RMDIR) $1 ; fi
+# generate imacros options for g++ preprocessor
+# exclude process target file from imacros files
+# this mainly works for QtCore/qglobal.h in QT
+_generate_imacros = $(addprefix -imacros ,$(addprefix             \
+                        $(HEADER_DIR)/,$(filter-out               \
+                            %/$(notdir $1),$(IMACROS))))
 
 #################### PHONY and FRIENDS #########################
 
