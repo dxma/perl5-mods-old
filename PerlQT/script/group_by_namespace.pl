@@ -227,8 +227,17 @@ sub __process_typedef {
         }
         else {
             # typedef enum FROM TO;
+            if ($entry->{FROM} =~ m/\*$/io) {
+                # check for pointer def
+                push @$entries_to_create, 
+                  [$gen_type->(). '_PTR', $entry->{FROM}];
+            }
+            else {
+                push @$entries_to_create, 
+                  [$gen_type->(), $entry->{FROM}];
+            }
             push @$entries_to_create, 
-              [$gen_type->(), $entry->{FROM}];
+              [$entry->{FROM}, $entry->{TO}];
         }
         # push built-in anonymous define
         if (ref $entry->{FROM} eq 'HASH') {
@@ -415,49 +424,52 @@ sub __process_class_or_struct {
         my $TYPE = 'friend';
         push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
     }
-    elsif (not exists $entry->{BODY}) {
-        # forward decl
-        # push new typedef only
-        __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}), 
-                                               $entry->{NAME}), 
-                          $entries, $namespace, $type, $visibility);
-    }
-    elsif (@{$entry->{BODY}} and not exists $entry->{VARIABLE}) {
-        # normal full decl 
-        # make sure not an anymous struct/class variable like
-        # struct { int i; } d;
-        my $entry_to_create = {};
-        # keep PROPERTY for future reference
-        $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
-          exists $entry->{PROPERTY};
-        # required class-specific meta information
-        $entry_to_create->{ISA} = $entry->{ISA} if 
-          exists $entry->{ISA};
-        $entry_to_create->{TYPE} = $entry->{type};
+    else {
         # push new typedef
-        __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}),
-                                               $entry->{NAME}),
-                          $entries, $namespace, $type, $visibility);
-        # push new namespace
-        my $new_namespace = @$namespace ?
-          $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
-        push @$namespace, $new_namespace;
-        # get QT module info 
-        $entry_to_create->{MODULE} = __get_qt_module_name();
-        # store
-        my $TYPE = 'meta';    
-        $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
-        # process body
-        # push 'private' as initial visibility
-        __process_accessibility($entry->{type} eq 'class' ?
-                                  VISIBILITY_PRIVATE() :
-                                    VISIBILITY_PUBLIC(), $entries, 
-                                $namespace, $type, $visibility);
-        __process_loop($entry->{BODY}, $entries, 
-                       $namespace, $type, $visibility);
-        # leave class declaration
-        # pop current namespace
-        pop @$namespace;
+        if (exists $entry->{NAME}) {
+            # make sure not an anonymous class/struct
+            __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}), 
+                                                   $entry->{NAME}), 
+                              $entries, $namespace, $type, $visibility);
+        }
+        if (exists $entry->{BODY} and @{$entry->{BODY}} and 
+              not exists $entry->{VARIABLE}) {
+            # normal full decl 
+            # make sure not an anymous struct/class variable like
+            # struct { int i; } d;
+            my $entry_to_create = {};
+            # keep PROPERTY for future reference
+            $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
+              exists $entry->{PROPERTY};
+            # required class-specific meta information
+            $entry_to_create->{ISA} = $entry->{ISA} if 
+              exists $entry->{ISA};
+            $entry_to_create->{TYPE} = $entry->{type};
+            # push new typedef
+            __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}),
+                                                   $entry->{NAME}),
+                              $entries, $namespace, $type, $visibility);
+            # push new namespace
+            my $new_namespace = @$namespace ?
+              $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
+            push @$namespace, $new_namespace;
+            # get QT module info 
+            $entry_to_create->{MODULE} = __get_qt_module_name();
+            # store
+            my $TYPE = 'meta';    
+            $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
+            # process body
+            # push 'private' as initial visibility
+            __process_accessibility($entry->{type} eq 'class' ?
+                                      VISIBILITY_PRIVATE() :
+                                        VISIBILITY_PUBLIC(), $entries, 
+                                    $namespace, $type, $visibility);
+            __process_loop($entry->{BODY}, $entries, 
+                           $namespace, $type, $visibility);
+            # leave class declaration
+            # pop current namespace
+            pop @$namespace;
+        }   
     }
 }
 

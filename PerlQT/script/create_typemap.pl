@@ -40,27 +40,46 @@ EOU
 }
 
 # for AUTOLOAD
-# prototype required
 # FIXME: ref of ptr, ptr of ref, ptr of ptr
-sub PTR(;$) { 0 }
-sub REF(;$) { 1 }
-sub const($) {
+sub PTR { 0 }
+sub REF { 1 }
+sub const {
     my $entry = shift;
     $entry->{const} = 1;
     return $entry;
 }
-sub unsigned($) {
+sub unsigned {
     my $entry = shift;
     $entry->{unsigned} = 1;
     return $entry;
 }
-sub signed($) {
+sub signed {
     my $entry = shift;
     $entry->{signed} = 1;
     return $entry;
 }
+sub void {
+}
 # mask CORE::int
 *CORE::GLOBAL::int = sub {};
+
+# QT template types
+sub Q3PtrList {
+}
+sub Q3ValueList {
+}
+sub QFlags {
+}
+sub QList {
+}
+sub QMap {
+}
+sub QMultiMap {
+}
+sub QPair {
+}
+sub QVector {
+}
 
 # internal use
 our $AUTOLOAD;
@@ -267,7 +286,7 @@ sub main {
             }
     const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
                            | { $return = ''; }
-    next_const             : m/^(.*?)\b(const)\s*(?!\()/o 
+    next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o 
                              { $return = [$1, $2]; } 
     const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
     next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
@@ -302,7 +321,9 @@ sub main {
                 # '>' => ')'
                 $TYPE =~ s/\>/)/gio;
                 #print STDERR "orig : ", $t, "\n";
-                while ($TYPE =~ m/\bconst\s*(?!\()/o) {
+                # recursively process any bare 'const' word
+                # skip processed and something like 'const_iterator'
+                while ($TYPE =~ m/\bconst\b(?!\_)\s*(?!\()/o) {
                     defined $parser->start($TYPE) or die "Parse failed!";
                 }
                 #print STDERR "patch: ", $TYPE, "\n";
@@ -343,7 +364,7 @@ sub main {
 
 =over
 
-=item _lookup_type_in_super
+=item _lookup_type_in_super_class
 
 Internal use only. Lookup a type throughout class' inheritance tree. 
 
@@ -355,9 +376,10 @@ return false on failure.
 
 =cut
 
-sub _lookup_type_in_super {
+sub _lookup_type_in_super_class {
     my ( $name, $type, $ref_super_name ) = @_;
-    our %META_DICTIONARY;
+    
+    our ( %META_DICTIONARY, %TYPE_DICTIONARY, );
     # recursively look into all super classes
     # depth first
     if (exists $META_DICTIONARY{$name} and 
@@ -371,10 +393,44 @@ sub _lookup_type_in_super {
             }
             elsif (exists $META_DICTIONARY{$super} and 
                      exists $META_DICTIONARY{$super}->{ISA}) {
-                my $result = _lookup_type_in_super(
+                my $result = _lookup_type_in_super_class(
                     $super, $type, $ref_super_name);
                 return $result if $result;
             }
+        }
+    }
+    return 0;
+}
+
+=over 
+
+=item _lookup_type_in_parent_namespace
+
+Internal use only. Lookup a type throughout parent namespaces.
+
+return true and write parent namespace name in $$ref_parent_name if
+found; 
+
+return false on failure.
+
+=back
+
+=cut
+
+sub _lookup_type_in_parent_namespace {
+    my ( $name, $type, $ref_parent_name ) = @_;
+    our ( %TYPE_DICTIONARY, );
+    
+    my @namespace = split /\:\:/, $name;
+    pop @namespace;
+    # A::B::C
+    # lookup in A::B, A
+    for (my $i = $#namespace; $i >= 0; $i--) {
+        my $ns = join("::", @namespace[0 .. $i]);
+        if (exists $TYPE_DICTIONARY{$ns} and 
+              exists $TYPE_DICTIONARY{$ns}->{$type}) {
+            $$ref_parent_name = $ns;
+            return 1;
         }
     }
     return 0;
@@ -394,16 +450,22 @@ sub AUTOLOAD {
     # lookup order:
     # self
     # super classes (if has)
-    # parent namespaces (experimental)
     # default_namespace
+    # parent namespaces (experimental)
     # global_typemap && simple_typemap
     my $super_name;
-    if (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
+    if ($type eq 'enum_type') {
+        # FIXME: lookup into %TYPE_DICTIONARY to verify
     }
-    elsif (_lookup_type_in_super($namespace, $type, \$super_name)) {
+    elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
     }
-    # FIXME: lookup in parent namespaces
+    elsif (_lookup_type_in_super_class(
+        $namespace, $type, \$super_name)) {
+    }
     elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
+    }
+    elsif (_lookup_type_in_parent_namespace(
+        $namespace, $type, \$super_name)) {
     }
     elsif (exists $GLOBAL_TYPEMAP{$type} or 
              exists $SIMPLE_TYPEMAP{$type}) {

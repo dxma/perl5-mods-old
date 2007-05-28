@@ -1,0 +1,13 @@
+# Manually maintained types, which might come from: 
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+ConstIterator		T_CLASS
+Iterator		T_CLASS
+GLenum			T_ENUM
+GLint			T_IV
+GLuint			T_UV
+# FIXME
+SQLHANDLE		T_UV
+std::string		T_CLASS
+size_type		T_IV
