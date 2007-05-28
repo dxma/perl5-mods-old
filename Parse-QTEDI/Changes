@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.12    20070528
+	- fix on qt/kde macro which ends with optional ';'
+
 0.11    20070513
 	- fix on template type output by bin/format_qtedi_production
 

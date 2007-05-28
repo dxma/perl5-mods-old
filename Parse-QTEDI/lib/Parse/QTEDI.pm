@@ -14,7 +14,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.11';
+$VERSION = '0.12';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -227,14 +227,14 @@ qt_macro_3 :
 qt_macro_99: 
   'Q_REQUIRED_RESULT' 
 qt_macro : 
-    qt_macro_1 
+    qt_macro_1 ( ';' | )
     { $return = { type => 'macro', subtype => 1, name => $item[1] } } 
     { print STDERR $item[1], "\n" if $::RD_DEBUG } 
-  | qt_macro_2 '(' next_end_bracket ')' 
+  | qt_macro_2 '(' next_end_bracket ')' ( ';' | )
     { $return = { type => 'macro', subtype => 2, name => $item[1], 
         value => $item[3] } } 
     { print STDERR join(" ", @item[1 .. 4]), "\n" if $::RD_DEBUG } 
-  | qt_macro_3 '(' balanced_bracket(s) ')' 
+  | qt_macro_3 '(' balanced_bracket(s) ')' ( ';' | )
     { $return = { type => 'macro', subtype => 3, name => $item[1], 
         values => join(" ", @{$item[3]}) } } 
     { print STDERR join(" ", $item[1 .. 2], @{$item[3]}, $item[4]), "\n" if $::RD_DEBUG } 
@@ -248,14 +248,14 @@ kde_macro_3  :
 kde_macro_99 : 
   'KDE_DEPRECATED' | 'KDE_EXPORT' 
 kde_macro : 
-    kde_macro_1 
+    kde_macro_1 ( ';' | )
     { $return = { type => 'macro', subtype => 1, name => $item[1] } } 
     { print STDERR $item[1], "\n" if $::RD_DEBUG } 
-  | kde_macro_2 '(' next_end_bracket ')' 
+  | kde_macro_2 '(' next_end_bracket ')' ( ';' | )
     { $return = { type => 'macro', subtype => 2, name => $item[1], 
         value => $item[3] } } 
     { print STDERR join(" ", @item[1 .. $#item]), "\n" if $::RD_DEBUG } 
-  | kde_macro_3 '(' balanced_bracket(s) ')' 
+  | kde_macro_3 '(' balanced_bracket(s) ')' ( ';' | )
     { $return = { type => 'macro', subtype => 3, name => $item[1], 
         values => join(" ", @{$item[3]}) } } 
     { print STDERR join(" ", $item[1 .. 2], @{$item[3]}, $item[4]), "\n" if $::RD_DEBUG } 
