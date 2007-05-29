@@ -34,7 +34,8 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <module.conf> <typemap.ignore> <typemap.simple> <typemap.dep> <in_xscode_dir> [<out_typemap>]
+usage: $0 <module.conf> <typemap.ignore> <typemap.simple>
+    <typemap.manual> <typemap.dep> <in_xscode_dir> [<out_typemap>]
 EOU
     exit 1;
 }
@@ -81,6 +82,19 @@ sub QPair {
 sub QVector {
 }
 
+=over
+
+=item _transform
+
+Final step to identify the structure information of a type. 
+
+=back
+
+=cut
+
+sub _transform {
+}
+
 # internal use
 our $AUTOLOAD;
 our $TYPE;
@@ -95,6 +109,9 @@ our %TYPE_DICTIONARY = ();
 our %SIMPLE_TYPEMAP  = ();
 our %GLOBAL_TYPEMAP  = ();
 our %IGNORE_TYPEMAP  = ();
+our %MANUAL_TYPEMAP  = ();
+# array to hold any unknown type(s)
+our @TYPE_UNKNOWN    = ();
 
 =over
 
@@ -148,10 +165,12 @@ sub _read_typemap {
 }
 
 sub main {
-    usage() if @ARGV < 5;
+    usage() if @ARGV < 6;
     # FIXME: GetOpt::Long
     #        see script/gen_xscode_mk.pl
-    my ( $module_dot_conf, $typemap_dot_ignore, $typemap_dot_simple, 
+    my ( $module_dot_conf, 
+         $typemap_dot_ignore, $typemap_dot_simple,
+         $typemap_dot_manual, 
          $typemap_dot_dep, $in_xscode_dir, 
          $out ) = @ARGV;
     die "file $module_dot_conf not found" unless 
@@ -160,6 +179,8 @@ sub main {
       -f $typemap_dot_ignore;
     die "file $typemap_dot_simple not found" unless 
       -f $typemap_dot_simple;
+    die "file $typemap_dot_manual not found" unless 
+      -f $typemap_dot_manual;
     die "file $typemap_dot_dep not found" unless 
       -f $typemap_dot_dep;
     die "dir $in_xscode_dir not found" unless 
@@ -259,9 +280,9 @@ sub main {
     # which will finally construct a self-deterministic type structure
     # missing functions are handled by AUTOLOAD
     my $known   = {};
-    # in case failed lookup, push it into $unknown
-    my $unknown = {};
-    our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP, );
+    # in case failed lookup, push it into @TYPE_UNKNOWN
+    our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
+          %MANUAL_TYPEMAP, @TYPE_UNKNOWN, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
@@ -270,6 +291,8 @@ sub main {
     _read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
     # locate simple types
     _read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
+    # locate manual types
+    _read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
     
     # const takes one additional parameter
     # a tiny Parse::RecDescent grammar to work on
@@ -313,7 +336,8 @@ sub main {
             $TYPE =~ s/\s+/ /gio;
             unless (exists $GLOBAL_TYPEMAP{$TYPE} or 
                       exists $SIMPLE_TYPEMAP{$TYPE} or 
-                        exists $IGNORE_TYPEMAP{$TYPE}) {
+                        exists $MANUAL_TYPEMAP{$TYPE} or 
+                          exists $IGNORE_TYPEMAP{$TYPE}) {
                 # transform
                 # template to a function call
                 # '<' => '('
@@ -358,7 +382,7 @@ sub main {
             }
         }
     }
-    
+    # FIXME: write typemap.unknown if unknown one(s) found
     exit 0;
 }
 
@@ -440,11 +464,17 @@ sub AUTOLOAD {
     our ( $NAMESPACE_DELIMITER, 
           $DEFAULT_NAMESPACE, $CURRENT_NAMESPACE, 
           %META_DICTIONARY, %TYPE_DICTIONARY, 
-          %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, );
+          %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
+          @TYPE_UNKNOWN, );
     my $package = __PACKAGE__;
     ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
     my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
-    my $type = pop @namespace;
+    my $type_full = join("::", @namespace);
+    my $type      = pop @namespace;
+    # key to query into %TYPE_DICTIONARY
+    # type with    namespace prefix: take its own namespace
+    # type without namespace prefix: take the namespace within which
+    #                                found the type
     my $namespace = @namespace ? join("::", @namespace) : 
       $CURRENT_NAMESPACE;
     # lookup order:
@@ -452,7 +482,7 @@ sub AUTOLOAD {
     # super classes (if has)
     # default_namespace
     # parent namespaces (experimental)
-    # global_typemap && simple_typemap
+    # global_typemap && simple_typemap && manual_typemap
     my $super_name;
     if ($type eq 'enum_type') {
         # FIXME: lookup into %TYPE_DICTIONARY to verify
@@ -461,18 +491,23 @@ sub AUTOLOAD {
     }
     elsif (_lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {
+        # located $type in $TYPE_DICTIONARY{$super_name}
     }
     elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
     }
     elsif (_lookup_type_in_parent_namespace(
         $namespace, $type, \$super_name)) {
+        # located $type in $TYPE_DICTIONARY{$super_name}
     }
-    elsif (exists $GLOBAL_TYPEMAP{$type} or 
-             exists $SIMPLE_TYPEMAP{$type}) {
+    elsif (exists $GLOBAL_TYPEMAP{$type_full} or 
+             exists $SIMPLE_TYPEMAP{$type_full} or 
+               exists $MANUAL_TYPEMAP{$type_full}) {
+        # something like std::string
     }
     else {
         # unknown
-        print $type, ": ", $namespace, "\n";
+        #print STDERR $type_full, "\n";
+        push @TYPE_UNKNOWN, $type_full;
     }
 }
 

@@ -117,6 +117,7 @@ TYPEMAP_DOT_DEP    := $(MAKE_ROOT)/.typemap.dep
 # used by script/create_typemap.pl
 TYPEMAP_DOT_IGNORE := $(MAKE_ROOT)/typemap.ignore
 TYPEMAP_DOT_SIMPLE := $(MAKE_ROOT)/typemap.simple
+TYPEMAP_DOT_MANUAL := $(MAKE_ROOT)/typemap.manual
 
 #################### TARGETS ###################################
 

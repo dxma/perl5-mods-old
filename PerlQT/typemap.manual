@@ -7,7 +7,6 @@ Iterator		T_CLASS
 GLenum			T_ENUM
 GLint			T_IV
 GLuint			T_UV
-# FIXME
-SQLHANDLE		T_UV
-std::string		T_CLASS
-size_type		T_IV
+SQLHANDLE		T_PTROBJ
+std::string		T_PV
+size_type		T_UV
