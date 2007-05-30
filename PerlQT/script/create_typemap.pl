@@ -41,28 +41,80 @@ EOU
 }
 
 # for AUTOLOAD
-# FIXME: ref of ptr, ptr of ref, ptr of ptr
-sub PTR { 0 }
-sub REF { 1 }
+sub PTR {
+    my $entry = @_ ? shift : {};
+    $entry->{IS_PTR} = 1;
+    if (exists $entry->{type}) {
+        # take existing type value
+        # '(&|*)*' => 'PTR'
+        # '(&|*)&' => 'REF'
+        $entry->{c_type} = '*'. $entry->{c_type};
+    }
+    else {
+        # new pointer structure
+        $entry->{type}   = 'PTR';
+        $entry->{c_type} = '*';
+    }
+    return $entry;
+}
+sub REF {
+    my $entry = @_ ? shift : {};
+    $entry->{IS_REF} = 1;
+    if (exists $entry->{type}) {
+        # take existing type value
+        $entry->{c_type} = '&'. $entry->{c_type};
+    }
+    else {
+        # new pointer structure
+        $entry->{type}   = 'REF';
+        $entry->{c_type} = '&';
+    }
+    return $entry;
+}
 sub const {
     my $entry = shift;
-    $entry->{const} = 1;
+    $entry->{IS_CONST} = 1;
+    $entry->{type}   = 'CONST_'. $entry->{type};
+    $entry->{c_type} = 'const '. $entry->{c_type};
     return $entry;
 }
 sub unsigned {
     my $entry = shift;
-    $entry->{unsigned} = 1;
+    $entry->{PREFERED_SV} = 'UV';
     return $entry;
 }
 sub signed {
     my $entry = shift;
-    $entry->{signed} = 1;
+    $entry->{PREFERED_SV} = 'IV';
     return $entry;
 }
 sub void {
+    my $entry = @_ ? shift : {};
+    if (exists $entry->{type}) {
+        $entry->{type}   = 'GENERIC_'. $entry->{type};
+        $entry->{c_type} = 'void '. $entry->{c_type};
+    }
+    else {
+        $entry->{type}   = 'GENERIC';
+        $entry->{c_type} = 'void';
+    }
+    return $entry;
 }
 # mask CORE::int
-*CORE::GLOBAL::int = sub {};
+*CORE::GLOBAL::int = sub {
+    my $entry = @_ ? shift : {};
+    my $prefered_sv = exists $entry->{PREFERED_SV} ?
+      $entry->{PREFERED_SV} : 'IV';
+    if (exists $entry->{type}) {
+        $entry->{type}   = $prefered_sv. '_'. $entry->{type};
+        $entry->{c_type} = 'int '. $entry->{c_type};
+    }
+    else {
+        $entry->{type}   = $prefered_sv;
+        $entry->{c_type} = 'int';
+    }
+    return $entry;
+};
 
 # QT template types
 sub Q3PtrList {
