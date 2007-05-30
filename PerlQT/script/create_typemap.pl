@@ -101,7 +101,7 @@ sub void {
     return $entry;
 }
 # mask CORE::int
-*CORE::GLOBAL::int = sub {
+my $my_int = sub {
     my $entry = @_ ? shift : {};
     my $prefered_sv = exists $entry->{PREFERED_SV} ?
       $entry->{PREFERED_SV} : 'IV';
@@ -430,7 +430,11 @@ sub main {
                 $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
                 #print $TYPE, "\n";
                 $TYPE = '_transform( '. $TYPE .' )';
-                eval $TYPE;
+                {
+                    # mask built-in function 'int'
+                    local *CORE::GLOBAL::int = $my_int;
+                    eval $TYPE;
+                }
             }
         }
     }
