@@ -100,7 +100,7 @@ sub void {
     }
     return $entry;
 }
-# mask CORE::int
+# mask CORE::int later
 my $my_int = sub {
     my $entry = @_ ? shift : {};
     my $prefered_sv = exists $entry->{PREFERED_SV} ?
@@ -117,21 +117,86 @@ my $my_int = sub {
 };
 
 # QT template types
+# invoke of each will instantiate new xs/pm code source files from
+# specific templates 
+# to serve requested template type
 sub Q3PtrList {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'Q3PTRLIST_'. $sub_entry->{type};
+    $entry->{c_type} = 'Q3PtrList< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
 }
 sub Q3ValueList {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'Q3VALUELIST_'. $sub_entry->{type};
+    $entry->{c_type} = 'Q3ValueList< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
 }
 sub QFlags {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'QFLAGS_'. $sub_entry->{type};
+    $entry->{c_type} = 'QFlags< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
 }
 sub QList {
-}
-sub QMap {
-}
-sub QMultiMap {
-}
-sub QPair {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'QLIST_'. $sub_entry->{type};
+    $entry->{c_type} = 'QList< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
 }
 sub QVector {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'QVECTOR_'. $sub_entry->{type};
+    $entry->{c_type} = 'QVector< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
+}
+sub QMap {
+    my ( $sub_key, $sub_value, ) = @_;
+    my $entry                    = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{child} = [ $sub_key, $sub_value, ];
+    $entry->{type}   = 
+      join('_', 'QMAP'. $sub_key->{type}. $sub_value->{type});
+    $entry->{c_type} = 'QMap< '. $sub_key->{c_type}. 
+      ', '. $sub_value->{c_type}. ' >';
+    # FIXME: generate xs/pm files
+}
+sub QMultiMap {
+    my ( $sub_key, $sub_value, ) = @_;
+    my $entry                    = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{child} = [ $sub_key, $sub_value, ];
+    $entry->{type}   = 
+      join('_', 'QMULTIMAP', $sub_key->{type}, $sub_value->{type});
+    $entry->{c_type} = 'QMultiMap< '. $sub_key->{c_type}. 
+      ', '. $sub_value->{c_type}. ' >';
+    # FIXME: generate xs/pm files
+}
+sub QPair {
+    my ( $first, $second, ) = @_;
+    my $entry                    = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{child} = [ $first, $second, ];
+    $entry->{type}   = 
+      join('_', 'QPAIR', $first->{type}, $second->{type});
+    $entry->{c_type} = 'QPair< '. $first->{c_type}. 
+      ', '. $second->{c_type}. ' >';
+    # FIXME: generate xs/pm files
 }
 
 =over
@@ -145,6 +210,15 @@ Final step to identify the structure information of a type.
 =cut
 
 sub _transform {
+    my ( $primary, $optional, ) = @_;
+    if (defined $optional) {
+        # (nested) PTR or REF structure
+        $primary->{type}   .= '_'. $optional->{type};
+        $primary->{c_type} .= ' '. $optional->{c_type};
+    }
+    # FIXME: write to typemap
+    print $primary->{type}, ": ", $primary->{c_type}, "\n";
+    return $primary;
 }
 
 # internal use
@@ -525,9 +599,11 @@ sub AUTOLOAD {
     my $package = __PACKAGE__;
     ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
     my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
+    # full type name
     my $type_full = join("::", @namespace);
+    # short type name
     my $type      = pop @namespace;
-    # key to query into %TYPE_DICTIONARY
+    # key to query into %TYPE_DICTIONARY :
     # type with    namespace prefix: take its own namespace
     # type without namespace prefix: take the namespace within which
     #                                found the type
@@ -540,31 +616,85 @@ sub AUTOLOAD {
     # parent namespaces (experimental)
     # global_typemap && simple_typemap && manual_typemap
     my $super_name;
+    # structure to return
+    my $entry = {};
+    my $TYPE_ENUM            = 'T_ENUM';
+    my $TYPE_FPOINTER_PREFIX = 'T_FPOINTER_';
     if ($type eq 'enum_type') {
-        # FIXME: lookup into %TYPE_DICTIONARY to verify
+        # QFlags template type
+        my $template_type      = $namespace[-1];
+        my $template_namespace = join("::", @namespace[0 .. -1]);
+        # lookup into %TYPE_DICTIONARY to verify
+#         if (exists $TYPE_DICTIONARY{$template_namespace} and 
+#               exists
+#                 $TYPE_DICTIONARY{$template_namespace}->{$template_type}) {
+#         }
+        $entry->{type}   = $TYPE_ENUM;
+        $entry->{c_type} = join("::", 
+                                $template_namespace, $template_type);
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
+        $entry->{type}   = $TYPE_DICTIONARY{$namespace}->{$type};
+        $entry->{c_type} = $type_full;
     }
     elsif (_lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
+        # function pointer: prototype string from 
+        # $TYPE_DICTIONARY{$super_type}->{ 
+        #     $TYPE_DICTIONARY{$super_name}->{$type} }
+        $entry->{type}   = $TYPE_DICTIONARY{$super_name}->{$type};
+        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
+            $entry->{c_type} = $type_full;
+        }
+        else {
+            $entry->{c_type} = $TYPE_DICTIONARY{$super_name}->{ 
+                $TYPE_DICTIONARY{$super_name}->{$type} };
+        }
     }
     elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
+        $entry->{type}   =
+          $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type};
+        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
+            $entry->{c_type} = $type_full;
+        }
+        else {
+            $entry->{c_type} = $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{
+                $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type} };
+        }
     }
     elsif (_lookup_type_in_parent_namespace(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
+        $entry->{type}   = $TYPE_DICTIONARY{$super_name}->{$type};
+        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
+            $entry->{c_type} = $type_full;
+        }
+        else {
+            $entry->{c_type} = $TYPE_DICTIONARY{$super_name}->{ 
+                $TYPE_DICTIONARY{$super_name}->{$type} };
+        }
     }
     elsif (exists $GLOBAL_TYPEMAP{$type_full} or 
              exists $SIMPLE_TYPEMAP{$type_full} or 
                exists $MANUAL_TYPEMAP{$type_full}) {
-        # something like std::string
+        # NOTE: something like std::string
+        $entry->{type}   = 
+          exists $GLOBAL_TYPEMAP{$type_full} ?
+            $GLOBAL_TYPEMAP{$type_full} : 
+              exists $SIMPLE_TYPEMAP{$type_full} ? 
+                $SIMPLE_TYPEMAP{$type_full} : 
+                  $MANUAL_TYPEMAP{$type_full};
+        $entry->{c_type} = $type_full;
     }
     else {
         # unknown
         #print STDERR $type_full, "\n";
+        $entry->{type}   = 'UNKNOWN_FIXME';
+        $entry->{c_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;
     }
+    return $entry;
 }
 
 &main;
