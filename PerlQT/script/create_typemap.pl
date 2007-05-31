@@ -5,7 +5,7 @@ use strict;
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use YAML ();
 use File::Spec ();
-use Config;
+use Config qw/%Config/;
 use Parse::RecDescent ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
@@ -32,7 +32,7 @@ See L<http://dev.perl.org/licenses/artistic.html>
 
 =cut
 
-sub usage {
+sub __usage {
     print STDERR << "EOU";
 usage: $0 <module.conf> <typemap.ignore> <typemap.simple>
     <typemap.manual> <typemap.dep> <in_xscode_dir> [<out_typemap>]
@@ -71,11 +71,18 @@ sub REF {
     }
     return $entry;
 }
+# NOTE: char * const == char const *
 sub const {
-    my $entry = shift;
+    my $entry = @_ ? shift : {};
     $entry->{IS_CONST} = 1;
-    $entry->{type}   = 'CONST_'. $entry->{type};
-    $entry->{c_type} = 'const '. $entry->{c_type};
+    if (exists $entry->{type}) {
+        $entry->{type}   = 'CONST_'. $entry->{type};
+        $entry->{c_type} = 'const '. $entry->{c_type};
+    }
+    else {
+        $entry->{type}   = 'CONST';
+        $entry->{c_type} = 'const';
+    }
     return $entry;
 }
 sub unsigned {
@@ -128,6 +135,7 @@ sub Q3PtrList {
     $entry->{type}   = 'Q3PTRLIST_'. $sub_entry->{type};
     $entry->{c_type} = 'Q3PtrList< '. $sub_entry->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub Q3ValueList {
     my $sub_entry = shift;
@@ -137,6 +145,7 @@ sub Q3ValueList {
     $entry->{type}   = 'Q3VALUELIST_'. $sub_entry->{type};
     $entry->{c_type} = 'Q3ValueList< '. $sub_entry->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QFlags {
     my $sub_entry = shift;
@@ -146,6 +155,7 @@ sub QFlags {
     $entry->{type}   = 'QFLAGS_'. $sub_entry->{type};
     $entry->{c_type} = 'QFlags< '. $sub_entry->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QList {
     my $sub_entry = shift;
@@ -155,6 +165,7 @@ sub QList {
     $entry->{type}   = 'QLIST_'. $sub_entry->{type};
     $entry->{c_type} = 'QList< '. $sub_entry->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QVector {
     my $sub_entry = shift;
@@ -164,6 +175,7 @@ sub QVector {
     $entry->{type}   = 'QVECTOR_'. $sub_entry->{type};
     $entry->{c_type} = 'QVector< '. $sub_entry->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QMap {
     my ( $sub_key, $sub_value, ) = @_;
@@ -175,6 +187,7 @@ sub QMap {
     $entry->{c_type} = 'QMap< '. $sub_key->{c_type}. 
       ', '. $sub_value->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QMultiMap {
     my ( $sub_key, $sub_value, ) = @_;
@@ -186,6 +199,7 @@ sub QMultiMap {
     $entry->{c_type} = 'QMultiMap< '. $sub_key->{c_type}. 
       ', '. $sub_value->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 sub QPair {
     my ( $first, $second, ) = @_;
@@ -197,11 +211,12 @@ sub QPair {
     $entry->{c_type} = 'QPair< '. $first->{c_type}. 
       ', '. $second->{c_type}. ' >';
     # FIXME: generate xs/pm files
+    return $entry;
 }
 
 =over
 
-=item _transform
+=item __transform
 
 Final step to identify the structure information of a type. 
 
@@ -209,12 +224,12 @@ Final step to identify the structure information of a type.
 
 =cut
 
-sub _transform {
-    my ( $primary, $optional, ) = @_;
-    if (defined $optional) {
-        # (nested) PTR or REF structure
-        $primary->{type}   .= '_'. $optional->{type};
-        $primary->{c_type} .= ' '. $optional->{c_type};
+sub __transform {
+    my ( $primary, @optional ) = @_;
+    foreach my $opt_entry (@optional) {
+        # (nested) PTR/REF/CONST structure
+        $primary->{type}   .= '_'. $opt_entry->{type};
+        $primary->{c_type} .= ' '. $opt_entry->{c_type};
     }
     # FIXME: write to typemap
     print $primary->{type}, ": ", $primary->{c_type}, "\n";
@@ -241,7 +256,7 @@ our @TYPE_UNKNOWN    = ();
 
 =over
 
-=item _load_yaml
+=item __load_yaml
 
 Internal use. Load a YAML-ish file and return its yaml-ed content.
 
@@ -249,7 +264,7 @@ Internal use. Load a YAML-ish file and return its yaml-ed content.
 
 =cut
 
-sub _load_yaml {
+sub __load_yaml {
     my ( $f ) = @_;
     
     local ( *FILE, );
@@ -262,7 +277,7 @@ sub _load_yaml {
 
 =over 
 
-=item _read_typemap
+=item __read_typemap
 
 Read supported type list inside a typemap file. Store each as a key of
 hash passed-in. 
@@ -271,7 +286,7 @@ hash passed-in.
 
 =cut
 
-sub _read_typemap {
+sub __read_typemap {
     my ($typemap_file, $typemap, ) = @_;
     die "file $typemap_file not found" unless -f $typemap_file;
     local ( *TYPEMAP, );
@@ -291,7 +306,7 @@ sub _read_typemap {
 }
 
 sub main {
-    usage() if @ARGV < 6;
+    __usage() if @ARGV < 6;
     # FIXME: GetOpt::Long
     #        see script/gen_xscode_mk.pl
     my ( $module_dot_conf, 
@@ -341,7 +356,7 @@ sub main {
         close TYPEMAP_DOT_DEP;
     }
     # get default namespace from module.conf
-    my $hconf = _load_yaml($module_dot_conf);
+    my $hconf = __load_yaml($module_dot_conf);
     our $DEFAULT_NAMESPACE;
     $DEFAULT_NAMESPACE = $hconf->{default_namespace};
     # pre-cache relevant source to mask the whole process 
@@ -352,7 +367,7 @@ sub main {
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.meta$//o;
         $n =~ s/\_\_/::/gio;
-        $META_DICTIONARY{$n} = _load_yaml($f);
+        $META_DICTIONARY{$n} = __load_yaml($f);
     }
     # pre-cache all type info
     our %TYPE_DICTIONARY;
@@ -360,7 +375,7 @@ sub main {
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.typedef$//o;
         $n =~ s/\_\_/::/gio;
-        $TYPE_DICTIONARY{$n} = _load_yaml($f);
+        $TYPE_DICTIONARY{$n} = __load_yaml($f);
     }
     # pre-cache all function info
     my %method = ();
@@ -370,7 +385,7 @@ sub main {
             ( my $n = $f[-1] ) =~ 
               s/\.\Q$t\E(?:\.(?:public|protected))?$//;
             $n =~ s/\_\_/::/gio;
-            $method{$t}->{$n} = _load_yaml($f);
+            $method{$t}->{$n} = __load_yaml($f);
         }
     }
     # collect types
@@ -412,13 +427,13 @@ sub main {
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
-    _read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
+    __read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
     # locate those types which should be ignored
-    _read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
+    __read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
     # locate simple types
-    _read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
+    __read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
     # locate manual types
-    _read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
+    __read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
     
     # const takes one additional parameter
     # a tiny Parse::RecDescent grammar to work on
@@ -503,7 +518,7 @@ sub main {
                 our $NAMESPACE_DELIMITER;
                 $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
                 #print $TYPE, "\n";
-                $TYPE = '_transform( '. $TYPE .' )';
+                $TYPE = '__transform( '. $TYPE .' )';
                 {
                     # mask built-in function 'int'
                     local *CORE::GLOBAL::int = $my_int;
@@ -518,7 +533,7 @@ sub main {
 
 =over
 
-=item _lookup_type_in_super_class
+=item __lookup_type_in_super_class
 
 Internal use only. Lookup a type throughout class' inheritance tree. 
 
@@ -530,7 +545,7 @@ return false on failure.
 
 =cut
 
-sub _lookup_type_in_super_class {
+sub __lookup_type_in_super_class {
     my ( $name, $type, $ref_super_name ) = @_;
     
     our ( %META_DICTIONARY, %TYPE_DICTIONARY, );
@@ -547,7 +562,7 @@ sub _lookup_type_in_super_class {
             }
             elsif (exists $META_DICTIONARY{$super} and 
                      exists $META_DICTIONARY{$super}->{ISA}) {
-                my $result = _lookup_type_in_super_class(
+                my $result = __lookup_type_in_super_class(
                     $super, $type, $ref_super_name);
                 return $result if $result;
             }
@@ -558,7 +573,7 @@ sub _lookup_type_in_super_class {
 
 =over 
 
-=item _lookup_type_in_parent_namespace
+=item __lookup_type_in_parent_namespace
 
 Internal use only. Lookup a type throughout parent namespaces.
 
@@ -571,7 +586,7 @@ return false on failure.
 
 =cut
 
-sub _lookup_type_in_parent_namespace {
+sub __lookup_type_in_parent_namespace {
     my ( $name, $type, $ref_parent_name ) = @_;
     our ( %TYPE_DICTIONARY, );
     
@@ -623,7 +638,7 @@ sub AUTOLOAD {
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
-        my $template_namespace = join("::", @namespace[0 .. -1]);
+        my $template_namespace = join("::", @namespace[0 .. $#namespace-1]);
         # lookup into %TYPE_DICTIONARY to verify
 #         if (exists $TYPE_DICTIONARY{$template_namespace} and 
 #               exists
@@ -637,7 +652,7 @@ sub AUTOLOAD {
         $entry->{type}   = $TYPE_DICTIONARY{$namespace}->{$type};
         $entry->{c_type} = $type_full;
     }
-    elsif (_lookup_type_in_super_class(
+    elsif (__lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
         # function pointer: prototype string from 
@@ -663,7 +678,7 @@ sub AUTOLOAD {
                 $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type} };
         }
     }
-    elsif (_lookup_type_in_parent_namespace(
+    elsif (__lookup_type_in_parent_namespace(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
         $entry->{type}   = $TYPE_DICTIONARY{$super_name}->{$type};
