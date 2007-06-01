@@ -177,6 +177,16 @@ sub QVector {
     # FIXME: generate xs/pm files
     return $entry;
 }
+sub QSet {
+    my $sub_entry = shift;
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{child} = $sub_entry;
+    $entry->{type}   = 'QSET_'. $sub_entry->{type};
+    $entry->{c_type} = 'QSet< '. $sub_entry->{c_type}. ' >';
+    # FIXME: generate xs/pm files
+    return $entry;
+}
 sub QMap {
     my ( $sub_key, $sub_value, ) = @_;
     my $entry                    = {};
@@ -704,7 +714,7 @@ sub AUTOLOAD {
     }
     else {
         # unknown
-        #print STDERR $type_full, "\n";
+        print STDERR "unknown type: ", $type_full, "\n";
         $entry->{type}   = 'UNKNOWN_FIXME';
         $entry->{c_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;

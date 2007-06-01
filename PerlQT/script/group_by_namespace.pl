@@ -227,8 +227,9 @@ sub __process_typedef {
         }
         else {
             # typedef enum FROM TO;
-            if ($entry->{FROM} =~ m/\*$/io) {
+            if ($entry->{FROM} =~ m/^\s*\*$/io) {
                 # check for pointer def
+                # FIXME: something like "Qt::*funcpointer"
                 push @$entries_to_create, 
                   [$gen_type->(). '_PTR', $entry->{FROM}];
             }
