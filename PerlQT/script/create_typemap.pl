@@ -40,6 +40,57 @@ EOU
     exit 1;
 }
 
+# internal use
+our $AUTOLOAD;
+our $TYPE;
+
+our $NAMESPACE_DELIMITER = '__';
+our $DEFAULT_NAMESPACE   = '';
+# the namespace in which the type is involved
+our $CURRENT_NAMESPACE   = '';
+# hash to hold all class's meta information
+our %META_DICTIONARY = ();
+# hash to hold all class's typedef information
+our %TYPE_DICTIONARY = ();
+our %SIMPLE_TYPEMAP  = ();
+our %GLOBAL_TYPEMAP  = ();
+our %IGNORE_TYPEMAP  = ();
+our %MANUAL_TYPEMAP  = ();
+# array to hold any unknown type(s)
+our @TYPE_UNKNOWN    = ();
+
+# for type transform: 
+# const takes one additional parameter
+# a tiny Parse::RecDescent grammar to work on
+# grabbing const parameter
+my $const_grammar = q{
+    start : next_const const_body const_remainder 
+            { $main::TYPE = $item[1]->[1]. "( ". $item[2]. " ) ". $item[3]; }
+            { if ($item[2] eq '') { 
+                  # something like 'QMenuBar * const'
+                  $main::TYPE = $item[1]->[0].", ".$main::TYPE;
+              } else {
+                  $main::TYPE = $item[1]->[0]. $main::TYPE;
+              }
+            }
+    const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
+                           | { $return = ''; }
+    next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o 
+                             { $return = [$1, $2]; } 
+    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
+    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
+    const_body     : const_body_simple ...!'(' { $return = $item[1]; }
+                   | const_body_loop           { $return = $item[1]; } 
+                   |                           { $return = '';       }
+    const_body_loop: next_const_body_token 
+                     ( '(' <commit> const_body_loop ')' 
+                       { $return = $item[1]. $item[3]. $item[4]; } 
+                     | { $return = '' } ) 
+                     { $return = $item[1]. $item[2]; }
+};
+my $parser = Parse::RecDescent::->new($const_grammar)
+  or die "Bad grammar!";
+
 # for AUTOLOAD
 sub PTR {
     my $entry = @_ ? shift : {};
@@ -98,7 +149,7 @@ sub signed {
 sub void {
     my $entry = @_ ? shift : {};
     if (exists $entry->{type}) {
-        $entry->{type}   = 'GENERIC_'. $entry->{type};
+        $entry->{type}   = 'T_GENERIC_'. $entry->{type};
         $entry->{c_type} = 'void '. $entry->{c_type};
     }
     else {
@@ -226,15 +277,17 @@ sub QPair {
 
 =over
 
-=item __transform
+=item __final_transform
 
 Final step to identify the structure information of a type. 
+
+return final transformed type structure. 
 
 =back
 
 =cut
 
-sub __transform {
+sub __final_transform {
     my ( $primary, @optional ) = @_;
     foreach my $opt_entry (@optional) {
         # (nested) PTR/REF/CONST structure
@@ -242,27 +295,9 @@ sub __transform {
         $primary->{c_type} .= ' '. $opt_entry->{c_type};
     }
     # FIXME: write to typemap
-    print $primary->{type}, ": ", $primary->{c_type}, "\n";
+    #print STDERR $primary->{type}, "\t"x5, $primary->{c_type}, "\n";
     return $primary;
 }
-
-# internal use
-our $AUTOLOAD;
-our $TYPE;
-
-our $NAMESPACE_DELIMITER = '__';
-our $DEFAULT_NAMESPACE   = '';
-our $CURRENT_NAMESPACE   = '';
-# hash to hold all class's meta information
-our %META_DICTIONARY = ();
-# hash to hold all class's typedef information
-our %TYPE_DICTIONARY = ();
-our %SIMPLE_TYPEMAP  = ();
-our %GLOBAL_TYPEMAP  = ();
-our %IGNORE_TYPEMAP  = ();
-our %MANUAL_TYPEMAP  = ();
-# array to hold any unknown type(s)
-our @TYPE_UNKNOWN    = ();
 
 =over
 
@@ -313,6 +348,88 @@ sub __read_typemap {
         $typemap->{$k} = $v;
     }
     close TYPEMAP;
+}
+
+=over
+
+=item __analyse_type
+
+Try to analyse a C/C++ type. Transform it into a group of function
+calls. Return a self-deterministic structure to describe the type
+information. 
+
+=back
+
+=cut
+
+sub __analyse_type {
+    our $TYPE = shift;
+    our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, );
+    my $result;
+    
+    # simply normalize
+    $TYPE =~ s/^\s+//gio;
+    $TYPE =~ s/\s+$//gio;
+    $TYPE =~ s/\s+/ /gio;
+    if (exists $GLOBAL_TYPEMAP{$TYPE} or 
+              exists $SIMPLE_TYPEMAP{$TYPE} or 
+                exists $MANUAL_TYPEMAP{$TYPE}) {
+        $result = {};
+        $result->{type}   = 
+          exists $GLOBAL_TYPEMAP{$TYPE} ? $GLOBAL_TYPEMAP{$TYPE} : 
+            exists $SIMPLE_TYPEMAP{$TYPE} ? $SIMPLE_TYPEMAP{$TYPE} : 
+              $MANUAL_TYPEMAP{$TYPE};
+        $result->{c_type} = $TYPE;
+    }
+    else {
+        # transform
+        # template to a function call
+        # '<' => '('
+        $TYPE =~ s/\</(/gio;
+        # '>' => ')'
+        $TYPE =~ s/\>/)/gio;
+        #print STDERR "orig : ", $t, "\n";
+        # recursively process any bare 'const' word
+        # skip processed and something like 'const_iterator'
+        while ($TYPE =~ m/\bconst\b(?!\_)\s*(?!\()/o) {
+            defined $parser->start($TYPE) or die "Parse failed!";
+        }
+        #print STDERR "patch: ", $TYPE, "\n";
+        # transform rule for coutinous (two or more) 
+        # pointer ('*') or reference ('&')
+        # * (*|&) => PTR (PTR|REF)
+        # which means second will ALWAYS be a parameter of 
+        # the first
+        # for instance:
+        # '* & *' => 'PTR( REF( PTR ))'
+        # FIRST GREDDY IS IMPORTANT
+        while ($TYPE =~ 
+                 s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
+                  {$1.'('. ($2 eq '*' ? ' PTR' : ' REF'). ')' }gei) {
+            1;
+        }
+        # leading or standalone pointer or reference
+        # '*' => ', PTR'
+        $TYPE =~ s/\*/, PTR/gio;
+        # '&' => ', REF'
+        $TYPE =~ s/\&/, REF/gio;
+        # mask bareword as a function call without any
+        # parameter
+        # skip '(un)signed'
+        $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
+        # '::' to $NAMESPACE_DELIMITER
+        our $NAMESPACE_DELIMITER;
+        $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
+        $TYPE = '__final_transform( '. $TYPE .' )';
+        {
+            #print $TYPE, "\n";
+            # mask built-in function 'int'
+            local *CORE::GLOBAL::int = $my_int;
+            $result = eval $TYPE;
+            die "error while eval-ing type: $@" if $@;
+        }
+    }
+    return $result;
 }
 
 sub main {
@@ -445,95 +562,21 @@ sub main {
     # locate manual types
     __read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
     
-    # const takes one additional parameter
-    # a tiny Parse::RecDescent grammar to work on
-    # grabbing const parameter
-    my $const_grammar = q{
-    start : next_const const_body const_remainder 
-            { $main::TYPE = $item[1]->[1]. "( ". $item[2]. " ) ". $item[3]; }
-            { if ($item[2] eq '') { 
-                  # something like 'QMenuBar * const'
-                  $main::TYPE = $item[1]->[0].", ".$main::TYPE;
-              } else {
-                  $main::TYPE = $item[1]->[0]. $main::TYPE;
-              }
-            }
-    const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
-                           | { $return = ''; }
-    next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o 
-                             { $return = [$1, $2]; } 
-    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
-    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
-    const_body     : const_body_simple ...!'(' { $return = $item[1]; }
-                   | const_body_loop           { $return = $item[1]; } 
-                   |                           { $return = '';       }
-    const_body_loop: next_const_body_token 
-                     ( '(' <commit> const_body_loop ')' 
-                       { $return = $item[1]. $item[3]. $item[4]; } 
-                     | { $return = '' } ) 
-                     { $return = $item[1]. $item[2]; }
-    };
-    my $parser = Parse::RecDescent::->new($const_grammar)
-      or die "Bad grammar!";
     our $CURRENT_NAMESPACE;
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
         $CURRENT_NAMESPACE = $n;
         foreach my $t (@{$type{$n}}) {
-            our $TYPE = $t;
-            # simply normalize
-            $TYPE =~ s/^\s+//gio;
-            $TYPE =~ s/\s+$//gio;
-            $TYPE =~ s/\s+/ /gio;
-            unless (exists $GLOBAL_TYPEMAP{$TYPE} or 
-                      exists $SIMPLE_TYPEMAP{$TYPE} or 
-                        exists $MANUAL_TYPEMAP{$TYPE} or 
-                          exists $IGNORE_TYPEMAP{$TYPE}) {
-                # transform
-                # template to a function call
-                # '<' => '('
-                $TYPE =~ s/\</(/gio;
-                # '>' => ')'
-                $TYPE =~ s/\>/)/gio;
-                #print STDERR "orig : ", $t, "\n";
-                # recursively process any bare 'const' word
-                # skip processed and something like 'const_iterator'
-                while ($TYPE =~ m/\bconst\b(?!\_)\s*(?!\()/o) {
-                    defined $parser->start($TYPE) or die "Parse failed!";
-                }
-                #print STDERR "patch: ", $TYPE, "\n";
-                # transform rule for coutinous (two or more) 
-                # pointer ('*') or reference ('&')
-                # * (*|&) => PTR (PTR|REF)
-                # which means second will ALWAYS be a parameter of 
-                # the first
-                # for instance:
-                # '* & *' => 'PTR( REF( PTR ))'
-                # FIRST GREDDY IS IMPORTANT
-                while ($TYPE =~ 
-                         s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
-                          {$1.'('. ($2 eq '*' ? ' PTR' : ' REF'. ')') }gei) {
-                    1;
-                }
-                # leading or standalone pointer or reference
-                # '*' => ', PTR'
-                $TYPE =~ s/\*/, PTR/gio;
-                # '&' => ', REF'
-                $TYPE =~ s/\&/, REF/gio;
-                # mask bareword as a function call without any
-                # parameter
-                # skip '(un)signed'
-                $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
-                # '::' to $NAMESPACE_DELIMITER
-                our $NAMESPACE_DELIMITER;
-                $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
-                #print $TYPE, "\n";
-                $TYPE = '__transform( '. $TYPE .' )';
+            unless (exists $IGNORE_TYPEMAP{$t}) {
+                my $result = __analyse_type($t);
+                # post patch:
+                # void ** => T_GENERIC_PTR => T_PTR
                 {
-                    # mask built-in function 'int'
-                    local *CORE::GLOBAL::int = $my_int;
-                    eval $TYPE;
+                    my $re_type = $result->{type};
+                    $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
+                    $result->{type} = $re_type;
                 }
+                print $result->{type}, "\t"x5, $result->{c_type}, "\n";
             }
         }
     }
