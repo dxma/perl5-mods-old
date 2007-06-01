@@ -244,7 +244,7 @@ sub QMap {
     $entry->{IS_TEMPLATE} = 2;
     $entry->{child} = [ $sub_key, $sub_value, ];
     $entry->{type}   = 
-      join('_', 'QMAP'. $sub_key->{type}. $sub_value->{type});
+      join('_', 'QMAP',$sub_key->{type}, $sub_value->{type});
     $entry->{c_type} = 'QMap< '. $sub_key->{c_type}. 
       ', '. $sub_value->{c_type}. ' >';
     # FIXME: generate xs/pm files
@@ -271,6 +271,18 @@ sub QPair {
       join('_', 'QPAIR', $first->{type}, $second->{type});
     $entry->{c_type} = 'QPair< '. $first->{c_type}. 
       ', '. $second->{c_type}. ' >';
+    # FIXME: generate xs/pm files
+    return $entry;
+}
+sub QHash {
+    my ( $sub_key, $sub_value, ) = @_;
+    my $entry                    = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{child} = [ $sub_key, $sub_value, ];
+    $entry->{type}   = 
+      join('_', 'QHASH', $sub_key->{type}, $sub_value->{type});
+    $entry->{c_type} = 'QHash< '. $sub_key->{c_type}. 
+      ', '. $sub_value->{c_type}. ' >';
     # FIXME: generate xs/pm files
     return $entry;
 }
@@ -576,7 +588,7 @@ sub main {
                     $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
                     $result->{type} = $re_type;
                 }
-                print $result->{type}, "\t"x5, $result->{c_type}, "\n";
+                print $result->{type}, "\t"x5, $t, "\n";
             }
         }
     }
@@ -688,6 +700,60 @@ sub AUTOLOAD {
     my $entry = {};
     my $TYPE_ENUM            = 'T_ENUM';
     my $TYPE_FPOINTER_PREFIX = 'T_FPOINTER_';
+    my $TYPE_ARRAY_PREFIX    = 'T_ARRAY_';
+    my $store_type_info_from_dictionary = sub {
+        my ( $namespace_key, $type, $type_full, $entry, ) = @_;
+        
+        my $regex_fpointer_or_array = 
+          qr/^(?:\Q$TYPE_FPOINTER_PREFIX\E|\Q$TYPE_ARRAY_PREFIX\E)/o;
+        if ($type =~ $regex_fpointer_or_array) {
+            # $type itself is already something like 
+            # T_FPOINTER_BLAH
+            # locate its prototype in %TYPE_DICTINOARY
+            $entry->{type}   = $type_full;
+            $entry->{c_type} =
+              $TYPE_DICTIONARY{$namespace_key}->{$type};
+        }
+        else {
+            $entry->{type} =
+              $TYPE_DICTIONARY{$namespace_key}->{$type};
+            if ($entry->{type} !~ m/^[A-Z_0-9_\_]+$/o) { 
+                # not a primitive type
+                # recursively lookup
+                # walkthrough all possible typedef alias
+                # to get final primitive type
+                #print "from : ", $type_full, "\n";
+                #print "to   : ", $entry->{type}, "\n";
+                # by default lookup in namespace $namespace_key
+                local $CURRENT_NAMESPACE = $namespace_key;
+                my $i = 0;
+                while ($entry->{type} !~ m/^[A-Z_0-9_\_]+$/o) {
+                    die "deep recursive loop detected for type ". 
+                      $namespace_key. '::'. $entry->{type} if $i == 50;
+                    my $result = __analyse_type($entry->{type});
+                    for my $k (keys %$result) {
+                        $entry->{$k} = $result->{$k};
+                    }
+                    #use Data::Dumper ();
+                    #print Data::Dumper::Dumper($result);
+                    #exit 0;
+                    $i++;
+                }
+            }
+            elsif ($entry->{type} =~ $regex_fpointer_or_array) {
+                # bridged-typedef 
+                # inside %TYPE_DICTIONARY it has two entries:
+                # 1. $type           => T_FPOINTER_BLAH
+                # 2. T_FPOINTER_BLAH => c prototype
+                $entry->{c_type} =
+                  $TYPE_DICTIONARY{$namespace_key}->{ $entry->{type} };
+            }
+            else {
+                $entry->{c_type} = $type_full;
+            }
+        }
+    };
+    
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
@@ -702,46 +768,24 @@ sub AUTOLOAD {
                                 $template_namespace, $template_type);
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
-        $entry->{type}   = $TYPE_DICTIONARY{$namespace}->{$type};
-        $entry->{c_type} = $type_full;
+        $store_type_info_from_dictionary->($namespace, 
+                                           $type, $type_full, $entry);
     }
     elsif (__lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
-        # function pointer: prototype string from 
-        # $TYPE_DICTIONARY{$super_type}->{ 
-        #     $TYPE_DICTIONARY{$super_name}->{$type} }
-        $entry->{type}   = $TYPE_DICTIONARY{$super_name}->{$type};
-        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
-            $entry->{c_type} = $type_full;
-        }
-        else {
-            $entry->{c_type} = $TYPE_DICTIONARY{$super_name}->{ 
-                $TYPE_DICTIONARY{$super_name}->{$type} };
-        }
+        $store_type_info_from_dictionary->($super_name, 
+                                           $type, $type_full, $entry);
     }
     elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
-        $entry->{type}   =
-          $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type};
-        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
-            $entry->{c_type} = $type_full;
-        }
-        else {
-            $entry->{c_type} = $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{
-                $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type} };
-        }
+        $store_type_info_from_dictionary->($DEFAULT_NAMESPACE, 
+                                           $type, $type_full, $entry);
     }
     elsif (__lookup_type_in_parent_namespace(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
-        $entry->{type}   = $TYPE_DICTIONARY{$super_name}->{$type};
-        if ($entry->{type} !~ m/^\Q$TYPE_FPOINTER_PREFIX\E/o) {
-            $entry->{c_type} = $type_full;
-        }
-        else {
-            $entry->{c_type} = $TYPE_DICTIONARY{$super_name}->{ 
-                $TYPE_DICTIONARY{$super_name}->{$type} };
-        }
+        $store_type_info_from_dictionary->($super_name, 
+                                           $type, $type_full, $entry);
     }
     elsif (exists $GLOBAL_TYPEMAP{$type_full} or 
              exists $SIMPLE_TYPEMAP{$type_full} or 

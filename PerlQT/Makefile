@@ -56,6 +56,9 @@ OUT_FORMAT_DIR  := $(MAKE_ROOT)/03format
 IN_GROUP_DIR    := $(OUT_FORMAT_DIR)
 OUT_GROUP_DIR   := $(MAKE_ROOT)/04group
 
+IN_TYPEMAP_DIR  := $(OUT_GROUP_DIR)
+OUT_TYPEMAP_DIR := $(MAKE_ROOT)/05typemap
+
 IN_XSCODE_DIR   := $(OUT_GROUP_DIR)
 OUT_XSCODE_DIR  := $(MAKE_ROOT)/99xscode
 
@@ -133,7 +136,9 @@ FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
                        $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
 # initially empty, overriden inside grouplist.mk
 GROUP_YAMLS     := $(empty)$(empty)
-TYPEMAP         := $(OUT_XSCODE_DIR)/typemap
+# initially empty, overriden inside xscode.mk
+TYPEMAP_YAMLS   := $(empty)$(empty)
+TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 
 #################### SUBROUTINES ###############################
 
@@ -231,7 +236,7 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # gen_group triggers rebuild of all so-called 
 # 'standard' files
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
-ifneq ($(filter gen_xscode all,$(_GOALS)),)
+ifneq ($(filter gen_xscode all list_%,$(_GOALS)),)
 -include $(GROUPLIST_DOT_MK)
 -include $(XSCODE_DOT_MK)
 endif
@@ -295,6 +300,10 @@ list_group_yamls :
 	# $(_GOALS)
 	# $(GROUP_YAMLS)
 .PHONY: list_group_yamls
+
+list_typemap_yamls : 
+	# $(TYPEMAP_YAMLS)
+.PHONY: list_typemap_yamls
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \

@@ -87,7 +87,11 @@ sub main {
     }
     # deps for typemap
     # currently strictly depends on all standard files from gen_group
-    $xscode_dot_mk .= "\$(TYPEMAP): \$(MODULE_DOT_CONF) ". 
+    $xscode_dot_mk .= "TYPEMAP_YAMLS := ". 
+      "\$(patsubst \$(OUT_GROUP_DIR)%,\$(OUT_TYPEMAP_DIR)%,". 
+        "\$(patsubst %.meta,%.typemap,". 
+          "\$(filter %.meta,\$(GROUP_YAMLS)))) \n";
+    $xscode_dot_mk .= "\$(TYPEMAP_YAMLS) \$(TYPEMAP): \$(MODULE_DOT_CONF) ". 
       "\$(TYPEMAP_DOT_IGNORE) \$(TYPEMAP_DOT_SIMPLE) ". 
         "\$(TYPEMAP_DOT_MANUAL) ". 
           "\$(filter-out \%.friend \%.function,\$(GROUP_YAMLS)) \n";
