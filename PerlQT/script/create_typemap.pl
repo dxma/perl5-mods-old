@@ -376,7 +376,8 @@ information.
 
 sub __analyse_type {
     our $TYPE = shift;
-    our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, );
+    our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
+          $CURRENT_NAMESPACE, );
     my $result;
     
     # simply normalize
@@ -392,6 +393,15 @@ sub __analyse_type {
             exists $SIMPLE_TYPEMAP{$TYPE} ? $SIMPLE_TYPEMAP{$TYPE} : 
               $MANUAL_TYPEMAP{$TYPE};
         $result->{c_type} = $TYPE;
+    }
+    elsif ($TYPE !~ m/\:\:/io and exists $MANUAL_TYPEMAP{
+        join("::", $CURRENT_NAMESPACE,$TYPE)}) {
+        # a private type in that class
+        $result = {};
+        $result->{type}   = $MANUAL_TYPEMAP{
+            join("::",$CURRENT_NAMESPACE, $TYPE) };
+        $result->{c_type} = $TYPE;
+        # FIXME: write $CURRENT_NAMESPACE.typemap
     }
     else {
         # transform
@@ -799,9 +809,17 @@ sub AUTOLOAD {
                   $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
     }
+    elsif ($type_full !~ m/\:\:/io and 
+             exists $MANUAL_TYPEMAP{join("::", $namespace, $type_full)}) {
+        # possibly a private class/struct inside class/struct
+        $entry->{type}   = $MANUAL_TYPEMAP{ 
+            join("::", $namespace, $type_full) };
+        $entry->{c_type} = $type_full;
+        # FIXME: write $namespace.typemap
+    }
     else {
         # unknown
-        print STDERR "unknown type: ", $type_full, "\n";
+        print STDERR "unknown type: ", $type_full, " in ", $namespace, "\n";
         $entry->{type}   = 'UNKNOWN_FIXME';
         $entry->{c_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;

@@ -227,11 +227,16 @@ sub __process_typedef {
         }
         else {
             # typedef enum FROM TO;
-            if ($entry->{FROM} =~ m/^\s*\*/io) {
+            if ($entry->{FROM} =~ m/^(.*?)\*(?:\*| )*\s*$/io) {
                 # check for pointer def
                 # FIXME: something like "Qt::*funcpointer"
+                # NOTE: "STRUCT * * "
                 push @$entries_to_create, 
                   [$gen_type->(). '_PTR', $entry->{FROM}];
+                my $type_without_pointer = $1;
+                $type_without_pointer =~ s/\s+$//io;
+                push @$entries_to_create,
+                  [$gen_type->(), $type_without_pointer];
             }
             else {
                 push @$entries_to_create, 

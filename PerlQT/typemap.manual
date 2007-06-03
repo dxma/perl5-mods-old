@@ -9,4 +9,10 @@ GLint			T_IV
 GLuint			T_UV
 SQLHANDLE		T_PTROBJ
 std::string		T_PV
+std::basic_string	T_PV
 size_type		T_UV
+
+# QT 4.3.0
+# private struct
+QByteArray::Data	T_STRUCT
+QString::Data		T_STRUCT
