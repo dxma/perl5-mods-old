@@ -74,6 +74,7 @@ unsigned long long	T_UV
 #qulonglong		T_UV
 #qreal			T_DOUBLE
 #qreal			T_FLOAT
+signed char		T_CHAR
 signed int		T_IV
 signed short		T_IV
 signed long		T_IV
