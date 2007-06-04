@@ -138,12 +138,18 @@ sub const {
 }
 sub unsigned {
     my $entry = shift;
-    $entry->{PREFERED_SV} = 'UV';
+    my $type = $entry->{type};
+    $type =~ s/T\_IV/T_UV/go;
+    $entry->{type}   = $type;
+    $entry->{c_type} = 'unsigned '. $entry->{c_type};
     return $entry;
 }
 sub signed {
     my $entry = shift;
-    $entry->{PREFERED_SV} = 'IV';
+    my $type = $entry->{type};
+    $type =~ s/T\_UV/T_IV/go;
+    $entry->{type}   = $type;
+    $entry->{c_type} = 'signed '. $entry->{c_type};
     return $entry;
 }
 sub void {
@@ -153,7 +159,7 @@ sub void {
         $entry->{c_type} = 'void '. $entry->{c_type};
     }
     else {
-        $entry->{type}   = 'GENERIC';
+        $entry->{type}   = 'T_GENERIC';
         $entry->{c_type} = 'void';
     }
     return $entry;
@@ -161,14 +167,12 @@ sub void {
 # mask CORE::int later
 my $my_int = sub {
     my $entry = @_ ? shift : {};
-    my $prefered_sv = exists $entry->{PREFERED_SV} ?
-      $entry->{PREFERED_SV} : 'IV';
     if (exists $entry->{type}) {
-        $entry->{type}   = $prefered_sv. '_'. $entry->{type};
+        $entry->{type}   = 'T_IV_'. $entry->{type};
         $entry->{c_type} = 'int '. $entry->{c_type};
     }
     else {
-        $entry->{type}   = $prefered_sv;
+        $entry->{type}   = 'T_IV';
         $entry->{c_type} = 'int';
     }
     return $entry;
@@ -435,9 +439,11 @@ sub __analyse_type {
         $TYPE =~ s/\*/, PTR/gio;
         # '&' => ', REF'
         $TYPE =~ s/\&/, REF/gio;
+        # transform signed|unsigned
+        # 'signed long' => 'signed( long )'
+        $TYPE =~ s/\b((?:un)?signed)\b\s+((?>[^ ]+))/$1( $2 )/go;
         # mask bareword as a function call without any
         # parameter
-        # skip '(un)signed'
         $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
@@ -593,9 +599,11 @@ sub main {
                 my $result = __analyse_type($t);
                 # post patch:
                 # void ** => T_GENERIC_PTR => T_PTR
+                # T_CLASS_CONST => CONST_T_CLASS
                 {
                     my $re_type = $result->{type};
                     $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
+                    $re_type =~ s/^(.*)\_CONST$/CONST_$1/o;
                     $result->{type} = $re_type;
                 }
                 print $result->{type}, "\t"x5, $t, "\n";
