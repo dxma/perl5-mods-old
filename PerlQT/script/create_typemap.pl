@@ -105,6 +105,7 @@ sub PTR {
         # new pointer structure
         $entry->{type}   = 'PTR';
         $entry->{c_type} = '*';
+        $entry->{t_type} = 'PTR';
     }
     return $entry;
 }
@@ -119,20 +120,23 @@ sub REF {
         # new pointer structure
         $entry->{type}   = 'REF';
         $entry->{c_type} = '&';
+        $entry->{t_type} = 'REF';
     }
     return $entry;
 }
 # NOTE: char * const == char const *
 sub const {
     my $entry = @_ ? shift : {};
-    $entry->{IS_CONST} = 1;
     if (exists $entry->{type}) {
         $entry->{type}   = 'CONST_'. $entry->{type};
         $entry->{c_type} = 'const '. $entry->{c_type};
+        $entry->{t_type} = 'CONST_'. $entry->{t_type};
     }
     else {
         $entry->{type}   = 'CONST';
         $entry->{c_type} = 'const';
+        $entry->{t_type} = 'CONST';
+        $entry->{IS_CONST} = 1;
     }
     return $entry;
 }
@@ -141,6 +145,9 @@ sub unsigned {
     my $type = $entry->{type};
     $type =~ s/T\_IV/T_UV/go;
     $entry->{type}   = $type;
+    my $ttype = $entry->{t_type};
+    $ttype =~ s/T\_IV/T_UV/go;
+    $entry->{t_type} = $ttype;
     $entry->{c_type} = 'unsigned '. $entry->{c_type};
     return $entry;
 }
@@ -149,6 +156,9 @@ sub signed {
     my $type = $entry->{type};
     $type =~ s/T\_UV/T_IV/go;
     $entry->{type}   = $type;
+    my $ttype = $entry->{t_type};
+    $ttype =~ s/T\_UV/T_IV/go;
+    $entry->{t_type} = $ttype;
     $entry->{c_type} = 'signed '. $entry->{c_type};
     return $entry;
 }
@@ -157,10 +167,12 @@ sub void {
     if (exists $entry->{type}) {
         $entry->{type}   = 'T_GENERIC_'. $entry->{type};
         $entry->{c_type} = 'void '. $entry->{c_type};
+        $entry->{t_type} = 'T_GENERIC_'. $entry->{t_type};
     }
     else {
         $entry->{type}   = 'T_GENERIC';
         $entry->{c_type} = 'void';
+        $entry->{t_type} = 'T_GENERIC';
     }
     return $entry;
 }
@@ -170,10 +182,12 @@ my $my_int = sub {
     if (exists $entry->{type}) {
         $entry->{type}   = 'T_IV_'. $entry->{type};
         $entry->{c_type} = 'int '. $entry->{c_type};
+        $entry->{t_type} = 'T_IV_'. $entry->{t_type};
     }
     else {
         $entry->{type}   = 'T_IV';
         $entry->{c_type} = 'int';
+        $entry->{t_type} = 'T_IV';
     }
     return $entry;
 };
@@ -183,110 +197,194 @@ my $my_int = sub {
 # specific templates 
 # to serve requested template type
 sub Q3PtrList {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'Q3PTRLIST_'. $sub_entry->{type};
-    $entry->{c_type} = 'Q3PtrList< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'Q3PTRLIST', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'Q3PtrList< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub Q3ValueList {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'Q3VALUELIST_'. $sub_entry->{type};
-    $entry->{c_type} = 'Q3ValueList< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'Q3VALUELIST', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'Q3ValueList< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QFlags {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'QFLAGS_'. $sub_entry->{type};
-    $entry->{c_type} = 'QFlags< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'QFLAGS', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QFlags< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QList {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'QLIST_'. $sub_entry->{type};
-    $entry->{c_type} = 'QList< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'QLIST', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QList< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QVector {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'QVECTOR_'. $sub_entry->{type};
-    $entry->{c_type} = 'QVector< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'QVECTOR', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QVector< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QSet {
-    my $sub_entry = shift;
+    my @sub_entry = @_;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{child} = $sub_entry;
-    $entry->{type}   = 'QSET_'. $sub_entry->{type};
-    $entry->{c_type} = 'QSet< '. $sub_entry->{c_type}. ' >';
+    $entry->{type}   = join('__', 'QSET', 
+                            map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QSet< '. 
+      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QMap {
-    my ( $sub_key, $sub_value, ) = @_;
-    my $entry                    = {};
+    my @sub_entry = @_;
+    my @sub_key   = ();
+    my @sub_value = ();
+    # locate the start index of value part
+    # NOTE: QMap< int *, QString >
+    my $index_value = 1;
+    for (my $i = 0; $i <= $#sub_entry; $i++) {
+        unless (exists $sub_entry[$i]->{IS_CONST} or 
+              exists $sub_entry[$i]->{IS_PTR} or 
+                exists $sub_entry[$i]->{IS_REF}) {
+            # not a part of key
+            $index_value = $i;
+            last;
+        }
+    }
+    @sub_key   = splice @sub_entry, 0, $index_value;
+    @sub_value = splice @sub_entry, $index_value;
+    my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
-    $entry->{child} = [ $sub_key, $sub_value, ];
     $entry->{type}   = 
-      join('_', 'QMAP',$sub_key->{type}, $sub_value->{type});
-    $entry->{c_type} = 'QMap< '. $sub_key->{c_type}. 
-      ', '. $sub_value->{c_type}. ' >';
+      join('__', 'QMAP', 
+           map { $_->{t_type} } @sub_key, @sub_value);
+    $entry->{c_type} = 'QMap< '. 
+      join(' ', map { $_->{c_type} } @sub_key). ', '. 
+        join(' ', map { $_->{c_type} } @sub_value). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QMultiMap {
-    my ( $sub_key, $sub_value, ) = @_;
-    my $entry                    = {};
+    my @sub_entry = @_;
+    my @sub_key   = ();
+    my @sub_value = ();
+    # locate the start index of value part
+    # NOTE: QMultiMap< int *, QString >
+    my $index_value = 1;
+    for (my $i = 0; $i <= $#sub_entry; $i++) {
+        unless (exists $sub_entry[$i]->{IS_CONST} or 
+              exists $sub_entry[$i]->{IS_PTR} or 
+                exists $sub_entry[$i]->{IS_REF}) {
+            # not a part of key
+            $index_value = $i;
+            last;
+        }
+    }
+    @sub_key   = splice @sub_entry, 0, $index_value;
+    @sub_value = splice @sub_entry, $index_value;
+    my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
-    $entry->{child} = [ $sub_key, $sub_value, ];
     $entry->{type}   = 
-      join('_', 'QMULTIMAP', $sub_key->{type}, $sub_value->{type});
-    $entry->{c_type} = 'QMultiMap< '. $sub_key->{c_type}. 
-      ', '. $sub_value->{c_type}. ' >';
+      join('__', 'QMULTIMAP', 
+           map { $_->{t_type} } @sub_key, @sub_value);
+    $entry->{c_type} = 'QMultiMap< '. 
+      join(' ', map { $_->{c_type} } @sub_key). ', '. 
+        join(' ', map { $_->{c_type} } @sub_value). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QPair {
-    my ( $first, $second, ) = @_;
-    my $entry                    = {};
+    my @sub_entry  = @_;
+    my @sub_first  = ();
+    my @sub_second = ();
+    # locate the start index of second part
+    # NOTE: QPair< int *, QString *>
+    my $index_second = 1;
+    for (my $i = 0; $i <= $#sub_entry; $i++) {
+        unless (exists $sub_entry[$i]->{IS_CONST} or 
+              exists $sub_entry[$i]->{IS_PTR} or 
+                exists $sub_entry[$i]->{IS_REF}) {
+            # not a part of key
+            $index_second = $i;
+            last;
+        }
+    }
+    @sub_first  = splice @sub_entry, 0, $index_second;
+    @sub_second = splice @sub_entry, $index_second;
+    my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
-    $entry->{child} = [ $first, $second, ];
     $entry->{type}   = 
-      join('_', 'QPAIR', $first->{type}, $second->{type});
-    $entry->{c_type} = 'QPair< '. $first->{c_type}. 
-      ', '. $second->{c_type}. ' >';
+      join('__', 'QPAIR', 
+           map { $_->{t_type} } @sub_first, @sub_second);
+    $entry->{c_type} = 'QPair< '. 
+      join(' ', map { $_->{c_type} } @sub_first). ', '. 
+        join(' ', map { $_->{c_type} } @sub_second). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
 sub QHash {
-    my ( $sub_key, $sub_value, ) = @_;
-    my $entry                    = {};
+    my @sub_entry = @_;
+    my @sub_key   = ();
+    my @sub_value = ();
+    # locate the start index of value part
+    # NOTE: QHash< int *, QString >
+    my $index_value = 1;
+    for (my $i = 0; $i <= $#sub_entry; $i++) {
+        unless (exists $sub_entry[$i]->{IS_CONST} or 
+              exists $sub_entry[$i]->{IS_PTR} or 
+                exists $sub_entry[$i]->{IS_REF}) {
+            # not a part of key
+            $index_value = $i;
+            last;
+        }
+    }
+    @sub_key   = splice @sub_entry, 0, $index_value;
+    @sub_value = splice @sub_entry, $index_value;
+    my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
-    $entry->{child} = [ $sub_key, $sub_value, ];
     $entry->{type}   = 
-      join('_', 'QHASH', $sub_key->{type}, $sub_value->{type});
-    $entry->{c_type} = 'QHash< '. $sub_key->{c_type}. 
-      ', '. $sub_value->{c_type}. ' >';
+      join('__', 'QHASH', 
+           map { $_->{t_type} } @sub_key, @sub_value);
+    $entry->{c_type} = 'QHash< '. 
+      join(' ', map { $_->{c_type} } @sub_key). ', '. 
+        join(' ', map { $_->{c_type} } @sub_value). ' >';
+    $entry->{t_type} = $entry->{type};
     # FIXME: generate xs/pm files
     return $entry;
 }
@@ -374,6 +472,12 @@ Try to analyse a C/C++ type. Transform it into a group of function
 calls. Return a self-deterministic structure to describe the type
 information. 
 
+B<NOTE>: the self-deterministic structure is basically a hash with
+three fundamental keys - 'type', 'c_type' and 't_type'. The value of
+'type' corresponses to the final typemap string. The value of 'c_type'
+is the raw C/C++ type string. The value of 't_type' is _ONLY_ used by 
+template types to form the specific typemap name. 
+
 =back
 
 =cut
@@ -397,6 +501,7 @@ sub __analyse_type {
             exists $SIMPLE_TYPEMAP{$TYPE} ? $SIMPLE_TYPEMAP{$TYPE} : 
               $MANUAL_TYPEMAP{$TYPE};
         $result->{c_type} = $TYPE;
+        $result->{t_type} = $result->{type};
     }
     elsif ($TYPE !~ m/\:\:/io and exists $MANUAL_TYPEMAP{
         join("::", $CURRENT_NAMESPACE,$TYPE)}) {
@@ -405,6 +510,7 @@ sub __analyse_type {
         $result->{type}   = $MANUAL_TYPEMAP{
             join("::",$CURRENT_NAMESPACE, $TYPE) };
         $result->{c_type} = $TYPE;
+        $result->{t_type} = $result->{type};
         # FIXME: write $CURRENT_NAMESPACE.typemap
     }
     else {
@@ -600,10 +706,12 @@ sub main {
                 # post patch:
                 # void ** => T_GENERIC_PTR => T_PTR
                 # T_CLASS_CONST => CONST_T_CLASS
+                # ::            => _
                 {
                     my $re_type = $result->{type};
                     $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
                     $re_type =~ s/^(.*)\_CONST$/CONST_$1/o;
+                    $re_type =~ s/\:\:/___/go;
                     $result->{type} = $re_type;
                 }
                 print $result->{type}, "\t"x5, $t, "\n";
@@ -731,6 +839,7 @@ sub AUTOLOAD {
             $entry->{type}   = $type_full;
             $entry->{c_type} =
               $TYPE_DICTIONARY{$namespace_key}->{$type};
+            $entry->{t_type} = $type_full;
         }
         else {
             $entry->{type} =
@@ -763,11 +872,13 @@ sub AUTOLOAD {
                 # inside %TYPE_DICTIONARY it has two entries:
                 # 1. $type           => T_FPOINTER_BLAH
                 # 2. T_FPOINTER_BLAH => c prototype
-                $entry->{c_type} =
-                  $TYPE_DICTIONARY{$namespace_key}->{ $entry->{type} };
+                $entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{ 
+                    $entry->{type} };
+                $entry->{t_type} = $entry->{type};
             }
             else {
                 $entry->{c_type} = $type_full;
+                $entry->{t_type} = uc($type_full);
             }
         }
     };
@@ -784,6 +895,7 @@ sub AUTOLOAD {
         $entry->{type}   = $TYPE_ENUM;
         $entry->{c_type} = join("::", 
                                 $template_namespace, $template_type);
+        $entry->{t_type} = $TYPE_ENUM;
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
         $store_type_info_from_dictionary->($namespace, 
@@ -816,6 +928,7 @@ sub AUTOLOAD {
                 $SIMPLE_TYPEMAP{$type_full} : 
                   $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
+        $entry->{t_type} = uc($type_full);
     }
     elsif ($type_full !~ m/\:\:/io and 
              exists $MANUAL_TYPEMAP{join("::", $namespace, $type_full)}) {
@@ -823,6 +936,7 @@ sub AUTOLOAD {
         $entry->{type}   = $MANUAL_TYPEMAP{ 
             join("::", $namespace, $type_full) };
         $entry->{c_type} = $type_full;
+        $entry->{t_type} = uc($type_full);
         # FIXME: write $namespace.typemap
     }
     else {
@@ -830,6 +944,7 @@ sub AUTOLOAD {
         print STDERR "unknown type: ", $type_full, " in ", $namespace, "\n";
         $entry->{type}   = 'UNKNOWN_FIXME';
         $entry->{c_type} = 'UNKNOWN_FIXME';
+        $entry->{t_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;
     }
     return $entry;
