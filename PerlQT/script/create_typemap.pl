@@ -56,6 +56,8 @@ our %SIMPLE_TYPEMAP  = ();
 our %GLOBAL_TYPEMAP  = ();
 our %IGNORE_TYPEMAP  = ();
 our %MANUAL_TYPEMAP  = ();
+# array to hold all known type(s)
+our @TYPE_KNOWN      = ();
 # array to hold any unknown type(s)
 our @TYPE_UNKNOWN    = ();
 
@@ -275,7 +277,7 @@ sub QMap {
     # locate the start index of value part
     # NOTE: QMap< int *, QString >
     my $index_value = 1;
-    for (my $i = 0; $i <= $#sub_entry; $i++) {
+    for (my $i = 1; $i <= $#sub_entry; $i++) {
         unless (exists $sub_entry[$i]->{IS_CONST} or 
               exists $sub_entry[$i]->{IS_PTR} or 
                 exists $sub_entry[$i]->{IS_REF}) {
@@ -285,7 +287,7 @@ sub QMap {
         }
     }
     @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = splice @sub_entry, $index_value;
+    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
@@ -305,7 +307,7 @@ sub QMultiMap {
     # locate the start index of value part
     # NOTE: QMultiMap< int *, QString >
     my $index_value = 1;
-    for (my $i = 0; $i <= $#sub_entry; $i++) {
+    for (my $i = 1; $i <= $#sub_entry; $i++) {
         unless (exists $sub_entry[$i]->{IS_CONST} or 
               exists $sub_entry[$i]->{IS_PTR} or 
                 exists $sub_entry[$i]->{IS_REF}) {
@@ -315,7 +317,7 @@ sub QMultiMap {
         }
     }
     @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = splice @sub_entry, $index_value;
+    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
@@ -335,7 +337,7 @@ sub QPair {
     # locate the start index of second part
     # NOTE: QPair< int *, QString *>
     my $index_second = 1;
-    for (my $i = 0; $i <= $#sub_entry; $i++) {
+    for (my $i = 1; $i <= $#sub_entry; $i++) {
         unless (exists $sub_entry[$i]->{IS_CONST} or 
               exists $sub_entry[$i]->{IS_PTR} or 
                 exists $sub_entry[$i]->{IS_REF}) {
@@ -345,7 +347,7 @@ sub QPair {
         }
     }
     @sub_first  = splice @sub_entry, 0, $index_second;
-    @sub_second = splice @sub_entry, $index_second;
+    @sub_second = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
@@ -365,7 +367,7 @@ sub QHash {
     # locate the start index of value part
     # NOTE: QHash< int *, QString >
     my $index_value = 1;
-    for (my $i = 0; $i <= $#sub_entry; $i++) {
+    for (my $i = 1; $i <= $#sub_entry; $i++) {
         unless (exists $sub_entry[$i]->{IS_CONST} or 
               exists $sub_entry[$i]->{IS_PTR} or 
                 exists $sub_entry[$i]->{IS_REF}) {
@@ -375,7 +377,7 @@ sub QHash {
         }
     }
     @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = splice @sub_entry, $index_value;
+    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
@@ -684,7 +686,8 @@ sub main {
     my $known   = {};
     # in case failed lookup, push it into @TYPE_UNKNOWN
     our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
-          %MANUAL_TYPEMAP, @TYPE_UNKNOWN, );
+          %MANUAL_TYPEMAP, 
+          @TYPE_KNOWN, @TYPE_UNKNOWN, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
@@ -706,7 +709,7 @@ sub main {
                 # post patch:
                 # void ** => T_GENERIC_PTR => T_PTR
                 # T_CLASS_CONST => CONST_T_CLASS
-                # ::            => _
+                # ::            => ___
                 {
                     my $re_type = $result->{type};
                     $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
@@ -714,7 +717,9 @@ sub main {
                     $re_type =~ s/\:\:/___/go;
                     $result->{type} = $re_type;
                 }
-                print $result->{type}, "\t"x5, $t, "\n";
+                push @TYPE_KNOWN, 
+                  [ $result->{c_type}, $result->{type} ];
+                print STDERR $t, "\t"x3, $result->{c_type}, "\n";
             }
         }
     }
