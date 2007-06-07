@@ -496,23 +496,22 @@ sub __analyse_type {
     $TYPE =~ s/\s+$//gio;
     $TYPE =~ s/\s+/ /gio;
     if (exists $GLOBAL_TYPEMAP{$TYPE} or 
-              exists $SIMPLE_TYPEMAP{$TYPE} or 
-                exists $MANUAL_TYPEMAP{$TYPE}) {
+              exists $SIMPLE_TYPEMAP{$TYPE}) {
         $result = {};
         $result->{type}   = 
           exists $GLOBAL_TYPEMAP{$TYPE} ? $GLOBAL_TYPEMAP{$TYPE} : 
-            exists $SIMPLE_TYPEMAP{$TYPE} ? $SIMPLE_TYPEMAP{$TYPE} : 
-              $MANUAL_TYPEMAP{$TYPE};
+            $SIMPLE_TYPEMAP{$TYPE};
         $result->{c_type} = $TYPE;
         $result->{t_type} = $result->{type};
     }
-    elsif ($TYPE !~ m/\:\:/io and exists $MANUAL_TYPEMAP{
+    elsif (exists $MANUAL_TYPEMAP{
         join("::", $CURRENT_NAMESPACE,$TYPE)}) {
-        # a private type in that class
+        # might be a private type in that class
         $result = {};
         my $type_full = join("::", $CURRENT_NAMESPACE, $TYPE);
         $result->{type}   = $MANUAL_TYPEMAP{$type_full};
-        $result->{c_type} = $TYPE;
+        # use full qualified name instead
+        $result->{c_type} = $type_full;
         $result->{t_type} = $result->{type};
         $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;
     }
@@ -718,7 +717,9 @@ sub main {
                     $re_type =~ s/\:\:/___/go;
                     $result->{type} = $re_type;
                 }
-                push @TYPE_KNOWN, [ $t, $result->{type} ];
+                #push @TYPE_KNOWN, [ $t, $result->{type} ];
+                push @TYPE_KNOWN, 
+                  [ $result->{c_type}, $result->{type} ];
                 #print STDERR $t, "\t"x3, $result->{c_type}, "\n";
             }
         }
@@ -964,30 +965,24 @@ sub AUTOLOAD {
                                            $type, $type_full, $entry);
     }
     elsif (exists $GLOBAL_TYPEMAP{$type_full} or 
-             exists $SIMPLE_TYPEMAP{$type_full} or 
-               exists $MANUAL_TYPEMAP{$type_full}) {
-        # NOTE: something like std::string
+             exists $SIMPLE_TYPEMAP{$type_full}) {
         $entry->{type}   = 
           exists $GLOBAL_TYPEMAP{$type_full} ?
-            $GLOBAL_TYPEMAP{$type_full} : 
-              exists $SIMPLE_TYPEMAP{$type_full} ? 
-                $SIMPLE_TYPEMAP{$type_full} : 
-                  $MANUAL_TYPEMAP{$type_full};
+            $GLOBAL_TYPEMAP{$type_full} : $SIMPLE_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
         $entry->{t_type} = uc($type_full);
     }
-    elsif ($type_full !~ m/\:\:/io and 
-             exists $MANUAL_TYPEMAP{join("::", $namespace, $type_full)}) {
+    elsif (exists $MANUAL_TYPEMAP{$type_full}) {
+        # NOTE: something like std::string
         # possibly a private class/struct inside class/struct
-        $entry->{type}   = $MANUAL_TYPEMAP{ 
-            join("::", $namespace, $type_full) };
+        $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
         $entry->{t_type} = uc($type_full);
-        # FIXME: write $namespace.typemap
+        #$TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
     }
     else {
         # unknown
-        print STDERR "unknown type: ", $type_full, " in ", $namespace, "\n";
+        print STDERR "unknown type: ", $type, " in ", $namespace, "\n";
         $entry->{type}   = 'UNKNOWN_FIXME';
         $entry->{c_type} = 'UNKNOWN_FIXME';
         $entry->{t_type} = 'UNKNOWN_FIXME';

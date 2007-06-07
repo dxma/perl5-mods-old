@@ -2,17 +2,30 @@
 # 1. 3rd party header
 # 2. template
 # 3. imported by #include directive
-ConstIterator		T_CLASS
-Iterator		T_CLASS
-GLenum			T_ENUM
-GLint			T_IV
-GLuint			T_UV
-SQLHANDLE		T_PTROBJ
-std::string		T_PV
-std::basic_string	T_PV
-size_type		T_UV
+# NOTE: _FULL_ qualified name if possible
+QStringList::ConstIterator		T_CLASS
+QStringList::Iterator			T_CLASS
+
+QGLContext::GLenum			T_ENUM
+QGLContext::GLint			T_IV
+QGLContext::GLuint			T_UV
+
+QGLFramebufferObject::GLenum		T_ENUM
+QGLFramebufferObject::GLint		T_UV
+QGLFramebufferObject::GLuint		T_UV
+
+QGLWidget::GLenum			T_ENUM
+QGLWidget::GLint			T_IV
+QGLWidget::GLuint			T_UV
+
+QODBCDriver::SQLHANDLE			T_PTROBJ
+
+std::string				T_PV
+std::basic_string			T_PV
+
+Q3SqlRecordInfo::size_type		T_UV
 
 # QT 4.3.0
 # private struct
-QByteArray::Data	T_STRUCT
-QString::Data		T_STRUCT
+QByteArray::Data			T_STRUCT
+QString::Data				T_STRUCT
