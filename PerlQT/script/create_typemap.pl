@@ -903,28 +903,36 @@ sub AUTOLOAD {
             }
             elsif ($entry->{type} =~ $regex_fpointer_or_array) {
                 # bridged-typedef 
-                # inside %TYPE_DICTIONARY it has two entries:
+                # inside %TYPE_DICTIONARY there are two related entries:
                 # 1. $type           => T_FPOINTER_BLAH
                 # 2. T_FPOINTER_BLAH => c prototype
-                $entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{ 
-                    $entry->{type} };
+                #$entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{ 
+                #    $entry->{type} };
+                $entry->{c_type} = $type_full;
                 $entry->{t_type} = $entry->{type};
                 # $type same as $type_full this case
                 if ($CURRENT_NAMESPACE ne $DEFAULT_NAMESPACE) {
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type_full} = 
+                    # change c_type to full qualified name
+                    $type_full = 
                       join("::", $CURRENT_NAMESPACE, $type_full);
+                    $entry->{c_type} = $type_full;
+                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} =
+                      $type_full;
                 }
             }
             else {
                 $entry->{c_type} = $type_full;
                 $entry->{t_type} = uc($type_full);
-                if ($CURRENT_NAMESPACE ne $namespace_key and
-                      $type_full !~ m/\:\:/ and 
-                        $namespace_key ne $DEFAULT_NAMESPACE) {
-                    # located local type $type_full in other namespace
+                if ($namespace_key ne $DEFAULT_NAMESPACE and 
+                      $type_full !~ m/\:\:/io) {
+                    # located local type $type in namespace typedef
                     # $type same as $type_full this case
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type_full} = 
+                    # change c_type to full qualified name
+                    $type_full = 
                       join("::", $namespace_key, $type_full);
+                    $entry->{c_type} = $type_full;
+                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = 
+                      $type_full;
                 }
             }
         }
@@ -973,12 +981,20 @@ sub AUTOLOAD {
         $entry->{t_type} = uc($type_full);
     }
     elsif (exists $MANUAL_TYPEMAP{$type_full}) {
-        # NOTE: something like std::string
-        # possibly a private class/struct inside class/struct
         $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
         $entry->{t_type} = uc($type_full);
         #$TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
+    }
+    elsif (exists $MANUAL_TYPEMAP{
+        join("::", $namespace, $type_full)}) {
+        # NOTE: something like std::string
+        # possibly a private class/struct inside class/struct
+        $type_full = join("::", $namespace, $type_full);
+        $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
+        $entry->{c_type} = $type_full;
+        $entry->{t_type} = uc($type_full);
+        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
     }
     else {
         # unknown
