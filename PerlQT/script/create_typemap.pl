@@ -60,6 +60,9 @@ our %MANUAL_TYPEMAP  = ();
 our @TYPE_KNOWN      = ();
 # array to hold any unknown type(s)
 our @TYPE_UNKNOWN    = ();
+# hash to hold all local type name 
+# and corresponding full qualified name
+our %TYPE_LOCALMAP   = ();
 
 # for type transform: 
 # const takes one additional parameter
@@ -410,8 +413,6 @@ sub __final_transform {
         $primary->{type}   .= '_'. $opt_entry->{type};
         $primary->{c_type} .= ' '. $opt_entry->{c_type};
     }
-    # FIXME: write to typemap
-    #print STDERR $primary->{type}, "\t"x5, $primary->{c_type}, "\n";
     return $primary;
 }
 
@@ -487,7 +488,7 @@ template types to form the specific typemap name.
 sub __analyse_type {
     our $TYPE = shift;
     our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
-          $CURRENT_NAMESPACE, );
+          $CURRENT_NAMESPACE, %TYPE_LOCALMAP, );
     my $result;
     
     # simply normalize
@@ -509,11 +510,11 @@ sub __analyse_type {
         join("::", $CURRENT_NAMESPACE,$TYPE)}) {
         # a private type in that class
         $result = {};
-        $result->{type}   = $MANUAL_TYPEMAP{
-            join("::",$CURRENT_NAMESPACE, $TYPE) };
+        my $type_full = join("::", $CURRENT_NAMESPACE, $TYPE);
+        $result->{type}   = $MANUAL_TYPEMAP{$type_full};
         $result->{c_type} = $TYPE;
         $result->{t_type} = $result->{type};
-        # FIXME: write $CURRENT_NAMESPACE.typemap
+        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;
     }
     else {
         # transform
@@ -687,7 +688,7 @@ sub main {
     # in case failed lookup, push it into @TYPE_UNKNOWN
     our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
           %MANUAL_TYPEMAP, 
-          @TYPE_KNOWN, @TYPE_UNKNOWN, );
+          @TYPE_KNOWN, @TYPE_UNKNOWN, %TYPE_LOCALMAP, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
@@ -717,13 +718,38 @@ sub main {
                     $re_type =~ s/\:\:/___/go;
                     $result->{type} = $re_type;
                 }
-                push @TYPE_KNOWN, 
-                  [ $result->{c_type}, $result->{type} ];
-                print STDERR $t, "\t"x3, $result->{c_type}, "\n";
+                push @TYPE_KNOWN, [ $t, $result->{type} ];
+                #print STDERR $t, "\t"x3, $result->{c_type}, "\n";
             }
         }
     }
+    
     # FIXME: write typemap.unknown if unknown one(s) found
+    # FIXME: write %TYPE_LOCALMAP
+    foreach my $ns (keys %TYPE_LOCALMAP) {
+        foreach my $t (keys %{$TYPE_LOCALMAP{$ns}}) {
+            print $ns, "\t"x2, 
+              $t, " => ", $TYPE_LOCALMAP{$ns}->{$t}, "\n";
+        }
+    }
+    if (defined $out) {
+        local ( *OUT, );
+        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
+          "cannot open file to write: $!";
+        foreach my $l (@TYPE_KNOWN) {
+            print OUT $l->[0], 
+              "\t"x (length($l->[0]) > 20 ? 2 : 5), 
+                $l->[1], "\n";
+        }
+        close OUT or die "cannot save to file: $!";
+    }
+    else {
+        foreach my $l (@TYPE_KNOWN) {
+            print STDOUT $l->[0], 
+              "\t"x (length($l->[0]) > 20 ? 2 : 5), 
+                $l->[1], "\n";
+        }
+    }
     exit 0;
 }
 
@@ -839,7 +865,9 @@ sub AUTOLOAD {
           qr/^(?:\Q$TYPE_FPOINTER_PREFIX\E|\Q$TYPE_ARRAY_PREFIX\E)/o;
         if ($type =~ $regex_fpointer_or_array) {
             # $type itself is already something like 
-            # T_FPOINTER_BLAH
+            # T_FPOINTER_BLAH 
+            # processed by script/format_qtedi_production.pl
+            # such case is _NOT_ typedefed
             # locate its prototype in %TYPE_DICTINOARY
             $entry->{type}   = $type_full;
             $entry->{c_type} =
@@ -880,10 +908,23 @@ sub AUTOLOAD {
                 $entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{ 
                     $entry->{type} };
                 $entry->{t_type} = $entry->{type};
+                # $type same as $type_full this case
+                if ($CURRENT_NAMESPACE ne $DEFAULT_NAMESPACE) {
+                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type_full} = 
+                      join("::", $CURRENT_NAMESPACE, $type_full);
+                }
             }
             else {
                 $entry->{c_type} = $type_full;
                 $entry->{t_type} = uc($type_full);
+                if ($CURRENT_NAMESPACE ne $namespace_key and
+                      $type_full !~ m/\:\:/ and 
+                        $namespace_key ne $DEFAULT_NAMESPACE) {
+                    # located local type $type_full in other namespace
+                    # $type same as $type_full this case
+                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type_full} = 
+                      join("::", $namespace_key, $type_full);
+                }
             }
         }
     };
