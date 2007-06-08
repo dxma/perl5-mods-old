@@ -198,7 +198,11 @@ sub __process_typedef {
         # keep prototype info for future use
         push @$entries_to_create, 
           [$entry->{PROTOTYPE}, $entry->{FROM}];
-        # TODO: template type inside fpointer
+        # store function pointer info
+        # normally function pointer is global 
+        # unless itself has namespace prefix
+        __process_fpointer($entry->{FPOINTERINFO}, $entries, 
+                           $namespace, $type, $visibility);
     }
     else {
         # container types
@@ -325,6 +329,65 @@ sub __process_enum {
 
 =over
 
+=item __process_fpointer
+
+Push a function pointer entry into either <namespace>.fpointer or
+<NAMESPACE_DEFAULT>.fpointer
+
+B<NOTE>: Function pointer, in most case, should be global. Unless
+declared as something like 'void (*QtTest::callback)(int i)'. 
+
+B<NOTE>: Global function pointer could be still pushed into a
+namespace other than NAMESPACE_DEFAULT, in order to reference envolved
+C/C++ types in that particular namespace. In such case, function
+pointer name will be prefixed as <NAMESPACE_DEFAULT>::<name>. 
+
+=back
+
+=cut
+
+sub __process_fpointer {
+    my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
+    
+    # store
+    my $TYPE = 'fpointer';
+    my $fpname = ref $entry->{NAME} eq 'HASH' ? 
+      $entry->{NAME}->{NAME} : $entry->{NAME};
+    
+    if ($fpname =~ m/\:\:/io) {
+        # namespace delimiter found
+        # push into that namespace
+        my ( @ns ) = split /\:\:/, $fpname;
+        my $fp = pop @ns;
+        my $ns = join("::", @ns);
+        # strip namespace
+        if (ref $entry->{NAME} eq 'HASH') {
+            $entry->{NAME}->{NAME} = $fp;
+        }
+        else {
+            $entry->{NAME} = $fp;
+        }
+        push @{$entries->{$ns. '.'. $TYPE}}, $entry;
+    }
+    elsif (@$namespace) {
+        # prefix with NAMESPACE_DEFAULT
+        if (ref $entry->{NAME} eq 'HASH') {
+            $entry->{NAME}->{NAME} = 
+              join("::", NAMESPACE_DEFAULT(), $entry->{NAME}->{NAME});
+        }
+        else {
+            $entry->{NAME} = 
+              join("::", NAMESPACE_DEFAULT(), $entry->{NAME});
+        }
+        push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
+    }
+    else {
+        push @{$entries->{NAMESPACE_DEFAULT(). '.'. $TYPE}}, $entry;
+    }
+}
+
+=over
+
 =item __process_function
 
 Push a function entry into possible files: 
@@ -373,6 +436,9 @@ sub __process_function {
                 __process_typedef(
                     __gen_simple_typedef($p->{NAME}, $p->{TYPE}), 
                     $entries, $namespace, $type, $visibility);
+                # store function pointer info
+                __process_fpointer($p->{FPOINTERINFO}, $entries, 
+                                   $namespace, $type, $visibility);
             }
             elsif ($p->{TYPE} =~ m/^T\_ARRAY\_/o) {
                 # check array pointer parameter
@@ -412,7 +478,7 @@ sub __process_function {
     }
 }
 
-# get QT-specific module info from file path
+# extract QT-specific module info from file path
 sub __get_qt_module_name {
     return (File::Spec::->splitdir($ARGV[ARGV_INDEX_FILE_INPUT]))[-2];
 }

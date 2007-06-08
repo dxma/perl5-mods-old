@@ -99,15 +99,17 @@ sub main {
     $xscode_dot_mk .= "\t\$(shell \$(CMD_RM) \$(TYPEMAP_DOT_DEP))\n";
     $xscode_dot_mk .= "\t\$(foreach i,\$^,". 
       "\$(shell \$(CMD_ECHO) \$(i) >> \$(TYPEMAP_DOT_DEP)))\n";
-    #$xscode_dot_mk .= "\t# \$^\n";
+    $xscode_dot_mk .= "\t\$(_Q)\$(CMD_RMDIR) \$(OUT_TYPEMAP_DIR)\n";
+    $xscode_dot_mk .= "\t\$(_Q)[[ -d \$(OUT_TYPEMAP_DIR) ]] || ". 
+      "\$(CMD_MKDIR) \$(OUT_TYPEMAP_DIR)\n";
     
     $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
     $xscode_dot_mk .= 
       "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
     $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_TP) \$(MODULE_DOT_CONF) ". 
       "\$(TYPEMAP_DOT_IGNORE) \$(TYPEMAP_DOT_SIMPLE) ". 
-        "\$(TYPEMAP_DOT_MANUAL) ".
-          "\$(TYPEMAP_DOT_DEP) \$(IN_XSCODE_DIR) \$@\n\n";
+        "\$(TYPEMAP_DOT_MANUAL) \$(TYPEMAP_DOT_DEP) ". 
+          "\$(OUT_TYPEMAP_DIR) \$@\n\n";
     
     if (defined $out) {
         local ( *OUT, );

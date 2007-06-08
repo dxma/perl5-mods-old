@@ -292,6 +292,8 @@ class_sanity_check:
 #       keep a custom list in seperate file
 gen_xscode   : gen_group $(XSCODE_DOT_MK) $(TYPEMAP) 
 clean_xscode : 
+	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
+	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode
 
@@ -307,7 +309,7 @@ list_typemap_yamls :
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \
-       clean_format clean_group
+       clean_format clean_group clean_xscode
 .PHONY: clean
 
 all: gen_xscode

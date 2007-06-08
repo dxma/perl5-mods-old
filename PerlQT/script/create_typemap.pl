@@ -35,7 +35,7 @@ See L<http://dev.perl.org/licenses/artistic.html>
 sub __usage {
     print STDERR << "EOU";
 usage: $0 <module.conf> <typemap.ignore> <typemap.simple>
-    <typemap.manual> <typemap.dep> <in_xscode_dir> [<out_typemap>]
+    <typemap.manual> <typemap.dep> <out_typemap_dir> [<out_typemap>]
 EOU
     exit 1;
 }
@@ -574,8 +574,8 @@ sub main {
     #        see script/gen_xscode_mk.pl
     my ( $module_dot_conf, 
          $typemap_dot_ignore, $typemap_dot_simple,
-         $typemap_dot_manual, 
-         $typemap_dot_dep, $in_xscode_dir, 
+         $typemap_dot_manual, $typemap_dot_dep, 
+         $out_typemap_dir, 
          $out ) = @ARGV;
     die "file $module_dot_conf not found" unless 
       -f $module_dot_conf;
@@ -587,8 +587,8 @@ sub main {
       -f $typemap_dot_manual;
     die "file $typemap_dot_dep not found" unless 
       -f $typemap_dot_dep;
-    die "dir $in_xscode_dir not found" unless 
-      -d $in_xscode_dir;
+    die "dir $out_typemap_dir not found" unless 
+      -d $out_typemap_dir;
     
     # categorize input files
     my @meta    = ();
@@ -612,6 +612,9 @@ sub main {
             elsif (m/\.(slot)\.(?:public|protected)$/o) {
                 push @{$member{$1}}, $_;
             } 
+            elsif (m/\.(fpointer)$/o) {
+                push @{$member{$1}}, $_;
+            }
             elsif (m/\.typedef$/o) {
                 push @typedef, $_;
             }
@@ -642,7 +645,7 @@ sub main {
     }
     # pre-cache all function info
     my %method = ();
-    foreach my $t (qw/function signal slot/) {
+    foreach my $t (qw/function signal slot fpointer/) {
         foreach my $f (@{$member{$t}}) {
             my @f = File::Spec::->splitdir($f);
             ( my $n = $f[-1] ) =~ 
@@ -725,16 +728,8 @@ sub main {
         }
     }
     
-    # FIXME: write typemap.unknown if unknown one(s) found
-    # FIXME: write %TYPE_LOCALMAP
-    foreach my $ns (keys %TYPE_LOCALMAP) {
-        foreach my $t (keys %{$TYPE_LOCALMAP{$ns}}) {
-            print $ns, "\t"x2, 
-              $t, " => ", $TYPE_LOCALMAP{$ns}->{$t}, "\n";
-        }
-    }
     if (defined $out) {
-        local ( *OUT, );
+        local ( *OUT, *UNKNOWN, );
         sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
           "cannot open file to write: $!";
         foreach my $l (@TYPE_KNOWN) {
@@ -743,12 +738,34 @@ sub main {
                 $l->[1], "\n";
         }
         close OUT or die "cannot save to file: $!";
+        # write typemap.unknown if unknown one(s) found
+        if (@TYPE_UNKNOWN) {
+            sysopen UNKNOWN, $out. '.unknown', O_CREAT|O_WRONLY|O_TRUNC or 
+              die "cannot open file to write: $!";
+            foreach (@TYPE_UNKNOWN) {
+                print UNKNOWN $_;
+            }
+            close UNKNOWN or die "cannot save to file: $!";
+        }
     }
     else {
         foreach my $l (@TYPE_KNOWN) {
             print STDOUT $l->[0], 
               "\t"x (length($l->[0]) > 20 ? 2 : 5), 
                 $l->[1], "\n";
+        }
+    }
+    # write %TYPE_LOCALMAP
+    if (keys %TYPE_LOCALMAP) {
+        local ( *LOCALMAP, );
+        foreach my $ns (keys %TYPE_LOCALMAP) {
+            my $localmap = File::Spec::->catfile($out_typemap_dir, 
+                                                 $ns. ".typemap");
+            sysopen LOCALMAP, $localmap, O_CREAT|O_WRONLY|O_TRUNC or 
+              die "cannot open file to write: $!";
+            my ( $hcont ) = YAML::Dump($TYPE_LOCALMAP{$ns});
+            print LOCALMAP $hcont;
+            close LOCALMAP or die "cannot save to file: $!";
         }
     }
     exit 0;

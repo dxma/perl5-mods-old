@@ -297,6 +297,13 @@ Format a function pointer entry.
   NAME_ORIGIN   : [BLAH]
   PROTOTYPE     : [prototype string]
   DEFAULT_VALUE : [default value, mostly 0]
+  FPOINTERINFO  : 
+     - NAME      : [same as NAME above]
+                   [could be a ref to inner FPOINTERINFO structure 
+                    in case of function pointer which returns      
+                    another function pointer                      ]
+     - RETURN    : [similar as in function]
+     - PARAMETER : [similar as in function]
 
 =back
 
@@ -373,7 +380,7 @@ sub __format_fpointer {
     };
     
     if (ref $entry->{name} eq 'HASH') {
-        # well, a function pointer which will return 
+        # well, a function pointer which returns 
         # another function pointer
         my $name = $entry->{name}->{name};
         ( $fpname, $fpname_origin ) = 
@@ -397,6 +404,32 @@ sub __format_fpointer {
     $get_parameters->($entry->{parameter}, $params);
     $fproto .= '('. join(', ', @$params). ')';
     
+    # masquerade a normal function entry
+    # delegate to __format_function 
+    # fill RETURN and PARAMETER fields
+    # NOTE: soft copy
+    my $masque_function = {};
+    $masque_function->{name}      = 
+      join(" ", $entry->{return}, $fpname);
+    $masque_function->{parameter} = $entry->{parameter};
+    $masque_function->{type}      = 'function';
+    __format_function($masque_function);
+    if (ref $entry->{name} eq 'HASH') {
+        # a function pointer returns another functipn pointer
+        # FIXME: delegate inner part to __format_function
+        my $masque_inner_function = {};
+        $masque_inner_function->{name}      = 
+          join(" ", $entry->{return}, $entry->{name}->{name});
+        $masque_inner_function->{parameter} = 
+          $entry->{name}->{parameter};
+        $masque_inner_function->{type}      = 'function';
+        __format_function($masque_inner_function);
+        # store in $masque_function
+        $masque_function->{NAME} = {};
+        $masque_function->{NAME}->{PARAMETER} = 
+          $masque_inner_function->{PARAMETER} if 
+            exists $masque_inner_function->{PARAMETER};
+    }
     # store
     delete $entry->{name};
     delete $entry->{return};
@@ -409,6 +442,11 @@ sub __format_fpointer {
         $entry->{DEFAULT_VALUE} = $entry->{default};
         delete $entry->{default};
     }
+    $entry->{FPOINTERINFO}= {};
+    $entry->{FPOINTERINFO}->{NAME}      = $masque_function->{NAME};
+    $entry->{FPOINTERINFO}->{RETURN}    = $masque_function->{RETURN};
+    $entry->{FPOINTERINFO}->{PARAMETER} =
+    $masque_function->{PARAMETER} if exists $masque_function->{PARAMETER};
     return 1;
 }
 
@@ -540,12 +578,13 @@ sub __format_function {
         my $pdefault_value  = 
           exists $p->{default} ? $p->{default} : '';
         $pdefault_value =~ s/\s+$//o;
-        my ( $pname, $ptype );
+        my ( $pname, $ptype, $fpinfo, );
         
         if ($psubtype eq 'fpointer') {
             __format_fpointer($p);
             $pname = $p->{PROTOTYPE};
             $ptype = $p->{NAME};
+            $fpinfo= $p->{FPOINTERINFO};
         }
         elsif ($pname_with_type =~ m/\[/io) {
             # array pointer
@@ -628,6 +667,10 @@ sub __format_function {
         my $p = { TYPE => $ptype };
         $p->{NAME} = $pname if $pname;
         $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value;
+        if ($psubtype eq 'fpointer') {
+            # attach FPOINTERINFO for function pointer
+            $p->{FPOINTERINFO} = $fpinfo;
+        }
         push @$parameters, $p;
     }
     
@@ -812,9 +855,10 @@ sub __format_typedef {
         if ($entry->{subtype} eq 'fpointer') {
             # fpointer
             __format_fpointer($entry->{body});
-            $entry->{PROTOTYPE} = $entry->{body}->{PROTOTYPE};
-            $entry->{TO}        = $entry->{body}->{NAME_ORIGIN};
-            $entry->{FROM}      = $entry->{body}->{NAME};
+            $entry->{PROTOTYPE}    = $entry->{body}->{PROTOTYPE};
+            $entry->{TO}           = $entry->{body}->{NAME_ORIGIN};
+            $entry->{FROM}         = $entry->{body}->{NAME};
+            $entry->{FPOINTERINFO} = $entry->{body}->{FPOINTERINFO};
         }
         else {
             # other container type
