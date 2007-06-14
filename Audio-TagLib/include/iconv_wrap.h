@@ -13,7 +13,8 @@ size_t iconv_wrap(iconv_t cd,
 		  char **outbuf, size_t *outbytesleft)
 {
 	char *in = *inbuf;
-	const char *in_c = (const char*) in;
+	//const char *in_c = (const char*) in;
+	const char *in_c = const_cast<const char*>(in);
 	return iconv(cd, 
 		     &in_c, inbytesleft,
 		     outbuf, outbytesleft);
