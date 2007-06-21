@@ -66,54 +66,56 @@ OUT_XSCODE_DIR  := $(MAKE_ROOT)/99xscode
 
 # DEBUG echos all shell commands
 ifndef DEBUG
-_Q              := @
+_Q := @
 else
-_Q              := $(empty)$(empty)
+_Q := $(empty)$(empty)
 endif
 
 # FIXME: check available options for all involved commands
-CMD_CC          := g++
+CMD_CC             := g++
 # intepretable echo
-CMD_ECHO        := echo -e
-CMD_PREPRO      := $(CMD_CC) -E
-CMD_PARSE       := $(SCRIPT_DIR)/parse_header.pl
-CMD_MKDIR       := mkdir -p
-CMD_MV          := mv -f
-CMD_CAT         := cat
-CMD_RM          := rm -f
-CMD_RMDIR       := rm -rf
+CMD_ECHO           := echo -e
+CMD_PREPRO         := $(CMD_CC) -E
+CMD_PARSE          := $(SCRIPT_DIR)/parse_header.pl
+CMD_MKDIR          := mkdir -p
+CMD_MV             := mv -f
+CMD_CAT            := cat
+CMD_RM             := rm -f
+CMD_RMDIR          := rm -rf
 
-OPT_CC_INPUT    := $(empty)$(empty)
-OPT_CC_OUTPUT   := -o
-IMACROS         := $(_IMACROS)
+OPT_CC_INPUT       := $(empty)$(empty)
+OPT_CC_OUTPUT      := -o
+IMACROS            := $(_IMACROS)
 
-CMD_STRIP_INC   := $(SCRIPT_DIR)/strip_include.pl
-CMD_STRIP_MK    := $(SCRIPT_DIR)/gen_strip_mk.pl
-CMD_PREPRO_HD   := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)   \
-                       -I$(HEADER_DIR)
-CMD_PREPRO_MK   := $(SCRIPT_DIR)/gen_prepro_mk.pl
-CMD_PARSE_HD    := $(CMD_PARSE)
-CMD_PARSE_MK    := $(SCRIPT_DIR)/gen_parse_mk.pl
-CMD_FORMAT_YML  := $(SCRIPT_DIR)/format_qtedi_production.pl
-CMD_FORMAT_MK   := $(SCRIPT_DIR)/gen_format_mk.pl
-CMD_GROUP_MK    := $(SCRIPT_DIR)/gen_group_mk.pl 
-CMD_GROUP_YML   := $(SCRIPT_DIR)/group_by_namespace.pl
-CMD_GROUP_CHECK := $(SCRIPT_DIR)/check_class_consistency.sh
-CMD_GROUPLIST_MK:= $(SCRIPT_DIR)/gen_grouplist_mk.pl 
-CMD_XSCODE_MK   := $(SCRIPT_DIR)/gen_xscode_mk.pl
-CMD_CREAT_TP    := $(SCRIPT_DIR)/create_typemap.pl 
-CMD_CREAT_XS    := $(SCRIPT_DIR)/create_xs_code.pl
-CMD_CREAT_PM    := $(SCRIPT_DIR)/create_pm_code.pl
+CMD_STRIP_INC      := $(SCRIPT_DIR)/strip_include.pl
+CMD_STRIP_MK       := $(SCRIPT_DIR)/gen_strip_mk.pl
+CMD_PREPRO_HD      := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)\
+                          -I$(HEADER_DIR)
+CMD_PREPRO_MK      := $(SCRIPT_DIR)/gen_prepro_mk.pl
+CMD_PARSE_HD       := $(CMD_PARSE)
+CMD_PARSE_MK       := $(SCRIPT_DIR)/gen_parse_mk.pl
+CMD_FORMAT_YML     := $(SCRIPT_DIR)/format_qtedi_production.pl
+CMD_FORMAT_MK      := $(SCRIPT_DIR)/gen_format_mk.pl
+CMD_GROUP_MK       := $(SCRIPT_DIR)/gen_group_mk.pl 
+CMD_GROUP_YML      := $(SCRIPT_DIR)/group_by_namespace.pl
+CMD_GROUP_CHECK    := $(SCRIPT_DIR)/check_class_consistency.sh
+CMD_GROUPLIST_MK   := $(SCRIPT_DIR)/gen_grouplist_mk.pl 
+CMD_XSCODE_MK      := $(SCRIPT_DIR)/gen_xscode_mk.pl
+CMD_CREAT_TP       := $(SCRIPT_DIR)/create_typemap.pl
+CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl 
+CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
+CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 
-MODULE_DOT_CONF := $(MAKE_ROOT)/module.conf 
-HEADER_DOT_MK   := $(MAKE_ROOT)/header.mk
-STRIP_DOT_MK    := $(MAKE_ROOT)/strip.mk
-PREPRO_DOT_MK   := $(MAKE_ROOT)/preprocess.mk
-PARSE_DOT_MK    := $(MAKE_ROOT)/parse.mk
-FORMAT_DOT_MK   := $(MAKE_ROOT)/format.mk
-GROUP_DOT_MK    := $(MAKE_ROOT)/group.mk
-GROUPLIST_DOT_MK:= $(MAKE_ROOT)/grouplist.mk
-XSCODE_DOT_MK   := $(MAKE_ROOT)/xscode.mk
+MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
+HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
+STRIP_DOT_MK       := $(MAKE_ROOT)/strip.mk
+PREPRO_DOT_MK      := $(MAKE_ROOT)/preprocess.mk
+PARSE_DOT_MK       := $(MAKE_ROOT)/parse.mk
+FORMAT_DOT_MK      := $(MAKE_ROOT)/format.mk
+GROUP_DOT_MK       := $(MAKE_ROOT)/group.mk
+GROUPLIST_DOT_MK   := $(MAKE_ROOT)/grouplist.mk
+TYPEMAPLIST_DOT_MK := $(MAKE_ROOT)/typemaplist.mk
+XSCODE_DOT_MK      := $(MAKE_ROOT)/xscode.mk
 
 # temple use
 TYPEMAP_DOT_DEP    := $(MAKE_ROOT)/.typemap.dep
@@ -138,7 +140,8 @@ FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
 GROUP_YAMLS     := $(empty)$(empty)
 # initially empty, overriden inside xscode.mk
 TYPEMAP_YAMLS   := $(empty)$(empty)
-TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
+TYPEMAP_BASE    := $(OUT_TYPEMAP_DIR)/typemap_base
+TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
 
 #################### SUBROUTINES ###############################
 
@@ -232,12 +235,17 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # group.mk > grouplist.mk > files under OUT_GROUP_DIR
 # on the other hand, grouplist.mk behaves like a 
 # checksum of staff under OUT_GROUP_DIR
-# TODO: removal of any file which is produced by latest 
+# removal of any file which was produced by latest 
 # gen_group triggers rebuild of all so-called 
 # 'standard' files
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
-ifneq ($(filter gen_xscode all list_%,$(_GOALS)),)
+ifneq ($(filter gen_typemap gen_xscode all list_%,$(_GOALS)),)
 -include $(GROUPLIST_DOT_MK)
+endif
+ifneq ($(filter gen_typemap all,$(_GOALS)),)
+-include $(TYPEMAPLIST_DOT_MK)
+endif
+ifneq ($(filter gen_xscode all,$(_GOALS)),)
 -include $(XSCODE_DOT_MK)
 endif
 $(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
@@ -245,6 +253,28 @@ $(XSCODE_DOT_MK)   : $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
         $(XSCODE_DOT_MK)
+
+TYPEMAP_YAMLS := $(patsubst $(OUT_GROUP_DIR)%,$(OUT_TYPEMAP_DIR)%,\
+                     $(patsubst %.meta,%.typemap,                 \
+                         $(filter %.meta,$(GROUP_YAMLS))))
+$(TYPEMAPLIST_DOT_MK): $(MODULE_DOT_CONF) $(TYPEMAP_DOT_IGNORE)   \
+                       $(TYPEMAP_DOT_SIMPLE) $(TYPEMAP_DOT_MANUAL)\
+                       $(filter-out %.friend %.function,          \
+                           $(GROUP_YAMLS))
+	$(shell $(CMD_RM) $(TYPEMAP_DOT_DEP))
+	$(foreach i,$^,$(shell $(CMD_ECHO) $(i) >> $(TYPEMAP_DOT_DEP)))
+	$(_Q)$(CMD_RMDIR) $(OUT_TYPEMAP_DIR)
+	$(_Q)[[ -d $(OUT_TYPEMAP_DIR) ]] || $(CMD_MKDIR)         \
+        $(OUT_TYPEMAP_DIR)
+	$(_Q)echo generating $(TYPEMAP_BASE)
+	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
+	$(_Q)$(CMD_CREAT_TP) $(MODULE_DOT_CONF)                  \
+        $(TYPEMAP_DOT_IGNORE) $(TYPEMAP_DOT_SIMPLE)          \
+        $(TYPEMAP_DOT_MANUAL) $(TYPEMAP_DOT_DEP)             \
+        $(OUT_TYPEMAP_DIR) $(TYPEMAP_BASE) $(TYPEMAP_TEMPLATE)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk :
@@ -288,11 +318,16 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
+gen_typemap  : gen_group $(TYPEMAPLIST_DOT_MK)            \
+               $(TYPEMAP) $(TYPEMAP_TEMPLATE)
+clean_typemap: 
+	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR)
+.PHONY: gen_typemap clean_typemap
+
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode   : gen_group $(XSCODE_DOT_MK) $(TYPEMAP) 
+gen_xscode   : gen_typemap $(XSCODE_DOT_MK)
 clean_xscode : 
-	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode clean_xscode
@@ -312,4 +347,4 @@ clean: clean_dot_mk clean_strip clean_prepro clean_parse \
        clean_format clean_group clean_xscode
 .PHONY: clean
 
-all: gen_xscode
+all: gen_typemap
