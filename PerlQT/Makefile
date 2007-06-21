@@ -242,7 +242,7 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 ifneq ($(filter gen_typemap gen_xscode all list_%,$(_GOALS)),)
 -include $(GROUPLIST_DOT_MK)
 endif
-ifneq ($(filter gen_typemap all,$(_GOALS)),)
+ifneq ($(filter gen_typemap gen_xscode all,$(_GOALS)),)
 -include $(TYPEMAPLIST_DOT_MK)
 endif
 ifneq ($(filter gen_xscode all,$(_GOALS)),)
@@ -318,10 +318,10 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-gen_typemap  : gen_group $(TYPEMAPLIST_DOT_MK)            \
-               $(TYPEMAP) $(TYPEMAP_TEMPLATE)
+gen_typemap  : gen_group $(TYPEMAPLIST_DOT_MK) $(TYPEMAP)
 clean_typemap: 
 	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR)
+	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
 .PHONY: gen_typemap clean_typemap
 
 # TODO: support of custom-inserted class meta files detection
