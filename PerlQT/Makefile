@@ -140,7 +140,7 @@ FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
 GROUP_YAMLS     := $(empty)$(empty)
 # initially empty, overriden inside xscode.mk
 TYPEMAP_YAMLS   := $(empty)$(empty)
-TYPEMAP_BASE    := $(OUT_TYPEMAP_DIR)/typemap_base
+TYPEMAP_LIST    := $(OUT_TYPEMAP_DIR)/typemap_list
 TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
 
 #################### SUBROUTINES ###############################
@@ -266,12 +266,12 @@ $(TYPEMAPLIST_DOT_MK): $(MODULE_DOT_CONF) $(TYPEMAP_DOT_IGNORE)   \
 	$(_Q)$(CMD_RMDIR) $(OUT_TYPEMAP_DIR)
 	$(_Q)[[ -d $(OUT_TYPEMAP_DIR) ]] || $(CMD_MKDIR)         \
         $(OUT_TYPEMAP_DIR)
-	$(_Q)echo generating $(TYPEMAP_BASE)
+	$(_Q)echo generating $(TYPEMAP_LIST)
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_CREAT_TP) $(MODULE_DOT_CONF)                  \
         $(TYPEMAP_DOT_IGNORE) $(TYPEMAP_DOT_SIMPLE)          \
         $(TYPEMAP_DOT_MANUAL) $(TYPEMAP_DOT_DEP)             \
-        $(OUT_TYPEMAP_DIR) $(TYPEMAP_BASE) $(TYPEMAP_TEMPLATE)
+        $(OUT_TYPEMAP_DIR) $(TYPEMAP_TEMPLATE) $(TYPEMAP_LIST)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 

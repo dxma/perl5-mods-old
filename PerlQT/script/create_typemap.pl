@@ -35,7 +35,7 @@ See L<http://dev.perl.org/licenses/artistic.html>
 sub __usage {
     print STDERR << "EOU";
 usage: $0 <module.conf> <typemap.ignore> <typemap.simple>
-    <typemap.manual> <typemap.dep> <out_typemap_dir> [<out_typemap>]
+    <typemap.manual> <typemap.dep> <out_typemap_dir> <typemap_template> [<typemap_list>]
 EOU
     exit 1;
 }
@@ -56,10 +56,14 @@ our %SIMPLE_TYPEMAP  = ();
 our %GLOBAL_TYPEMAP  = ();
 our %IGNORE_TYPEMAP  = ();
 our %MANUAL_TYPEMAP  = ();
-# array to hold all known type(s)
-our @TYPE_KNOWN      = ();
+# hash to hold all known type(s)
+our %TYPE_KNOWN      = ();
 # array to hold any unknown type(s)
 our @TYPE_UNKNOWN    = ();
+# array to hold all template type(s)
+our @TYPE_TEMPLATE   = ();
+# shadow cache
+our %_TYPE_TEMPLATE  = ();
 # hash to hold all local type name 
 # and corresponding full qualified name
 our %TYPE_LOCALMAP   = ();
@@ -203,78 +207,144 @@ my $my_int = sub {
 # to serve requested template type
 sub Q3PtrList {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'Q3PTRLIST', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'Q3PtrList< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'Q3PtrList< '. $sub_c_type. ' >';
+    # t_type same as type
+    # which contains sub-type information
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        # new template type
+        my $new_entry = {};
+        $new_entry->{name}       = 'Q3PtrList';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        # mark done
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub Q3ValueList {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'Q3VALUELIST', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'Q3ValueList< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'Q3ValueList< '. $sub_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'Q3ValueList';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QFlags {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'QFLAGS', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'QFlags< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QFlags< '. $sub_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QFlags';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QList {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QLIST', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'QList< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QList< '. $sub_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QList';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QVector {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QVECTOR', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'QVector< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QVector< '. $sub_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QVector';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QSet {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QSET', 
                             map { $_->{t_type} } @sub_entry);
-    $entry->{c_type} = 'QSet< '. 
-      join(' ', map { $_->{c_type} } @sub_entry). ' >';
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QSet< '. $sub_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QSet';
+        $new_entry->{type}       = 1;
+        $new_entry->{entry_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QMap {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -296,15 +366,27 @@ sub QMap {
     $entry->{type}   = 
       join('__', 'QMAP', 
            map { $_->{t_type} } @sub_key, @sub_value);
+    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
+    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
     $entry->{c_type} = 'QMap< '. 
-      join(' ', map { $_->{c_type} } @sub_key). ', '. 
-        join(' ', map { $_->{c_type} } @sub_value). ' >';
+      $key_c_type. ', '. $value_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QMap';
+        $new_entry->{type}       = 2;
+        $new_entry->{key_type}   = $key_c_type;
+        $new_entry->{value_type} = $value_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QMultiMap {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -326,15 +408,27 @@ sub QMultiMap {
     $entry->{type}   = 
       join('__', 'QMULTIMAP', 
            map { $_->{t_type} } @sub_key, @sub_value);
+    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
+    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
     $entry->{c_type} = 'QMultiMap< '. 
-      join(' ', map { $_->{c_type} } @sub_key). ', '. 
-        join(' ', map { $_->{c_type} } @sub_value). ' >';
+      $key_c_type. ', '. $value_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QMultiMap';
+        $new_entry->{type}       = 2;
+        $new_entry->{key_type}   = $key_c_type;
+        $new_entry->{value_type} = $value_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QPair {
     my @sub_entry  = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my @sub_first  = ();
     my @sub_second = ();
     # locate the start index of second part
@@ -356,15 +450,27 @@ sub QPair {
     $entry->{type}   = 
       join('__', 'QPAIR', 
            map { $_->{t_type} } @sub_first, @sub_second);
+    my $first_c_type  = join(' ', map { $_->{c_type} } @sub_first);
+    my $second_c_type = join(' ', map { $_->{c_type} } @sub_second);
     $entry->{c_type} = 'QPair< '. 
-      join(' ', map { $_->{c_type} } @sub_first). ', '. 
-        join(' ', map { $_->{c_type} } @sub_second). ' >';
+      $first_c_type. ', '. $second_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}        = 'QPair';
+        $new_entry->{type}        = 2;
+        $new_entry->{first_type}  = $first_c_type;
+        $new_entry->{second_type} = $second_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 sub QHash {
     my @sub_entry = @_;
+    
+    our ( @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -386,11 +492,21 @@ sub QHash {
     $entry->{type}   = 
       join('__', 'QHASH', 
            map { $_->{t_type} } @sub_key, @sub_value);
+    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
+    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
     $entry->{c_type} = 'QHash< '. 
-      join(' ', map { $_->{c_type} } @sub_key). ', '. 
-        join(' ', map { $_->{c_type} } @sub_value). ' >';
+      $key_c_type. ', '. $value_c_type. ' >';
     $entry->{t_type} = $entry->{type};
-    # FIXME: generate xs/pm files
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QHash';
+        $new_entry->{type}       = 2;
+        $new_entry->{key_type}   = $key_c_type;
+        $new_entry->{value_type} = $value_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
     return $entry;
 }
 
@@ -569,14 +685,14 @@ sub __analyse_type {
 }
 
 sub main {
-    __usage() if @ARGV < 6;
+    __usage() if @ARGV < 7;
     # FIXME: GetOpt::Long
     #        see script/gen_xscode_mk.pl
     my ( $module_dot_conf, 
          $typemap_dot_ignore, $typemap_dot_simple,
          $typemap_dot_manual, $typemap_dot_dep, 
          $out_typemap_dir, 
-         $out ) = @ARGV;
+         $out_template, $out_list ) = @ARGV;
     die "file $module_dot_conf not found" unless 
       -f $module_dot_conf;
     die "file $typemap_dot_ignore not found" unless 
@@ -690,7 +806,7 @@ sub main {
     # in case failed lookup, push it into @TYPE_UNKNOWN
     our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
           %MANUAL_TYPEMAP, 
-          @TYPE_KNOWN, @TYPE_UNKNOWN, %TYPE_LOCALMAP, );
+          %TYPE_KNOWN, @TYPE_UNKNOWN, %TYPE_LOCALMAP, @TYPE_TEMPLATE, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
@@ -706,8 +822,11 @@ sub main {
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
         $CURRENT_NAMESPACE = $n;
+        TYPE_LOOP:
         foreach my $t (@{$type{$n}}) {
             unless (exists $IGNORE_TYPEMAP{$t}) {
+                next TYPE_LOOP if exists $TYPE_KNOWN{$t};
+                
                 my $result = __analyse_type($t);
                 # post patch:
                 # void ** => T_GENERIC_PTR => T_PTR
@@ -720,27 +839,23 @@ sub main {
                     $re_type =~ s/\:\:/___/go;
                     $result->{type} = $re_type;
                 }
-                #push @TYPE_KNOWN, [ $t, $result->{type} ];
-                push @TYPE_KNOWN, 
-                  [ $result->{c_type}, $result->{type} ];
+                $TYPE_KNOWN{$result->{c_type}} = $result->{type};
                 #print STDERR $t, "\t"x3, $result->{c_type}, "\n";
             }
         }
     }
     
-    if (defined $out) {
+    # write typemap list
+    my $hcont_typemap_list = YAML::Dump(\%TYPE_KNOWN);
+    if (defined $out_list) {
         local ( *OUT, *UNKNOWN, );
-        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
-          "cannot open file to write: $!";
-        foreach my $l (@TYPE_KNOWN) {
-            print OUT $l->[0], 
-              "\t"x (length($l->[0]) > 20 ? 2 : 5), 
-                $l->[1], "\n";
-        }
+        sysopen OUT, $out_list, O_CREAT|O_WRONLY|O_TRUNC or 
+          die "cannot open file to write: $!";
+        print OUT $hcont_typemap_list;
         close OUT or die "cannot save to file: $!";
         # write typemap.unknown if unknown one(s) found
         if (@TYPE_UNKNOWN) {
-            sysopen UNKNOWN, $out. '.unknown', O_CREAT|O_WRONLY|O_TRUNC or 
+            sysopen UNKNOWN, $out_list. '.unknown', O_CREAT|O_WRONLY|O_TRUNC or 
               die "cannot open file to write: $!";
             foreach (@TYPE_UNKNOWN) {
                 print UNKNOWN $_;
@@ -749,11 +864,16 @@ sub main {
         }
     }
     else {
-        foreach my $l (@TYPE_KNOWN) {
-            print STDOUT $l->[0], 
-              "\t"x (length($l->[0]) > 20 ? 2 : 5), 
-                $l->[1], "\n";
-        }
+        print STDOUT $hcont_typemap_list;
+    }
+    # write @TYPE_TEMPLATE
+    if (@TYPE_TEMPLATE) {
+        local ( *TEMPLATE, );
+        sysopen TEMPLATE, $out_template, O_CREAT|O_WRONLY|O_TRUNC or 
+          die "cannot open file to write: $!";
+        my ( $hcont ) = YAML::Dump(\@TYPE_TEMPLATE);
+        print TEMPLATE $hcont;
+        close TEMPLATE or die "cannot save to file: $!";
     }
     # write %TYPE_LOCALMAP
     if (keys %TYPE_LOCALMAP) {

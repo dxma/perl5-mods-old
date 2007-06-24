@@ -43,7 +43,7 @@ sub main {
     my $typemaplist_dot_mk = 
       "TYPEMAP_YAMLS := ". join(" ", @f). "\n\n";
     $typemaplist_dot_mk .= "TYPEMAP_FILES := \$(TYPEMAP_YAMLS) ". 
-      "\$(TYPEMAP_BASE) \$(TYPEMAP_TEMPLATE)\n\n";
+      "\$(TYPEMAP_LIST) \$(TYPEMAP_TEMPLATE)\n\n";
     # lost of standard files produced by latest gen_typemap
     # force re-run gen_typemap
     $typemaplist_dot_mk .= "ifneq (\$(filter-out \$(filter ". 
