@@ -208,7 +208,7 @@ my $my_int = sub {
 sub Q3PtrList {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'Q3PTRLIST', 
@@ -229,12 +229,14 @@ sub Q3PtrList {
         # mark done
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    # record in main typemap
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub Q3ValueList {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'Q3VALUELIST', 
@@ -251,12 +253,13 @@ sub Q3ValueList {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QFlags {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'QFLAGS', 
@@ -273,12 +276,13 @@ sub QFlags {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QList {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QLIST', 
@@ -295,12 +299,13 @@ sub QList {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QVector {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QVECTOR', 
@@ -317,12 +322,13 @@ sub QVector {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QSet {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'QSET', 
@@ -339,12 +345,13 @@ sub QSet {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QMap {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -381,12 +388,13 @@ sub QMap {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QMultiMap {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -423,12 +431,13 @@ sub QMultiMap {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QPair {
     my @sub_entry  = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my @sub_first  = ();
     my @sub_second = ();
     # locate the start index of second part
@@ -465,12 +474,13 @@ sub QPair {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 sub QHash {
     my @sub_entry = @_;
     
-    our ( @TYPE_TEMPLATE, );
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my @sub_key   = ();
     my @sub_value = ();
     # locate the start index of value part
@@ -507,6 +517,7 @@ sub QHash {
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
 
