@@ -1,0 +1,670 @@
+MODULE = [% module %]			PACKAGE = [% package %]
+PROTOTYPES: ENABLE
+
+################################################################
+#### 
+#### $type        : item type
+#### $package     : namespace
+#### $type_package: item namespace
+#### $namespace   : root namespace
+####
+################################################################
+
+Q3PtrList<[% type %]> * 
+[% package %]::new(...)
+PROTOTYPE: ;$
+PREINIT:
+    [% package %] *p;
+CODE:
+    /*!
+     * Q3PtrList<[% type %]>()
+     * Q3PtrList<[% type %]>(const Q3PtrList<[% type %]> &list)
+    */
+    switch(items) {
+    case 2:
+        if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% package %]"))
+            p = reinterpret_cast<Q3PtrList<[% type %]> *>(SvIV(SvRV(ST(1))));
+        else
+            croak("ST(1) is not of type [% package %]");
+        RETVAL = new Q3PtrList<[% type %]>(*p);
+        break;
+    default:
+        RETVAL = new Q3PtrList<[% type %]>();
+    }
+    // set autoDelete true by default 
+    RETVAL->setAutoDelete(true);
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::DESTROY()
+CODE:
+    if(!SvREADONLY(SvRV(ST(0))))
+        delete THIS;
+
+void
+[% package %]::append(item)
+    SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+    if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR([% type %] *, SvIV(SvRV(item)));
+        RETVAL = THIS->append(it);
+        SvREADONLY_on(SvRV(item));
+    } else
+        croak("item is not of type [% type %]");
+
+void 
+[% package %]::at(index)
+    uint index
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->at(index);
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+int 
+[% package %]::at()
+CODE:
+    RETVAL = THIS->at();
+OUTPUT:
+    RETVAL
+
+void
+[% package %]::clear()
+CODE:
+    THIS->clear();
+
+uint 
+[% package %]::contains(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->contains(item);
+OUTPUT:
+    RETVAL
+
+uint 
+[% package %]::containsRef(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->containsRef(item);
+OUTPUT:
+    RETVAL
+
+uint 
+[% package %]::count()
+CODE:
+    RETVAL = THIS->count();
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::current()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->current();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::currentNode()
+PREINIT:
+    Q3LNode *node;
+PPCODE:
+	item = THIS->currentNode();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% namespace %]::Q3LNode", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+int 
+[% package %]::find(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->find(item);
+OUTPUT:
+    RETVAL
+
+int 
+[% package %]::findNext(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->findNext(item);
+OUTPUT:
+    RETVAL
+
+int 
+[% package %]::findNextRef(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->findNextRef(item);
+OUTPUT:
+    RETVAL
+
+int 
+[% package %]::findRef(item)
+    const [% type %] *item
+CODE:
+    RETVAL = THIS->findRef(item);
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::first()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->first();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::getFirst()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->getFirst();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::getLast()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->getLast();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::inSort(item)
+    const [% type %] *item
+CODE:
+    THIS->inSort(item);
+
+bool 
+[% package %]::insert(index, item)
+    uint index
+    SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+    if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        RETVAL = THIS->insert(index, it);
+        if(RETVAL == true)
+            SvREADONLY_on(SvRV(item));
+    } else
+        croak("item is not of type [% type %]");
+OUTPUT:
+    RETVAL
+
+bool 
+[% package %]::isEmpty()
+CODE:
+    RETVAL = THIS->isEmpty();
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::last()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->last();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::next()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->next();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+void 
+[% package %]::prepend(item)
+    SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+    if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        THIS->prepend(it);
+        SvREADONLY_on(SvRV(item));
+    } else
+        croak("item is not of type [% type %]");
+
+void 
+[% package %]::prev()
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	item = THIS->prev();
+	ST(0) = sv_newmortal();
+	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	SvREADONLY_on(SvRV(ST(0)));
+	XSRETURN(1);
+
+bool 
+[% package %]::remove(...)
+PROTOTYPE: ;$
+PREINIT:
+    [% type %] *p;
+    unsigned int i;
+CODE:
+    /*!
+     * bool remove(uint index)
+     * bool remove()
+     * bool remove(const type * item)
+    */
+    switch(items) {
+    case 2:
+        if(sv_isobject(ST(1)) && sv_isa(ST(1), "[% type_package %]")) {
+            p = reinterpret_cast<const [% type %] *>(SvIV(SvRV(ST(1))));
+            RETVAL = THIS->remove(p);
+            if(RETVAL == true && THIS->autoDelete())
+                SvREADONLY_on(SvRV(ST(1)));
+        } else if(SvIOK(ST(1))) {
+            i = SvIV(ST(1));
+            RETVAL = THIS->remove(i);
+        } else 
+            croak("ST(1) is not of type [% type_package %] or integer");
+        break;
+    default:
+        RETVAL = THIS->remove();
+    }
+OUTPUT:
+    RETVAL
+
+bool 
+[% package %]::removeFirst()
+CODE:
+    RETVAL = THIS->removeFirst();
+OUTPUT:
+    RETVAL
+
+bool 
+[% package %]::removeLast()
+CODE:
+    RETVAL = THIS->removeLast();
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::removeNode(node)
+    Q3LNode *node
+CODE:
+    THIS->removeNode(node);
+
+bool 
+[% package %]::removeRef(item)
+    SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+    if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        RETVAL = THIS->removeRef(it);
+        if(RETVAL == true && THIS->autoDelete())
+            SvREADONLY_on(SvRV(item));
+    } else
+        croak("item is not of type [% type %]");
+OUTPUT:
+    RETVAL
+
+bool 
+[% package %]::replace(index, item)
+    uint index
+    SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+	if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        RETVAL = THIS->replace(index, it);
+        if(RETVAL == true) 
+            	SvREADONLY_on(SvRV(item));
+    } else
+        croak("item is not of type [% type %]");
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::sort()
+CODE:
+    THIS->sort();
+
+[% type %] * 
+[% package %]::take(...)
+PROTOTYPE: ;$
+PREINIT:
+    unsigned int i;
+CODE:
+    /*!
+     * [% type %] *take(uint index)
+     * [% type %] *take()
+    */
+    switch(items) {
+    case 2:
+        if(SvIOK(ST(1))) {
+            i = SvIV(ST(1));
+            RETVAL = THIS->take(i);
+        } else 
+            croak("ST(1) is not an integer");
+        break;
+    default:
+        RETVAL = THIS->take();
+    }
+OUTPUT:
+    RETVAL
+
+[% type %] * 
+[% package %]::takeNode(node)
+    Q3LNode *node
+CODE:
+	RETVAL = THIS->takeNode(node);
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::toVector(vec)
+    Q3GVector *vec
+CODE:
+    THIS->toVector(vec);
+
+bool 
+[% package %]::_notEquals(list)
+    const Q3PtrList<[% type %]> *list
+CODE:
+    RETVAL = THIS->operator!=(*list);
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::_copy(list)
+    const Q3PtrList<[% type %]> *list
+PPCODE:
+    (void)THIS->operator=(*list);
+    XSRETURN(1);
+
+bool 
+[% package %]::_equals(list)
+    const Q3PtrList<[% type %]> *list
+CODE:
+    RETVAL = THIS->operator==(*list);
+OUTPUT:
+    RETVAL
+
+bool 
+[% package %]::autoDelete()
+CODE:
+    RETVAL = THIS->autoDelete();
+OUTPUT:
+    RETVAL
+
+uint 
+[% package %]::count()
+CODE:
+    RETVAL = THIS->count();
+OUTPUT:
+    RETVAL
+
+void 
+[% package %]::setAutoDelete(enable)
+    bool enable
+CODE:
+    THIS->setAutoDelete(enable);
+
+# Protected member function NOT supported
+
+################################################################
+# 
+# SPECIAL FUNCTIONS for TIE MAGIC
+# 
+################################################################
+
+static void 
+_NAMESPACE_::TIEARRAY(...)
+PROTOTYPE: ;$
+PREINIT:
+	Q3PtrList<[% type %]> * list;
+PPCODE:
+	/*!
+	 * tie @a, "[% package %]"
+	 * tie @a, "[% package %]", $obj_to_tie
+	 */
+	switch(items) {
+	case 2:
+		if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% package %]")) {
+			ST(0) = sv_2mortal(newRV_inc(SvRV(ST(1))));
+		} else
+			croak("ST(1) is not of type [% package %]");
+		break;
+	default:
+		/* items == 1 */
+		list = new Q3PtrList<[% type %]>();
+		ST(0) = sv_newmortal();
+		sv_setref_pv(ST(0), "[% package %]", reinterpret_cast<void *>(list));
+	}
+	XSRETURN(1);
+
+void 
+[% package %]::FETCH(index)
+	unsigned int index
+PREINIT:
+    [% type %] *item;
+PPCODE:
+	if(0 <= index && index < THIS->count()) {
+		ST(0) = sv_newmortal();
+		item = THIS->at(index);
+		sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item));
+		SvREADONLY_on(SvRV(ST(0)));
+		XSRETURN(1);
+	} else
+		XSRETURN_UNDEF;
+
+void 
+[% package %]::STORE(index, item)
+	unsigned int index
+	SV item
+PREINIT:
+    const [% type %] *it;
+CODE:
+	/*!
+	 * insert item into specific index 
+	 * append to the end if index out of bound 
+	 */
+	if(sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        if( 0 <= index && index < THIS->count()) {
+            if(THIS->insert(index, it)) 
+                SvREADONLY_on(SvRV(item));
+	    } else {
+		    THIS->append(it);
+            SvREADONLY_on(SvRV(item));
+        }
+    } else 
+        croak("item is not of type [% type %]");
+
+unsigned int 
+[% package %]::FETCHSIZE()
+CODE:
+	RETVAL = THIS->count();
+OUTPUT:
+	RETVAL
+
+void 
+[% package %]::STORESIZE(s)
+	unsigned int s
+CODE:
+	/* noop */
+
+void 
+[% package %]::EXTEND(s)
+	unsigned int s
+CODE:
+	/* noop */
+
+bool 
+[% package %]::EXISTS(key)
+	unsigned int key
+CODE:
+	if( 0 <= key && key < THIS->count())
+		RETVAL = true;
+	else 
+		RETVAL = false;
+OUTPUT:
+	RETVAL
+
+void 
+[% package %]::DELETE(key)
+	unsigned int key
+CODE:
+    /* FIXME: croak on false remove */
+	if(0 <= key && key < THIS->count()) 
+        (void)THIS->remove(key);
+
+void 
+[% package %]::CLEAR()
+CODE:
+	THIS->clear();
+
+void 
+[% package %]::PUSH(...)
+PPCODE:
+	if(items > 1) {
+		/* ensure all items are of type [% type %] before pushing */
+		for(int i = 1; i < items; i++) {
+			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
+				croak("ST(i) is not of type [% type %]");
+		}
+		for(int i = 1; i < items; i++) {
+            THIS->append(INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+		}
+		ST(0) = sv_2mortal(newSVuv(THIS->count()));
+		XSRETURN(1);
+	} else 
+		XSRETURN_UNDEF;
+
+void 
+[% package %]::POP()
+PPCODE:
+    if(!THIS->isEmpty()) {
+        ST(0) = sv_newmortal();
+        sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(THIS->take(THIS->count()-1)));
+		XSRETURN(1);
+	} else
+		XSRETURN_UNDEF; 
+
+void 
+[% package %]::SHIFT()
+PPCODE:
+	if(!THIS->isEmpty()) {
+		ST(0) = sv_newmortal();
+		sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(THIS->take(0)));
+		XSRETURN(1);
+	} else
+		XSRETURN_UNDEF;
+
+void 
+[% package %]::UNSHIFT(...)
+PPCODE:
+	if(items > 1) {
+		/* ensure all items are of type [% type %] */
+		for(int i = 1; i < items; i++) {
+			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
+				croak("ST(i) is not of type [% type %]");
+		}
+		for(int i = items - 1; i > 0; i--) {
+			(void)THIS->append(INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+            SvREADONLY_on(SvRV(ST(i)));
+		}
+		ST(0) = sv_2mortal(newSVuv(THIS->count()));
+		XSRETURN(1);
+	} else
+		XSRETURN_UNDEF;
+
+void 
+[% package %]::SPLICE(...)
+PROTOTYPE: $;$@
+PREINIT:
+	unsigned int offset;
+	unsigned int length;
+    [% type %] *item;
+PPCODE:
+	switch(items) {
+	case 2:
+		/* splice(offset, length=$#this-offset+1) */
+		if(SvIOK(ST(1)) || SvUOK(ST(1)))
+			offset = SvUV(ST(1));
+		else
+			croak("ST(1) is not of type integer");
+		length = THIS->count() - offset;
+		break;
+	case 3:
+		/* splice(offset, length) */
+		if(SvIOK(ST(1)) || SvUOK(ST(1)))
+			offset = SvUV(ST(1));
+		else
+			croak("ST(1) is not of type integer");
+		if(SvIOK(ST(2)) || SvUOK(ST(2)))
+			length = SvUV(ST(2));
+		else
+			croak("ST(2) is not of type integer");
+		break;
+	default:
+		/* items > 3 */
+		/* splice(offset, length, LIST) */
+		if(SvIOK(ST(1)) || SvUOK(ST(1)))
+			offset = SvUV(ST(1));
+		else
+			croak("ST(1) is not of type integer");
+		if(SvIOK(ST(2)) || SvUOK(ST(2)))
+			length = SvUV(ST(2));
+		else
+			croak("ST(2) is not of type integer");
+		/* (items-3) items to insert */
+		for(int i = 3; i < items; i++) {
+			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
+			    croak("ST(i) is not of type [% type %]");
+		}
+		for(int i = items; i > items - 3; i--) {
+            THIS->insert(offset, INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+		}
+		offset += items - 3;
+	}
+	if(length > 0) {
+		for(int i = 0; i < length; i++) {
+			item = THIS->take(offset);
+			ST(i) = sv_newmortal();
+			sv_setref_pv(ST(i), "[% type_package %]", reinterpret_cast<void *>(item));
+		}
+		XSRETURN(length);
+	} else
+		XSRETURN_EMPTY;
+
+################################################################
+# 
+# NO UNTIE method defined
+# 
+################################################################
