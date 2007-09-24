@@ -3,6 +3,8 @@ PROTOTYPES: ENABLE
 
 ################################################################
 #### 
+#### this version assume type is *always* object
+#### 
 #### $type        : item type
 #### $package     : namespace
 #### $type_package: item namespace
