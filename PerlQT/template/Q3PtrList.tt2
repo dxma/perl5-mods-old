@@ -5,10 +5,10 @@ PROTOTYPES: ENABLE
 #### 
 #### this version assume type is *always* object
 #### 
-#### $type        : item type
-#### $package     : namespace
-#### $type_package: item namespace
-#### $namespace   : root namespace
+#### $type           : item type
+#### $package        : package namespace
+#### $type_package   : item namespace
+#### $root_namespace : root namespace
 ####
 ################################################################
 
@@ -32,9 +32,9 @@ CODE:
         break;
     default:
         RETVAL = new Q3PtrList<[% type %]>();
+        // set autoDelete true by default 
+        RETVAL->setAutoDelete(true);
     }
-    // set autoDelete true by default 
-    RETVAL->setAutoDelete(true);
 OUTPUT:
     RETVAL
 
@@ -63,18 +63,26 @@ void
 PREINIT:
     [% type %] *item;
 PPCODE:
-	item = THIS->at(index);
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
-	XSRETURN(1);
-
-int 
-[% package %]::at()
-CODE:
-    RETVAL = THIS->at();
-OUTPUT:
-    RETVAL
+    /*! 
+     * [% type %] *Q3PtrList::at(uint index) 
+     * int Q3PtrList::at()
+    */
+    switch(items) {
+    case 2:
+	    item = THIS->at(index);
+        if (item != 0) {
+	        ST(0) = sv_newmortal();
+	        sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item));
+	        SvREADONLY_on(SvRV(ST(0)));
+        } 
+        else {
+            ST(0) = &PL_sv_undef;
+        }
+        break;
+    default:
+        ST(0) = sv_2mortal(newSViv(THIS->at()));
+    }
+    XSRETURN(1);
 
 void
 [% package %]::clear()
@@ -110,9 +118,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->current();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
@@ -122,7 +135,7 @@ PREINIT:
 PPCODE:
 	item = THIS->currentNode();
 	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% namespace %]::Q3LNode", reinterpret_cast<void *>(item);
+	sv_setref_pv(ST(0), "[% root_namespace %]::Q3LNode", reinterpret_cast<void *>(item);
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
@@ -164,9 +177,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->first();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
@@ -175,9 +193,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->getFirst();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
@@ -186,16 +209,26 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->getLast();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
 [% package %]::inSort(item)
-    const [% type %] *item
+    SV item
+PREINIT:
+    const [% type %] *it;
 CODE:
-    THIS->inSort(item);
+    if (sv_isobject(item) && sv_isa(item, "[% type_package %]")) {
+        it = INT2PTR(const [% type %] *, SvIV(SvRV(item)));
+        THIS->inSort(it);
+        SvREADONLY_on(SvRV(item));
 
 bool 
 [% package %]::insert(index, item)
@@ -227,9 +260,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->last();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
@@ -238,9 +276,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->next();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 void 
@@ -262,9 +305,14 @@ PREINIT:
     [% type %] *item;
 PPCODE:
 	item = THIS->prev();
-	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
-	SvREADONLY_on(SvRV(ST(0)));
+    if (item != 0) {
+	    ST(0) = sv_newmortal();
+	    sv_setref_pv(ST(0), "[% type_package %]", reinterpret_cast<void *>(item);
+	    SvREADONLY_on(SvRV(ST(0)));
+    } 
+    else {
+        ST(0) = &PL_sv_undef;
+    }
 	XSRETURN(1);
 
 bool 
@@ -314,9 +362,19 @@ OUTPUT:
 
 void 
 [% package %]::removeNode(node)
-    Q3LNode *node
+    SV node
+PREINIT:
+    Q3LNode *nd;
 CODE:
-    THIS->removeNode(node);
+    if (sv_isobject(ST(1)) && sv_isa(ST(1), "[% root_namespace %]::Q3LNode")) {
+        nd = INT2PTR(Q3LNode *, SvIV(SvRV(ST(1))));
+        THIS->removeNode(nd);
+        if (THIS->autoDelete()) 
+	        SvREADONLY_on(SvRV(ST(1)));
+    } 
+    else {
+        croak("ST(1) is not of type [% root_namespace %]::Q3LNode");
+    }
 
 bool 
 [% package %]::removeRef(item)
@@ -446,7 +504,7 @@ CODE:
 ################################################################
 
 static void 
-_NAMESPACE_::TIEARRAY(...)
+[% package %]::TIEARRAY(...)
 PROTOTYPE: ;$
 PREINIT:
 	Q3PtrList<[% type %]> * list;
@@ -652,6 +710,7 @@ PPCODE:
 		}
 		for(int i = items; i > items - 3; i--) {
             THIS->insert(offset, INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+            SvREADONLY_on(SvRV(ST(i)));
 		}
 		offset += items - 3;
 	}
