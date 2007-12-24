@@ -222,9 +222,9 @@ sub Q3PtrList {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         # new template type
         my $new_entry = {};
-        $new_entry->{name}       = 'Q3PtrList';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'Q3PtrList';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         # mark done
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -247,9 +247,9 @@ sub Q3ValueList {
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
-        $new_entry->{name}       = 'Q3ValueList';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'Q3ValueList';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -270,9 +270,9 @@ sub QFlags {
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
-        $new_entry->{name}       = 'QFlags';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'QFlags';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -293,9 +293,9 @@ sub QList {
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
-        $new_entry->{name}       = 'QList';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'QList';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -316,9 +316,9 @@ sub QVector {
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
-        $new_entry->{name}       = 'QVector';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'QVector';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -339,9 +339,9 @@ sub QSet {
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
-        $new_entry->{name}       = 'QSet';
-        $new_entry->{type}       = 1;
-        $new_entry->{entry_type} = $sub_c_type;
+        $new_entry->{name}      = 'QSet';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
