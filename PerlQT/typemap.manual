@@ -29,3 +29,6 @@ Q3SqlRecordInfo::size_type		T_UV
 # private struct
 QByteArray::Data			T_STRUCT
 QString::Data				T_STRUCT
+
+# QT 4.3.3
+isc_db_handle				T_PTR

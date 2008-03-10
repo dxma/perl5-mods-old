@@ -69,12 +69,15 @@ sub main {
     # command to create grouplist.mk
     $group_dot_mk .= "\t\$(_Q)echo generating \$@\n";
     $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUPLIST_MK) ". 
-      "\$(OUT_GROUP_DIR) \$@\n";
-    # command to sync timestamp of all staff under OUT_GROUP_DIR 
-    # with grouplist.mk
+      "\$(OUT_GROUP_DIR) \$(GROUP_DOT_MK) \$@\n";
     $group_dot_mk .= "\t\$(_Q)for i in `ls \$(OUT_GROUP_DIR)`; ". 
-      "do touch -r \$@ \$(OUT_GROUP_DIR)/\$\$i; done\n";
+      "do touch \$(OUT_GROUP_DIR)/\$\$i; done\n";
     $group_dot_mk .= "\n";
+    $group_dot_mk .= "ifneq (\$(filter gen_typemap ". 
+      " gen_xscode all list_\%,\$(_GOALS)),)\n";
+    $group_dot_mk .= "\$(info including \$(GROUPLIST_DOT_MK))\n";
+    $group_dot_mk .= "include \$(GROUPLIST_DOT_MK)\n";
+    $group_dot_mk .= "endif\n";
     
     if (defined $out) {
         local ( *OUT, );

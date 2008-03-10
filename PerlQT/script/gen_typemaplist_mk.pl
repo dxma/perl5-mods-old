@@ -46,11 +46,11 @@ sub main {
       "\$(TYPEMAP_LIST) \$(TYPEMAP_TEMPLATE)\n\n";
     # lost of standard files produced by latest gen_typemap
     # force re-run gen_typemap
-    $typemaplist_dot_mk .= "ifneq (\$(filter-out \$(filter ". 
-      "\$(TYPEMAP_FILES),\$(addprefix \$(OUT_TYPEMAP_DIR)/,". 
-        "\$(shell ls \$(OUT_TYPEMAP_DIR)))),\$(TYPEMAP_FILES)),)\n";
-    $typemaplist_dot_mk .= "\$(TYPEMAPLIST_DOT_MK): FORCE\n";
-    $typemaplist_dot_mk .= "endif\n\n";
+#     $typemaplist_dot_mk .= "ifneq (\$(filter-out \$(filter ". 
+#       "\$(TYPEMAP_FILES),\$(addprefix \$(OUT_TYPEMAP_DIR)/,". 
+#         "\$(shell ls \$(OUT_TYPEMAP_DIR)))),\$(TYPEMAP_FILES)),)\n";
+#     $typemaplist_dot_mk .= "\$(TYPEMAPLIST_DOT_MK): FORCE\n";
+#     $typemaplist_dot_mk .= "endif\n\n";
     
     if (defined $out) {
         local ( *OUT, );

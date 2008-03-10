@@ -176,15 +176,6 @@ else
 _GOALS := all
 endif
 
-ifeq ($(filter clean%,$(_GOALS)),)
--include $(HEADER_DOT_MK)
--include $(STRIP_DOT_MK)
--include $(PREPRO_DOT_MK)
--include $(PARSE_DOT_MK)
--include $(FORMAT_DOT_MK)
--include $(GROUP_DOT_MK)
-endif
-
 #################### META RULES and PATTERNS ###################
 
 # FIXME: great performance issue
@@ -229,6 +220,13 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
+$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
+
+$(XSCODE_DOT_MK)   : $(GROUPLIST_DOT_MK) $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS) 
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
+        $(XSCODE_DOT_MK)
+
 # generate xs && pm code
 # GROUP_YAMLS from grouplist.mk
 # in case grouplist.mk doesn't exist
@@ -242,25 +240,37 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 # gen_group triggers rebuild of all so-called 
 # 'standard' files
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
-ifneq ($(filter gen_typemap gen_xscode all list_%,$(_GOALS)),)
--include $(GROUPLIST_DOT_MK)
+ifeq ($(filter clean%,$(_GOALS)),)
+$(info including $(HEADER_DOT_MK))
+include $(HEADER_DOT_MK)
+$(info including $(STRIP_DOT_MK))
+include $(STRIP_DOT_MK)
+$(info including $(PREPRO_DOT_MK))
+include $(PREPRO_DOT_MK)
+$(info including $(PARSE_DOT_MK))
+include $(PARSE_DOT_MK)
+$(info including $(FORMAT_DOT_MK))
+include $(FORMAT_DOT_MK)
+$(info including $(GROUP_DOT_MK))
+include $(GROUP_DOT_MK)
 endif
-ifneq ($(filter gen_typemap gen_xscode all,$(_GOALS)),)
--include $(TYPEMAPLIST_DOT_MK)
-endif
-ifneq ($(filter gen_xscode all,$(_GOALS)),)
--include $(XSCODE_DOT_MK)
-endif
-$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
-$(XSCODE_DOT_MK)   : $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) 
-	$(_Q)echo generating $@
-	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
-        $(XSCODE_DOT_MK)
+#ifneq ($(filter gen_typemap gen_xscode all list_%,$(_GOALS)),)
+#$(info including $(GROUPLIST_DOT_MK))
+#include $(GROUPLIST_DOT_MK)
+#endif
+#ifneq ($(filter gen_typemap gen_xscode all,$(_GOALS)),)
+#$(info including $(TYPEMAPLIST_DOT_MK))
+#-include $(TYPEMAPLIST_DOT_MK)
+#endif
+#ifneq ($(filter gen_xscode all,$(_GOALS)),)
+#$(info including $(XSCODE_DOT_MK))
+#-include $(XSCODE_DOT_MK)
+#endif
 
 TYPEMAP_YAMLS := $(patsubst $(OUT_GROUP_DIR)%,$(OUT_TYPEMAP_DIR)%,\
                      $(patsubst %.meta,%.typemap,                 \
                          $(filter %.meta,$(GROUP_YAMLS))))
-$(TYPEMAPLIST_DOT_MK): $(MODULE_DOT_CONF) $(TYPEMAP_DOT_IGNORE)   \
+$(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF) $(TYPEMAP_DOT_IGNORE)   \
                        $(TYPEMAP_DOT_SIMPLE) $(TYPEMAP_DOT_MANUAL)\
                        $(filter-out %.friend %.function,          \
                            $(GROUP_YAMLS))
@@ -289,6 +299,7 @@ clean_dot_mk :
 	$(_Q)$(call _remove_file,$(GROUP_DOT_MK))
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
+	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
 .PHONY: clean_dot_mk
 
 gen_strip    : $(STRIP_HEADERS)
@@ -311,9 +322,10 @@ clean_format :
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
 
-gen_group    : gen_format $(GROUPLIST_DOT_MK)
+gen_group    : gen_format $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)
 clean_group  :
 	$(_Q)$(call _remove_dir,$(OUT_GROUP_DIR))
+	$(_Q)$(call _remove_file,$(GROUP_DOT_MK))
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 .PHONY: gen_group clean_group
 
@@ -321,9 +333,9 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-gen_typemap  : gen_group $(TYPEMAPLIST_DOT_MK) $(TYPEMAP)
+gen_typemap  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
 clean_typemap: 
-	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR)
+	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
 .PHONY: gen_typemap clean_typemap
 
@@ -347,7 +359,7 @@ list_typemap_yamls :
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \
-       clean_format clean_group clean_xscode
+       clean_format clean_group clean_typemap clean_xscode
 .PHONY: clean
 
 all: gen_typemap
