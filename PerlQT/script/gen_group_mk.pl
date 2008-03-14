@@ -74,7 +74,7 @@ sub main {
       "do touch \$(OUT_GROUP_DIR)/\$\$i; done\n";
     $group_dot_mk .= "\n";
     $group_dot_mk .= "ifneq (\$(filter gen_typemap ". 
-      " gen_xscode all list_\%,\$(_GOALS)),)\n";
+      "gen_xscode all list_\%,\$(_GOALS)),)\n";
     $group_dot_mk .= "\$(info including \$(GROUPLIST_DOT_MK))\n";
     $group_dot_mk .= "include \$(GROUPLIST_DOT_MK)\n";
     $group_dot_mk .= "endif\n";

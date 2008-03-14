@@ -53,6 +53,7 @@ sub main {
       die "cannot open file to read: $!";
     $grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUP_DOT_MK) ". 
       "\$(GROUPLIST_DOT_MK)\n";
+    # copy rule to make GROUPLIST_DOT_MK
     my $strip = <GROUP_DOT_MK>;
     my $l;
     while (defined ($l = <GROUP_DOT_MK>)) {
@@ -60,19 +61,17 @@ sub main {
         $grouplist_dot_mk .= $l;
     }
     close GROUP_DOT_MK;
-#     $grouplist_dot_mk .= "DELTA_GROUP_YAMLS = \$(filter-out ". 
-#       "\$(addprefix \$(OUT_GROUP_DIR)/,". 
-#         "\$(shell ls \$(OUT_GROUP_DIR))),\$(GROUP_YAMLS))\n";
-#     $grouplist_dot_mk .= "ifneq (\$(DELTA_GROUP_YAMLS),)\n";
-#     $grouplist_dot_mk .= "\$(info \$(DELTA_GROUP_YAMLS))\n";
-#     $grouplist_dot_mk .= "\$(info some target file missing)\n";
-#     $grouplist_dot_mk .= "\$(GROUPLIST_DOT_MK): \n";
-#     $grouplist_dot_mk .= "endif\n\n";
-#     $grouplist_dot_mk .= "ifeq (\$(DELTA_GROUP_YAMLS),)\n";
-#     $grouplist_dot_mk .= "\$(info \$(DELTA_GROUP_YAMLS))\n";
-#     $grouplist_dot_mk .= "\$(info all target files found)\n";
-#     $grouplist_dot_mk .= "\$(GROUPLIST_DOT_MK): \$(GROUP_YAMLS)\n";
-#     $grouplist_dot_mk .= "endif\n\n";
+    # both depends on definition of GROUP_YAMLS
+    $grouplist_dot_mk .= "\nifneq (\$(filter gen_typemap ". 
+      "gen_xscode all,\$(_GOALS)),)\n";
+    $grouplist_dot_mk .= "\$(info including \$(TYPEMAPLIST_DOT_MK))\n";
+    $grouplist_dot_mk .= "include \$(TYPEMAPLIST_DOT_MK)\n";
+    $grouplist_dot_mk .= "endif\n";
+    $grouplist_dot_mk .= "ifneq (\$(filter gen_xscode all, ". 
+      "\$(_GOALS)),)\n";
+    $grouplist_dot_mk .= "\$(info including \$(XSCODE_DOT_MK))\n";
+    $grouplist_dot_mk .= "include \$(XSCODE_DOT_MK)\n";
+    $grouplist_dot_mk .= "endif\n";
     
     if (defined $out) {
         local ( *OUT, );

@@ -254,18 +254,6 @@ include $(FORMAT_DOT_MK)
 $(info including $(GROUP_DOT_MK))
 include $(GROUP_DOT_MK)
 endif
-#ifneq ($(filter gen_typemap gen_xscode all list_%,$(_GOALS)),)
-#$(info including $(GROUPLIST_DOT_MK))
-#include $(GROUPLIST_DOT_MK)
-#endif
-#ifneq ($(filter gen_typemap gen_xscode all,$(_GOALS)),)
-#$(info including $(TYPEMAPLIST_DOT_MK))
-#-include $(TYPEMAPLIST_DOT_MK)
-#endif
-#ifneq ($(filter gen_xscode all,$(_GOALS)),)
-#$(info including $(XSCODE_DOT_MK))
-#-include $(XSCODE_DOT_MK)
-#endif
 
 TYPEMAP_YAMLS := $(patsubst $(OUT_GROUP_DIR)%,$(OUT_TYPEMAP_DIR)%,\
                      $(patsubst %.meta,%.typemap,                 \
@@ -362,4 +350,4 @@ clean: clean_dot_mk clean_strip clean_prepro clean_parse \
        clean_format clean_group clean_typemap clean_xscode
 .PHONY: clean
 
-all: gen_typemap
+all: gen_xscode
