@@ -222,7 +222,8 @@ $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 
 $(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
 
-$(XSCODE_DOT_MK)   : $(GROUPLIST_DOT_MK) $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS) 
+$(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
+                     $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
         $(XSCODE_DOT_MK)
@@ -255,13 +256,10 @@ $(info including $(GROUP_DOT_MK))
 include $(GROUP_DOT_MK)
 endif
 
-TYPEMAP_YAMLS := $(patsubst $(OUT_GROUP_DIR)%,$(OUT_TYPEMAP_DIR)%,\
-                     $(patsubst %.meta,%.typemap,                 \
-                         $(filter %.meta,$(GROUP_YAMLS))))
-$(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF) $(TYPEMAP_DOT_IGNORE)   \
-                       $(TYPEMAP_DOT_SIMPLE) $(TYPEMAP_DOT_MANUAL)\
-                       $(filter-out %.friend %.function,          \
-                           $(GROUP_YAMLS))
+$(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
+                       $(TYPEMAP_DOT_IGNORE) $(TYPEMAP_DOT_SIMPLE)\
+                       $(TYPEMAP_DOT_MANUAL)                      \
+                       $(filter-out %.friend %.function,$(GROUP_YAMLS))
 	$(shell $(CMD_RM) $(TYPEMAP_DOT_DEP))
 	$(foreach i,$^,$(shell $(CMD_ECHO) $(i) >> $(TYPEMAP_DOT_DEP)))
 	$(_Q)$(CMD_RMDIR) $(OUT_TYPEMAP_DIR)

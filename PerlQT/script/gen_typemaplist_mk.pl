@@ -44,13 +44,14 @@ sub main {
       "TYPEMAP_YAMLS := ". join(" ", @f). "\n\n";
     $typemaplist_dot_mk .= "TYPEMAP_FILES := \$(TYPEMAP_YAMLS) ". 
       "\$(TYPEMAP_LIST) \$(TYPEMAP_TEMPLATE)\n\n";
-    # lost of standard files produced by latest gen_typemap
-    # force re-run gen_typemap
-#     $typemaplist_dot_mk .= "ifneq (\$(filter-out \$(filter ". 
-#       "\$(TYPEMAP_FILES),\$(addprefix \$(OUT_TYPEMAP_DIR)/,". 
-#         "\$(shell ls \$(OUT_TYPEMAP_DIR)))),\$(TYPEMAP_FILES)),)\n";
-#     $typemaplist_dot_mk .= "\$(TYPEMAPLIST_DOT_MK): FORCE\n";
-#     $typemaplist_dot_mk .= "endif\n\n";
+    # TODO: missing of any in TYPEMAP_FILES 
+    # triggers rebuild of TYPEMAPLIST_DOT_MK
+    # depends on definition of TYPEMAP_YAMLS
+    $typemaplist_dot_mk .= "ifneq (\$(filter gen_xscode all, ". 
+      "\$(_GOALS)),)\n";
+    $typemaplist_dot_mk .= "\$(info including \$(XSCODE_DOT_MK))\n";
+    $typemaplist_dot_mk .= "include \$(XSCODE_DOT_MK)\n";
+    $typemaplist_dot_mk .= "endif\n";
     
     if (defined $out) {
         local ( *OUT, );

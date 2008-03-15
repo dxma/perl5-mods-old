@@ -61,16 +61,11 @@ sub main {
         $grouplist_dot_mk .= $l;
     }
     close GROUP_DOT_MK;
-    # both depends on definition of GROUP_YAMLS
+    # depends on definition of GROUP_YAMLS
     $grouplist_dot_mk .= "\nifneq (\$(filter gen_typemap ". 
       "gen_xscode all,\$(_GOALS)),)\n";
     $grouplist_dot_mk .= "\$(info including \$(TYPEMAPLIST_DOT_MK))\n";
     $grouplist_dot_mk .= "include \$(TYPEMAPLIST_DOT_MK)\n";
-    $grouplist_dot_mk .= "endif\n";
-    $grouplist_dot_mk .= "ifneq (\$(filter gen_xscode all, ". 
-      "\$(_GOALS)),)\n";
-    $grouplist_dot_mk .= "\$(info including \$(XSCODE_DOT_MK))\n";
-    $grouplist_dot_mk .= "include \$(XSCODE_DOT_MK)\n";
     $grouplist_dot_mk .= "endif\n";
     
     if (defined $out) {
