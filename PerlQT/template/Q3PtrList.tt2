@@ -1,37 +1,37 @@
-MODULE = [% module %]			PACKAGE = [% package %]
+MODULE = [% module %]			PACKAGE = [% modu_package %]
 PROTOTYPES: ENABLE
 
 ################################################################
 #### 
 #### NB: $type is *always* object
 #### 
-#### $type           : item type
-#### $package        : package namespace
-#### $type_package   : item namespace
-#### $root_namespace : universal namespace
+#### $item_type    : item type
+#### $modu_package : package namespace
+#### $type_package : item namespace
+#### $root_package : universal namespace
 ####
 ################################################################
 
-Q3PtrList<[% type %]> * 
-[% package %]::new(...)
+Q3PtrList<[% item_type %]> * 
+[% modu_package %]::new(...)
 PROTOTYPE: ;$
 PREINIT:
-    [% package %] *p;
+    Q3PtrList<[% item_type %]> *p;
 CODE:
     /* 
-     * Q3PtrList<[% type %]>()
-     * Q3PtrList<[% type %]>(const Q3PtrList<[% type %]> &list)
+     * Q3PtrList<[% item_type %]>()
+     * Q3PtrList<[% item_type %]>(const Q3PtrList<[% item_type %]> &list)
      */
     switch(items) {
     case 2:
-        if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% package %]"))
-            p = reinterpret_cast<Q3PtrList<[% type %]> *>(SvIV(SvRV(ST(1))));
+        if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% modu_package %]"))
+            p = reinterpret_cast<Q3PtrList<[% item_type %]> *>(SvIV(SvRV(ST(1))));
         else
-            croak("ST(1) is not of type [% package %]");
-        RETVAL = new Q3PtrList<[% type %]>(*p);
+            croak("ST(1) is not of type [% modu_package %]");
+        RETVAL = new Q3PtrList<[% item_type %]>(*p);
         break;
     default:
-        RETVAL = new Q3PtrList<[% type %]>();
+        RETVAL = new Q3PtrList<[% item_type %]>();
         // set autoDelete true by default 
         RETVAL->setAutoDelete(true);
         // _PERLQT_TODO: SvREADONLY_off(RETVAL)
@@ -40,15 +40,15 @@ OUTPUT:
     RETVAL
 
 void 
-[% package %]::DESTROY()
+[% modu_package %]::DESTROY()
 CODE:
     // delete that not marked with readonly
     if(!SvREADONLY(SvRV(ST(0))))
         delete THIS;
 
 void
-[% package %]::append(item)
-    const [% type %] *item
+[% modu_package %]::append(item)
+    const [% item_type %] *item
 CODE:
     THIS->append(item);
     // mark item readonly
@@ -56,13 +56,13 @@ CODE:
     SvREADONLY_on(SvRV(ST(1)));
 
 void 
-[% package %]::at(index)
+[% modu_package %]::at(index)
     uint index
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
     /*! 
-     * [% type %] *Q3PtrList::at(uint index) 
+     * [% item_type %] *Q3PtrList::at(uint index) 
      * int Q3PtrList::at()
     */
     switch(items) {
@@ -84,37 +84,37 @@ PPCODE:
     XSRETURN(1);
 
 void
-[% package %]::clear()
+[% modu_package %]::clear()
 CODE:
     THIS->clear();
 
 uint 
-[% package %]::contains(item)
-    const [% type %] *item
+[% modu_package %]::contains(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->contains(item);
 OUTPUT:
     RETVAL
 
 uint 
-[% package %]::containsRef(item)
-    const [% type %] *item
+[% modu_package %]::containsRef(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->containsRef(item);
 OUTPUT:
     RETVAL
 
 uint 
-[% package %]::count()
+[% modu_package %]::count()
 CODE:
     RETVAL = THIS->count();
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::current()
+[% modu_package %]::current()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->current();
     if (item != 0) {
@@ -129,53 +129,53 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::currentNode()
+[% modu_package %]::currentNode()
 PREINIT:
     Q3LNode *node;
 PPCODE:
 	item = THIS->currentNode();
 	ST(0) = sv_newmortal();
-	sv_setref_pv(ST(0), "[% root_namespace %]::Q3LNode", reinterpret_cast<void *>(item);
+	sv_setref_pv(ST(0), "[% root_package %]::Q3LNode", reinterpret_cast<void *>(item);
     // export only
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
 int 
-[% package %]::find(item)
-    const [% type %] *item
+[% modu_package %]::find(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->find(item);
 OUTPUT:
     RETVAL
 
 int 
-[% package %]::findNext(item)
-    const [% type %] *item
+[% modu_package %]::findNext(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->findNext(item);
 OUTPUT:
     RETVAL
 
 int 
-[% package %]::findNextRef(item)
-    const [% type %] *item
+[% modu_package %]::findNextRef(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->findNextRef(item);
 OUTPUT:
     RETVAL
 
 int 
-[% package %]::findRef(item)
-    const [% type %] *item
+[% modu_package %]::findRef(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->findRef(item);
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::first()
+[% modu_package %]::first()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->first();
     if (item != 0) {
@@ -190,9 +190,9 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::getFirst()
+[% modu_package %]::getFirst()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->getFirst();
     if (item != 0) {
@@ -207,9 +207,9 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::getLast()
+[% modu_package %]::getLast()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->getLast();
     if (item != 0) {
@@ -224,17 +224,17 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::inSort(item)
-    const [% type %] *item
+[% modu_package %]::inSort(item)
+    const [% item_type %] *item
 CODE:
     THIS->inSort(item);
     // mark readonly, owned by list now
     SvREADONLY_on(SvRV(ST(1)));
 
 bool 
-[% package %]::insert(index, item)
+[% modu_package %]::insert(index, item)
     uint index
-    const [% type %] *item
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->insert(index, item);
     // mark readonly
@@ -244,16 +244,16 @@ OUTPUT:
     RETVAL
 
 bool 
-[% package %]::isEmpty()
+[% modu_package %]::isEmpty()
 CODE:
     RETVAL = THIS->isEmpty();
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::last()
+[% modu_package %]::last()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->last();
     if (item != 0) {
@@ -268,9 +268,9 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::next()
+[% modu_package %]::next()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->next();
     if (item != 0) {
@@ -285,17 +285,17 @@ PPCODE:
 	XSRETURN(1);
 
 void 
-[% package %]::prepend(item)
-    const [% type %] *item
+[% modu_package %]::prepend(item)
+    const [% item_type %] *item
 CODE:
     THIS->prepend(item);
     // mark readonly
-    SvREADONLY_on(SvRV(ST(0)));
+    SvREADONLY_on(SvRV(ST(1)));
 
 void 
-[% package %]::prev()
+[% modu_package %]::prev()
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	item = THIS->prev();
     if (item != 0) {
@@ -310,21 +310,21 @@ PPCODE:
 	XSRETURN(1);
 
 bool 
-[% package %]::remove(...)
+[% modu_package %]::remove(...)
 PROTOTYPE: ;$
 PREINIT:
-    [% type %] *p;
+    [% item_type %] *p;
     unsigned int i;
 CODE:
     /*!
      * bool remove(uint index)
      * bool remove()
-     * bool remove(const type * item)
+     * bool remove(const [% item_type %] * item)
     */
     switch(items) {
     case 2:
         if(sv_isobject(ST(1)) && sv_isa(ST(1), "[% type_package %]")) {
-            p = reinterpret_cast<const [% type %] *>(SvIV(SvRV(ST(1))));
+            p = reinterpret_cast<const [% item_type %] *>(SvIV(SvRV(ST(1))));
             RETVAL = THIS->remove(p);
             // no delete if auto delete enabled
             if(RETVAL == true && THIS->autoDelete())
@@ -342,21 +342,21 @@ OUTPUT:
     RETVAL
 
 bool 
-[% package %]::removeFirst()
+[% modu_package %]::removeFirst()
 CODE:
     RETVAL = THIS->removeFirst();
 OUTPUT:
     RETVAL
 
 bool 
-[% package %]::removeLast()
+[% modu_package %]::removeLast()
 CODE:
     RETVAL = THIS->removeLast();
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::removeNode(node)
+[% modu_package %]::removeNode(node)
     Q3LNode *node
 CODE:
     THIS->removeNode(node);
@@ -365,8 +365,8 @@ CODE:
 	    SvREADONLY_on(SvRV(ST(1)));
 
 bool 
-[% package %]::removeRef(item)
-    const [% type %] *item
+[% modu_package %]::removeRef(item)
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->removeRef(item);
     // no delete if auto delete enabled
@@ -376,9 +376,9 @@ OUTPUT:
     RETVAL
 
 bool 
-[% package %]::replace(index, item)
+[% modu_package %]::replace(index, item)
     uint index
-    const [% type %] *item
+    const [% item_type %] *item
 CODE:
     RETVAL = THIS->replace(index, item);
     // mark readonly
@@ -388,19 +388,19 @@ OUTPUT:
     RETVAL
 
 void 
-[% package %]::sort()
+[% modu_package %]::sort()
 CODE:
     THIS->sort();
 
-[% type %] * 
-[% package %]::take(...)
+[% item_type %] * 
+[% modu_package %]::take(...)
 PROTOTYPE: ;$
 PREINIT:
     unsigned int i;
 CODE:
     /*!
-     * [% type %] *take(uint index)
-     * [% type %] *take()
+     * [% item_type %] *take(uint index)
+     * [% item_type %] *take()
     */
     switch(items) {
     case 2:
@@ -416,8 +416,8 @@ CODE:
 OUTPUT:
     RETVAL
 
-[% type %] * 
-[% package %]::takeNode(node)
+[% item_type %] * 
+[% modu_package %]::takeNode(node)
     Q3LNode *node
 CODE:
 	RETVAL = THIS->takeNode(node);
@@ -425,50 +425,50 @@ OUTPUT:
     RETVAL
 
 void 
-[% package %]::toVector(vec)
+[% modu_package %]::toVector(vec)
     Q3GVector *vec
 CODE:
     THIS->toVector(vec);
 
 bool 
-[% package %]::_notEquals(list)
-    const Q3PtrList<[% type %]> *list
+[% modu_package %]::_notEquals(list)
+    const Q3PtrList<[% item_type %]> *list
 CODE:
     RETVAL = THIS->operator!=(*list);
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::_copy(list)
-    const Q3PtrList<[% type %]> *list
+[% modu_package %]::_copy(list)
+    const Q3PtrList<[% item_type %]> *list
 PPCODE:
     (void)THIS->operator=(*list);
     XSRETURN(1);
 
 bool 
-[% package %]::_equals(list)
-    const Q3PtrList<[% type %]> *list
+[% modu_package %]::_equals(list)
+    const Q3PtrList<[% item_type %]> *list
 CODE:
     RETVAL = THIS->operator==(*list);
 OUTPUT:
     RETVAL
 
 bool 
-[% package %]::autoDelete()
+[% modu_package %]::autoDelete()
 CODE:
     RETVAL = THIS->autoDelete();
 OUTPUT:
     RETVAL
 
 uint 
-[% package %]::count()
+[% modu_package %]::count()
 CODE:
     RETVAL = THIS->count();
 OUTPUT:
     RETVAL
 
 void 
-[% package %]::setAutoDelete(enable)
+[% modu_package %]::setAutoDelete(enable)
     bool enable
 CODE:
     THIS->setAutoDelete(enable);
@@ -482,35 +482,35 @@ CODE:
 ################################################################
 
 static void 
-[% package %]::TIEARRAY(...)
+[% modu_package %]::TIEARRAY(...)
 PROTOTYPE: ;$
 PREINIT:
-	Q3PtrList<[% type %]> * list;
+	Q3PtrList<[% item_type %]> * list;
 PPCODE:
 	/*!
-	 * tie @a, "[% package %]"
-	 * tie @a, "[% package %]", $obj_to_tie
+	 * tie @a, "[% modu_package %]"
+	 * tie @a, "[% modu_package %]", $obj_to_tie
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% package %]")) {
+		if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% modu_package %]")) {
 			ST(0) = sv_2mortal(newRV_inc(SvRV(ST(1))));
 		} else
-			croak("ST(1) is not of type [% package %]");
+			croak("ST(1) is not of type [% modu_package %]");
 		break;
 	default:
 		/* items == 1 */
-		list = new Q3PtrList<[% type %]>();
+		list = new Q3PtrList<[% item_type %]>();
 		ST(0) = sv_newmortal();
-		sv_setref_pv(ST(0), "[% package %]", reinterpret_cast<void *>(list));
+		sv_setref_pv(ST(0), "[% modu_package %]", reinterpret_cast<void *>(list));
 	}
 	XSRETURN(1);
 
 void 
-[% package %]::FETCH(index)
+[% modu_package %]::FETCH(index)
 	unsigned int index
 PREINIT:
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	if(0 <= index && index < THIS->count()) {
 		ST(0) = sv_newmortal();
@@ -523,9 +523,9 @@ PPCODE:
 		XSRETURN_UNDEF;
 
 void 
-[% package %]::STORE(index, item)
+[% modu_package %]::STORE(index, item)
 	unsigned int index
-	const [% type %] *item
+	const [% item_type %] *item
 CODE:
 	/* 
 	 * insert item into specific index 
@@ -542,26 +542,26 @@ CODE:
     }
 
 unsigned int 
-[% package %]::FETCHSIZE()
+[% modu_package %]::FETCHSIZE()
 CODE:
 	RETVAL = THIS->count();
 OUTPUT:
 	RETVAL
 
 void 
-[% package %]::STORESIZE(s)
+[% modu_package %]::STORESIZE(s)
 	unsigned int s
 CODE:
 	/* NOOP */
 
 void 
-[% package %]::EXTEND(s)
+[% modu_package %]::EXTEND(s)
 	unsigned int s
 CODE:
 	/* NOOP */
 
 bool 
-[% package %]::EXISTS(key)
+[% modu_package %]::EXISTS(key)
 	unsigned int key
 CODE:
 	if( 0 <= key && key < THIS->count())
@@ -572,7 +572,7 @@ OUTPUT:
 	RETVAL
 
 void 
-[% package %]::DELETE(key)
+[% modu_package %]::DELETE(key)
 	unsigned int key
 CODE:
     // FIXME: croak on false remove
@@ -580,23 +580,23 @@ CODE:
         (void)THIS->remove(key);
 
 void 
-[% package %]::CLEAR()
+[% modu_package %]::CLEAR()
 CODE:
 	THIS->clear();
 
 void 
-[% package %]::PUSH(...)
+[% modu_package %]::PUSH(...)
 PPCODE:
 	if(items > 1) {
-		/* ensure all items are of type [% type %] before pushing */
+		/* ensure all items are of type [% item_type %] before pushing */
 		for(int i = 1; i < items; i++) {
 			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
-				croak("ST(i) is not of type [% type %]");
+				croak("ST(i) is not of type [% item_type %]");
 		}
 		for(int i = 1; i < items; i++) {
-            THIS->append(INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+            THIS->append(INT2PTR(const [% item_type %] *, SvIV(SvRV(ST(i)))));
             // mark readonly
-            SvREADONLY_on(SvRV(ST(i));            
+            SvREADONLY_on(SvRV(ST(i));
 		}
 		ST(0) = sv_2mortal(newSVuv(THIS->count()));
 		XSRETURN(1);
@@ -604,7 +604,7 @@ PPCODE:
 		XSRETURN_UNDEF;
 
 void 
-[% package %]::POP()
+[% modu_package %]::POP()
 PPCODE:
     if(!THIS->isEmpty()) {
         ST(0) = sv_newmortal();
@@ -614,7 +614,7 @@ PPCODE:
 		XSRETURN_UNDEF; 
 
 void 
-[% package %]::SHIFT()
+[% modu_package %]::SHIFT()
 PPCODE:
 	if(!THIS->isEmpty()) {
 		ST(0) = sv_newmortal();
@@ -624,16 +624,16 @@ PPCODE:
 		XSRETURN_UNDEF;
 
 void 
-[% package %]::UNSHIFT(...)
+[% modu_package %]::UNSHIFT(...)
 PPCODE:
 	if(items > 1) {
-		/* ensure all items are of type [% type %] */
+		/* ensure all items are of type [% item_type %] */
 		for(int i = 1; i < items; i++) {
 			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
-				croak("ST(i) is not of type [% type %]");
+				croak("ST(i) is not of type [% item_type %]");
 		}
 		for(int i = items - 1; i > 0; i--) {
-			(void)THIS->append(INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+			(void)THIS->append(INT2PTR(const [% item_type %] *, SvIV(SvRV(ST(i)))));
             // mark readonly
             SvREADONLY_on(SvRV(ST(i)));
 		}
@@ -643,12 +643,12 @@ PPCODE:
 		XSRETURN_UNDEF;
 
 void 
-[% package %]::SPLICE(...)
+[% modu_package %]::SPLICE(...)
 PROTOTYPE: $;$@
 PREINIT:
 	unsigned int offset;
 	unsigned int length;
-    [% type %] *item;
+    [% item_type %] *item;
 PPCODE:
 	switch(items) {
 	case 2:
@@ -684,10 +684,10 @@ PPCODE:
 		// (items-3) items to insert
 		for(int i = 3; i < items; i++) {
 			if(!(sv_isobject(ST(i)) && sv_isa(ST(i), "[% type_package %]")))
-			    croak("ST(i) is not of type [% type %]");
+			    croak("ST(i) is not of type [% item_type %]");
 		}
 		for(int i = items; i > items - 3; i--) {
-            THIS->insert(offset, INT2PTR(const [% type %] *, SvIV(SvRV(ST(i)))));
+            THIS->insert(offset, INT2PTR(const [% item_type %] *, SvIV(SvRV(ST(i)))));
             // mark readonly
             SvREADONLY_on(SvRV(ST(i)));
 		}
