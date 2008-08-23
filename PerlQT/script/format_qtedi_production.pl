@@ -48,14 +48,13 @@ gcc.
 =cut
 
 ################ DICTIONARY ################
-# property storage flag
-sub KEEP()    { 1 }
-
+sub P_IGNORE() { 0 }
+sub P_KEEP  () { 1 }
 # QT-specific
 my $QT_PROPERTIES = {
-    Q_TESTLIB_EXPORT                    => 0,
-    Q_DECL_EXPORT                       => KEEP,
-    Q_DBUS_EXPORT                       => 0,
+    Q_TESTLIB_EXPORT => P_IGNORE,
+    Q_DECL_EXPORT    => P_KEEP,
+    Q_DBUS_EXPORT    => P_IGNORE,
 };
 
 # KDE-specific
@@ -65,14 +64,14 @@ my $KDE_PROPERTIES = {
 # function-specific
 my $FUNCTION_PROPERTIES = {
     # C++ standard
-    explicit                            => 0,
-    implicit                            => 0,
-    virtual                             => KEEP,
-    inline                              => 0,
-    static                              => KEEP,
-    friend                              => KEEP,
+    explicit         => P_IGNORE,
+    implicit         => P_IGNORE,
+    virtual          => P_KEEP,
+    inline           => P_IGNORE,
+    static           => P_KEEP,
+    friend           => P_KEEP,
     # const belongs to return type
-    #const                               => KEEP, 
+    # const           => P_IGNORE, 
     %$QT_PROPERTIES, 
     %$KDE_PROPERTIES, 
 };
@@ -80,10 +79,10 @@ my $FUNCTION_PROPERTIES = {
 # class/struct/union-specific
 my $CLASS_PROPERTIES =  { 
     # C++ standard
-    inline                              => 0,
-    static                              => KEEP,
-    friend                              => KEEP,
-    mutable                             => 0,
+    inline           => P_IGNORE,
+    static           => P_KEEP,
+    friend           => P_KEEP,
+    mutable          => P_IGNORE,
     %$QT_PROPERTIES,
     %$KDE_PROPERTIES,
 };
@@ -160,7 +159,7 @@ sub __format_class_or_struct {
         my $cname = pop @values;
         foreach my $v (@values) {
             if (exists $CLASS_PROPERTIES->{$v} and 
-                  $CLASS_PROPERTIES->{$v} & KEEP) {
+                  $CLASS_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
         }
@@ -313,12 +312,13 @@ sub __format_fpointer {
     my $entry = shift;
     
     # grep function property from return field
-    my $properties = [];
+    my $properties = 
+      exists $entry->{property} ? $entry->{property} : [];
     my $fpreturn   = [];
     my @return = split /\s*\b\s*/, $entry->{return};
     foreach my $e (@return) {
         if (exists $FUNCTION_PROPERTIES->{$e} and 
-              $FUNCTION_PROPERTIES->{$e} == KEEP) {
+              $FUNCTION_PROPERTIES->{$e} == P_KEEP) {
             push @$properties, $e;
         }
         else {
@@ -403,8 +403,17 @@ sub __format_fpointer {
     my $params = [];
     $get_parameters->($entry->{parameter}, $params);
     $fproto .= '('. join(', ', @$params). ')';
+    # attach function pointer properties
+    foreach my $p (@$properties) {
+        if ($p eq 'const') {
+            $fproto .= ' const';
+        }
+        else {
+            $fproto = $p. ' '. $fproto;
+        }
+    }
     
-    # masquerade a normal function entry
+    # masquerade as a normal function entry
     # delegate to __format_function 
     # fill RETURN and PARAMETER fields
     # NOTE: soft copy
@@ -528,7 +537,7 @@ sub __format_function {
     # filter out properties 
     foreach my $v (@fvalues) {
         if (exists $FUNCTION_PROPERTIES->{$v}) {
-            if ($FUNCTION_PROPERTIES->{$v} & KEEP) {
+            if ($FUNCTION_PROPERTIES->{$v} == P_KEEP) {
                 unshift @$properties, $v;
             }
         }
@@ -539,7 +548,7 @@ sub __format_function {
     if (exists $entry->{property}) {
         foreach my $p (@{$entry->{property}}) {
             if (exists $FUNCTION_PROPERTIES->{$p} and 
-                  $FUNCTION_PROPERTIES->{$p} & KEEP) {
+                  $FUNCTION_PROPERTIES->{$p} == P_KEEP) {
                 unshift @$properties, $p;
             }
         }
@@ -752,7 +761,7 @@ sub __format_enum {
         my $ename = pop @values;
         foreach my $v (@values) {
             if (exists $ENUM_PROPERTIES->{$v} and 
-                  $ENUM_PROPERTIES->{$v} & KEEP) {
+                  $ENUM_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
         }
@@ -993,7 +1002,7 @@ sub __format_namespace {
         my $nname = pop @values;
         foreach my $v (@values) {
             if (exists $NAMESPACE_PROPERTIES->{$v} and 
-                  $NAMESPACE_PROPERTIES->{$v} & KEEP) {
+                  $NAMESPACE_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
         }
