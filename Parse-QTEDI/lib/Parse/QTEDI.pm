@@ -14,7 +14,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -200,7 +200,7 @@ class    :
   { print STDERR $item[1][0], ": ", 
         join(" ", @item[2 .. $#item-3]), "\n" if $::RD_DEBUG }
 # a simple trap here 
-# to prevent template function parsed as normal one
+# to prevent template function from being parsed as normal one
 function : 
     keyword_template <commit> <reject>
   | class_accessibility <commit> <reject> 
@@ -515,7 +515,19 @@ function_parameter_function_pointer            :
     '(' function_parameter_function_pointer_loop ')' 
     { $item[2] ? 1 : undef }
     '(' function_parameter_loop ')' 
-    { $return = { name => $item[2], parameter => $item[6], }; }
+    function_parameter_function_pointer_const
+    { 
+      $return = { name => $item[2], parameter => $item[6], }; 
+      push @{ $return->{property} },  $item[8] if $item[8]; 
+    } 
+
+# 'const' could be either return/param type attribute
+# or function property
+function_parameter_function_pointer_const      : 
+    (   'const' { $return = 'const'; } 
+      | { $return = ''; } 
+    ) 
+    { $return = $item[1]; } 
 
 function_parameter_function_pointer_loop       : 
     (   function_parameter_function_pointer_next_token 

@@ -1,5 +1,8 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.13    20080823
+    - 'const' property on function and function pointer
+
 0.12    20070528
 	- fix on qt/kde macro which ends with optional ';'
 
