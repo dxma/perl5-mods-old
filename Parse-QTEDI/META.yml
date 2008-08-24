@@ -15,5 +15,6 @@ requires:
   Exporter: 0
   Fcntl: 0
   Parse::RecDescent: 1.94
+  YAML: 0.62
   perl: 5.005
-version: 0.01_01
+version: 0.13

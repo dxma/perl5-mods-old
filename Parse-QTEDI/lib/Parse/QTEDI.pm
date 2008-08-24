@@ -14,7 +14,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML ();
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -493,8 +493,9 @@ function_parameter_template_type            :
       | { $return = '';       } 
     ) 
     { 
-      $return = join(" ", $item[1], 
-          join("", @{$item[2]}), $item[3], $item[4]); 
+      $return = join(" ", 
+          join("", $item[1], join("", @{$item[2]}), $item[3]), 
+          $item[4]); 
     } 
 
 function_parameter_template_type_loop       : 
@@ -503,7 +504,7 @@ function_parameter_template_type_loop       :
       | { $return = '';       } 
     ) 
     (   '<' function_parameter_template_type_loop '>' 
-        { $return = join(" ", @item[1 .. 3]); } 
+        { $return = join("", @item[1 .. 3]); } 
       | { $return = '';                      } 
     ) 
     { $return = join("", @item[1 .. 2]); } 
@@ -560,7 +561,7 @@ function_parameter_default_value_loop_token_dispatch :
     '(' ')' 
     { $return = '()'; } 
   | '(' function_parameter_default_value_loop2 ')' 
-    { $return = join(" ", @item[1 .. 3]); } 
+    { $return = join("", @item[1 .. 3]); } 
   | "'" /(?>[^\']*)/iso "'" { $return = join("", @item[1 .. 3]); } 
   | '"' /(?>[^\"]*)/iso '"' { $return = join("", @item[1 .. 3]); } 
 
@@ -572,7 +573,7 @@ function_parameter_default_value_loop2      :
     (   function_parameter_default_value_loop_token_dispatch 
         { $return = $item[1]; } 
       | ',' function_parameter_default_value_loop2 
-        { $return = join(" ", @item[1 .. 2]); } 
+        { $return = join("", @item[1 .. 2]); } 
       | { $return = '';                       } 
     ) 
     { $return = join("", @item[1 .. 2]); } 
