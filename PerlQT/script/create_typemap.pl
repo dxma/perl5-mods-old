@@ -214,7 +214,7 @@ sub Q3PtrList {
     $entry->{type}   = join('__', 'Q3PTRLIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'Q3PtrList< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'Q3PtrList<'. $sub_c_type. '>';
     # t_type same as type
     # which contains sub-type information
     $entry->{t_type} = $entry->{type};
@@ -242,7 +242,7 @@ sub Q3ValueList {
     $entry->{type}   = join('__', 'Q3VALUELIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'Q3ValueList< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'Q3ValueList<'. $sub_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -265,7 +265,7 @@ sub QFlags {
     $entry->{type}   = join('__', 'QFLAGS', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QFlags< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'QFlags<'. $sub_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -288,12 +288,35 @@ sub QList {
     $entry->{type}   = join('__', 'QLIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QList< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'QList<'. $sub_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QList';
+        $new_entry->{type}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+sub QFuture {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'QFUTURE', 
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QFuture<'. $sub_c_type. '>';
+    $entry->{t_type} = $entry->{type};
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QFuture';
         $new_entry->{type}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
@@ -311,7 +334,7 @@ sub QVector {
     $entry->{type}   = join('__', 'QVECTOR', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QVector< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'QVector<'. $sub_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -334,7 +357,7 @@ sub QSet {
     $entry->{type}   = join('__', 'QSET', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QSet< '. $sub_c_type. ' >';
+    $entry->{c_type} = 'QSet<'. $sub_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -375,8 +398,8 @@ sub QMap {
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMap< '. 
-      $key_c_type. ', '. $value_c_type. ' >';
+    $entry->{c_type} = 'QMap<'. 
+      $key_c_type. ','. $value_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -418,8 +441,8 @@ sub QMultiMap {
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMultiMap< '. 
-      $key_c_type. ', '. $value_c_type. ' >';
+    $entry->{c_type} = 'QMultiMap<'. 
+      $key_c_type. ','. $value_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -461,8 +484,8 @@ sub QPair {
            map { $_->{t_type} } @sub_first, @sub_second);
     my $first_c_type  = join(' ', map { $_->{c_type} } @sub_first);
     my $second_c_type = join(' ', map { $_->{c_type} } @sub_second);
-    $entry->{c_type} = 'QPair< '. 
-      $first_c_type. ', '. $second_c_type. ' >';
+    $entry->{c_type} = 'QPair<'. 
+      $first_c_type. ','. $second_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -504,8 +527,8 @@ sub QHash {
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QHash< '. 
-      $key_c_type. ', '. $value_c_type. ' >';
+    $entry->{c_type} = 'QHash<'. 
+      $key_c_type. ','. $value_c_type. '>';
     $entry->{t_type} = $entry->{type};
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
@@ -616,28 +639,29 @@ sub __analyse_type {
     our $TYPE = shift;
     our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
           $CURRENT_NAMESPACE, %TYPE_LOCALMAP, );
-    my $result;
+    my ( $result, $type_full, );
     
-    # simply normalize
-    $TYPE =~ s/^\s+//gio;
-    $TYPE =~ s/\s+$//gio;
-    $TYPE =~ s/\s+/ /gio;
+    # $type_full: full qualified type name (with namespace)
+    # FIXME: doesn't apply to simple c type like int etc.
+    if ($TYPE =~ m/::(?>[^<>]+)$/io) {
+        $type_full = $TYPE;
+    }
+    else {
+        $type_full = join("::", $CURRENT_NAMESPACE, $TYPE);
+    }
+    #print STDERR $TYPE, " -> ", $type_full, "\n";
     if (exists $GLOBAL_TYPEMAP{$TYPE} or 
               exists $SIMPLE_TYPEMAP{$TYPE}) {
         $result = {};
-        $result->{type}   = 
-          exists $GLOBAL_TYPEMAP{$TYPE} ? $GLOBAL_TYPEMAP{$TYPE} : 
-            $SIMPLE_TYPEMAP{$TYPE};
+        $result->{type}   = exists $GLOBAL_TYPEMAP{$TYPE} ? 
+          $GLOBAL_TYPEMAP{$TYPE} : $SIMPLE_TYPEMAP{$TYPE};
         $result->{c_type} = $TYPE;
         $result->{t_type} = $result->{type};
     }
-    elsif (exists $MANUAL_TYPEMAP{
-        join("::", $CURRENT_NAMESPACE,$TYPE)}) {
+    elsif (exists $MANUAL_TYPEMAP{$type_full}) {
         # might be a private type in that class
         $result = {};
-        my $type_full = join("::", $CURRENT_NAMESPACE, $TYPE);
         $result->{type}   = $MANUAL_TYPEMAP{$type_full};
-        # use full qualified name instead
         $result->{c_type} = $type_full;
         $result->{t_type} = $result->{type};
         $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;

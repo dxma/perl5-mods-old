@@ -281,6 +281,30 @@ sub __format_union {
 
 =over
 
+=item __normalize
+
+Normalize type or function pointer string.
+
+=back
+
+=cut
+
+sub __normalize {
+    my $string = shift;
+    # normalize
+    $string =~ s/^\s+//gio;
+    $string =~ s/\s+$//gio;
+    $string =~ s/\s+/ /gio;
+    $string =~ s/<\s+/</gio;
+    $string =~ s/\s+,/,/gio;
+    $string =~ s/,\s+/,/gio;
+    $string =~ s/\s+>/>/gio;
+    $string =~ s/>\s+::/>::/gio;
+    return $string;
+}
+
+=over
+
 =item __format_fpointer
 
 Format a function pointer entry. 
@@ -389,7 +413,7 @@ sub __format_fpointer {
         # process inner params
         my $params = [];
         $get_parameters->($entry->{name}->{parameter}, $params);
-        $fproto .= join(', ', @$params). '))';
+        $fproto .= join(',', @$params). '))';
     }
     else {
         my $name = $entry->{name};
@@ -402,7 +426,7 @@ sub __format_fpointer {
     # process outer params
     my $params = [];
     $get_parameters->($entry->{parameter}, $params);
-    $fproto .= '('. join(', ', @$params). ')';
+    $fproto .= '('. join(',', @$params). ')';
     # attach function pointer properties
     foreach my $p (@$properties) {
         if ($p eq 'const') {
@@ -439,6 +463,9 @@ sub __format_fpointer {
           $masque_inner_function->{PARAMETER} if 
             exists $masque_inner_function->{PARAMETER};
     }
+    # normalize
+    $fpname = __normalize($fpname);
+    $fproto = __normalize($fproto);
     # store
     delete $entry->{name};
     delete $entry->{return};
@@ -529,6 +556,30 @@ sub __format_function {
             unshift @fname, pop @fvalues;
             $i -= 2;
         }
+        elsif ($fvalues[$i] eq '>::') {
+            # template namespace
+            unshift @fname, pop @fvalues;
+            $i--;
+            TN_LOOP:
+            for (my $depth = 1; $i >= 0; ) {
+                if ($fvalues[$i] eq '<') {
+                    unshift @fname, pop @fvalues;
+                    unshift @fname, pop @fvalues;
+                    $i -= 2;
+                    last TN_LOOP if --$depth == 0;
+                }
+                elsif ($fvalues[$i] eq '>') {
+                    unshift @fname, pop @fvalues;
+                    $i--;
+                    $depth++;
+                }
+                # FIXME: '>::'
+                else {
+                    unshift @fname, pop @fvalues;
+                    $i--;
+                }
+            }
+        }
         else {
             last FN_LOOP;
         }
@@ -563,6 +614,10 @@ sub __format_function {
                 $i += 2;
             } 
             elsif ($freturn_type[$i] eq '<') {
+                $return_type .= $freturn_type[$i];
+                $i++;
+            }
+            elsif ($freturn_type[$i] eq '>') {
                 $return_type .= $freturn_type[$i];
                 $i++;
             }
@@ -664,6 +719,10 @@ sub __format_function {
                         $ptype .= $ptype[$i];
                         $i++;
                     }
+                    elsif ($ptype[$i] eq '>') {
+                        $ptype .= $ptype[$i];
+                        $i++;
+                    }
                     else {
                         $ptype .= ' '. $ptype[$i];
                         $i++;
@@ -672,6 +731,7 @@ sub __format_function {
             }
             $ptype =~ s/\s+$//o;
         }
+        $ptype = __normalize($ptype);
         # store param unit
         my $p = { TYPE => $ptype };
         $p->{NAME} = $pname if $pname;
@@ -706,6 +766,9 @@ sub __format_function {
                 # template type
                 $fname .= $fname[$i];
             }
+            elsif ($fname[$i] eq '>') {
+                $fname .= $fname[$i];
+            }
             else {
                 $fname .= ' '. $fname[$i];
             }
@@ -714,6 +777,9 @@ sub __format_function {
     else {
         $fname = join('', @fname);
     }
+    # normalize
+    $fname       = __normalize($fname);
+    $return_type = __normalize($return_type) if $return_type;
     # store
     $entry->{NAME}      = $fname;
     # meta info field

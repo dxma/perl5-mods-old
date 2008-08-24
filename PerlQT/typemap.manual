@@ -22,6 +22,7 @@ QODBCDriver::SQLHANDLE			T_PTROBJ
 
 std::string				T_PV
 std::basic_string			T_PV
+std::forward_iterator_tag		T_STRUCT
 
 Q3SqlRecordInfo::size_type		T_UV
 
@@ -32,3 +33,7 @@ QString::Data				T_STRUCT
 
 # QT 4.3.3
 isc_db_handle				T_PTR
+
+# QT 4.4.1
+QMap<int,ResultItem>::const_iterator	T_CLASS
+QUintForType<void *>::Type		T_IUV
