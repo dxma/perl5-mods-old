@@ -853,6 +853,20 @@ sub main {
     # locate manual types
     __read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
     
+    my $post_patch_type = sub {
+        my ( $result, ) = @_;
+        
+        # post patch:
+        # void ** => T_GENERIC_PTR => T_PTR
+        # T_CLASS_CONST => CONST_T_CLASS
+        # ::            => ___
+        my $re_type = $result->{type};
+        $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
+        $re_type =~ s/^(.*)\_CONST$/CONST_$1/o;
+        $re_type =~ s/\:\:/___/go;
+        $result->{type} = $re_type;
+    };
+    
     our $CURRENT_NAMESPACE;
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
@@ -863,17 +877,7 @@ sub main {
                 next TYPE_LOOP if exists $TYPE_KNOWN{$t};
                 
                 my $result = __analyse_type($t);
-                # post patch:
-                # void ** => T_GENERIC_PTR => T_PTR
-                # T_CLASS_CONST => CONST_T_CLASS
-                # ::            => ___
-                {
-                    my $re_type = $result->{type};
-                    $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
-                    $re_type =~ s/^(.*)\_CONST$/CONST_$1/o;
-                    $re_type =~ s/\:\:/___/go;
-                    $result->{type} = $re_type;
-                }
+                $post_patch_type->($result);
                 $TYPE_KNOWN{$result->{c_type}} = $result->{type};
                 #print STDERR $t, "\t"x3, $result->{c_type}, "\n";
             }
@@ -900,6 +904,34 @@ sub main {
     }
     else {
         print STDOUT $hcont_typemap_list;
+    }
+    # figure out inner type for each template class
+    $CURRENT_NAMESPACE = '';
+    TYPE_TEMPLATE_LOOP:
+    foreach my $template_class (@TYPE_TEMPLATE) {
+        TEMPLATE_CLASS_LOOP:
+        foreach my $k (keys %$template_class) {
+            next TEMPLATE_CLASS_LOOP unless 
+              $k =~ m/\_type$/o;
+            my $type = $template_class->{$k};
+            unless (exists $IGNORE_TYPEMAP{$type}) {
+                my $k_class = $k. '_class';
+                if (exists $TYPE_KNOWN{$type}) {
+                    # already found
+                    $template_class->{$k_class} = 
+                      $TYPE_KNOWN{$type};
+                }
+                else {
+                    # call analyse_type
+                    my $result = __analyse_type($type);
+                    $post_patch_type->($result);
+                    $template_class->{$k_class} = 
+                      $result->{type};
+                    $TYPE_KNOWN{$result->{c_type}} = 
+                      $result->{type};
+                }
+            }
+        }
     }
     # write @TYPE_TEMPLATE
     if (@TYPE_TEMPLATE) {
