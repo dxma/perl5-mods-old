@@ -915,7 +915,7 @@ sub main {
               $k =~ m/\_type$/o;
             my $type = $template_class->{$k};
             unless (exists $IGNORE_TYPEMAP{$type}) {
-                my $k_class = $k. '_class';
+                ( my $k_class = $k ) =~ s/type$/class/o;
                 if (exists $TYPE_KNOWN{$type}) {
                     # already found
                     $template_class->{$k_class} = 
