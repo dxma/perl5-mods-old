@@ -108,6 +108,7 @@ CMD_CREAT_TP       := $(SCRIPT_DIR)/create_typemap.pl
 CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl 
 CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
+CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
 
 MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
 HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
@@ -342,6 +343,12 @@ list_group_yamls :
 list_typemap_yamls : 
 	# $(TYPEMAP_YAMLS)
 .PHONY: list_typemap_yamls
+
+list_template_types: $(TYPEMAP_TEMPLATE)
+	$(_Q)$(CMD_YGREP) -f name $< | sort | uniq | cut -d':' -f2
+
+list_template_def  : $(TYPEMAP_TEMPLATE)
+	$(_Q)$(CMD_YGREP) -c name=$(TEMPLATE_NAME) $<
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \

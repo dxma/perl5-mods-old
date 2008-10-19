@@ -1,0 +1,10 @@
+MODULE = [% my_name %]			PACKAGE = [% my_package %]
+PROTOTYPES: ENABLE
+
+################################################################
+#### HEADER VARS
+#### 
+#### $my_name     : perl module name
+#### $my_package  : perl package namespace
+####
+################################################################

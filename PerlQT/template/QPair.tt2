@@ -1,57 +1,85 @@
-MODULE = [% module %]			PACKAGE = [% modu_package %]
-PROTOTYPES: ENABLE
+[% PROCESS defvar.tt2 %]
+[% PROCESS header.tt2 %]
+
+[% PROCESS typemap.tt2 %]
 
 ################################################################
+#### MODULE VARS
 #### 
+#### $t1.type      : T1 c type name
+#### $t1.package   : T1 perl package name
+#### $t1.class     : T1 class
+#### $t1.is_object : T1 is object or not
 #### 
-#### $t1           : T1
-#### $t2           : T2
-#### $modu_package : package namespace
-#### $t1_package   : T1 namespace
-#### $t2_package   : T2 namespace
-#### $t1_is_object : T1 is object or not
-#### $t2_is_object : T2 is object or not
-#### $root_package : root namespace
+#### $t2.type      : T2 c type name
+#### $t2.package   : T2 perl package name
+#### $t2.class     : T2 class
+#### $t2.is_object : T2 is object or not
 ####
 ################################################################
 
-QPair<[% type1 %], [% type2 %]> * 
-[% modu_package %]::new(...)
+[% my_type = 'QPair<' _ t1.type _ ',' _ t2.type _ '>' %]
+[% BLOCK preinit %]
+    [% t1.type %] [% IF t1.is_object %]*[% END %]arg1;
+    [% t2.type %] [% IF t2.is_object %]*[% END %]arg2;
+[% END %]
+[% BLOCK marshal_t1_in %]
+  [% IF t1.is_object %]
+    [% INCLUDE marshal_in 
+      var   = my_var
+      arg   = my_arg
+      type  = t1.type
+      ntype = t1.package
+      class = 'T_PTROBJ'
+    %]
+  [% ELSE %]
+    [% INCLUDE marshal_in 
+      var   = my_var
+      arg   = my_arg
+      type  = t1.type
+      class = t1.class
+    %]
+  [% END %]
+[% END %]
+[% BLOCK marshal_t2_in %]
+  [% IF t2.is_object %]
+    [% INCLUDE marshal_in 
+      var   = my_var
+      arg   = my_arg
+      type  = t2.type
+      ntype = t2.package
+      class = 'T_PTROBJ'
+    %]
+  [% ELSE %]
+    [% INCLUDE marshal_in 
+      var   = my_var
+      arg   = my_arg
+      type  = t2.type
+      class = t2.class
+    %]
+  [% END %]
+[% END %]
+
+[% my_type %] * 
+[% my_package %]::new(...)
 PROTOTYPE: ;$$
 PREINIT:
-    [% type1 %] [% IF t1_is_object %]*[% ELSE %][% END %]v1;
-    [% type2 %] [% IF t2_is_ojbect %]*[% ELSE %][% END %]v2;
+[% PROCESS preinit %]
 CODE:
     /* 
-     * QPair<[% t1 %], [% t2 %]>()
-     * QPair<[% t1 %], [% t2 %]>(const [% t1 %] & value1, const [% t2 %] & value2)
+     * [% my_name %]()
+     * [% my_name %](const [% t1.type %] & arg1, const [% t2.type %] & arg2)
      */
     switch(items) {
     case 3:
-        if(sv_isobject(ST(1)) && sv_derived_from(ST(1), "[% IF t1_package %][% t1_package %]::[% t1 %][% ELSE %][% t1 %]")
-            v1 = reinterpret_cast<[% t1 %] *>(SvIV(SvRV(ST(1))));
-        elif(SvIOK(ST(1)))
-            v1 = reinterpret_cast<[% t1 %] *>(&SvIV(ST(1)));
-        elif(SvNOK(ST(1)))
-            v1 = reinterpret_cast<[% t1 %] *>(&SvNV(ST(1)));
-        elif(SvPOK(ST(1)))
-            v1 = reinterpret_cast<[% t1 %] *>(SvPV(ST(1)));
-        else
-            croak("ST(1) is not of type [% t1 %] or I/N/PV");
-        if(sv_isobject(ST(2)) && sv_derived_from(ST(2), "[% IF t2_package %][% t2_package %]::[% t2 %][% ELSE %][% t2 %]")
-            v1 = reinterpret_cast<[% t2 %] *>(SvIV(SvRV(ST(2))));
-        elif(SvIOK(ST(2)))
-            v1 = reinterpret_cast<[% t2 %] *>(&SvIV(ST(2)));
-        elif(SvNOK(ST(2)))
-            v1 = reinterpret_cast<[% t2 %] *>(&SvNV(ST(2)));
-        elif(SvPOK(ST(2)))
-            v1 = reinterpret_cast<[% t2 %] *>(SvPV(ST(2)));
-        else
-            croak("ST(2) is not of type [% t2 %] or I/N/PV");
-        RETVAL = new QPair<[% t1 %], [% t2 %]>(v1, v2);
+[% INCLUDE marshal_t1_in my_var = 'arg1' my_arg = 'ST(1)' %]
+[% INCLUDE marshal_t2_in my_var = 'arg2' my_arg = 'ST(2)' %]
+        RETVAL = new [% my_type %](arg1, arg2);
         break;
+    case 1:
+        RETVAL = new [% my_type %]();
     default:
-        RETVAL = new QPair<[% t1 %], [% t2 %]>();
+        croak(aTHX_ "calling with wrong argument number");
 OUTPUT:
     RETVAL
 
