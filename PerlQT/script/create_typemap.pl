@@ -21,15 +21,6 @@ B<NOTE>: Connect each involved C++ type (either function parameter
 type or function return type) to known typemap slot; Record unknown
 ones into typemap.unknown
 
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
-
 =cut
 
 sub __usage {
@@ -223,7 +214,9 @@ sub Q3PtrList {
         # new template type
         my $new_entry = {};
         $new_entry->{name}      = 'Q3PtrList';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         # mark done
@@ -248,7 +241,9 @@ sub Q3ValueList {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'Q3ValueList';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -271,7 +266,9 @@ sub QFlags {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QFlags';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -294,7 +291,9 @@ sub QList {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QList';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -317,7 +316,9 @@ sub QFuture {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QFuture';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -340,7 +341,9 @@ sub QVector {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QVector';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -363,7 +366,9 @@ sub QSet {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QSet';
-        $new_entry->{type}      = 1;
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
         $new_entry->{item_type} = $sub_c_type;
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
@@ -405,7 +410,9 @@ sub QMap {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QMap';
-        $new_entry->{type}       = 2;
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = 2;
         $new_entry->{key_type}   = $key_c_type;
         $new_entry->{value_type} = $value_c_type;
         push @TYPE_TEMPLATE, $new_entry;
@@ -448,7 +455,9 @@ sub QMultiMap {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QMultiMap';
-        $new_entry->{type}       = 2;
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = 2;
         $new_entry->{key_type}   = $key_c_type;
         $new_entry->{value_type} = $value_c_type;
         push @TYPE_TEMPLATE, $new_entry;
@@ -491,7 +500,9 @@ sub QPair {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}        = 'QPair';
-        $new_entry->{type}        = 2;
+        $new_entry->{type}        = $new_entry->{name};
+        $new_entry->{ntype}       = $entry->{type};
+        $new_entry->{argc}        = 2;
         $new_entry->{first_type}  = $first_c_type;
         $new_entry->{second_type} = $second_c_type;
         push @TYPE_TEMPLATE, $new_entry;
@@ -534,7 +545,9 @@ sub QHash {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QHash';
-        $new_entry->{type}       = 2;
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = 2;
         $new_entry->{key_type}   = $key_c_type;
         $new_entry->{value_type} = $value_c_type;
         push @TYPE_TEMPLATE, $new_entry;
@@ -856,11 +869,11 @@ sub main {
     my $post_patch_type = sub {
         my ( $result, ) = @_;
         
+        my $re_type = $result->{type};
         # post patch:
         # void ** => T_GENERIC_PTR => T_PTR
         # T_CLASS_CONST => CONST_T_CLASS
         # ::            => ___
-        my $re_type = $result->{type};
         $re_type =~ s/^T\_GENERIC\_PTR$/T_PTR/o;
         $re_type =~ s/^(.*)\_CONST$/CONST_$1/o;
         $re_type =~ s/\:\:/___/go;
@@ -915,17 +928,17 @@ sub main {
               $k =~ m/\_type$/o;
             my $type = $template_class->{$k};
             unless (exists $IGNORE_TYPEMAP{$type}) {
-                ( my $k_class = $k ) =~ s/type$/class/o;
+                ( my $k_type = $k ) =~ s/type$/ntype/o;
                 if (exists $TYPE_KNOWN{$type}) {
                     # already found
-                    $template_class->{$k_class} = 
+                    $template_class->{$k_type} = 
                       $TYPE_KNOWN{$type};
                 }
                 else {
                     # call analyse_type
                     my $result = __analyse_type($type);
                     $post_patch_type->($result);
-                    $template_class->{$k_class} = 
+                    $template_class->{$k_type} = 
                       $result->{type};
                     $TYPE_KNOWN{$result->{c_type}} = 
                       $result->{type};
@@ -962,7 +975,7 @@ sub main {
 
 =item __lookup_type_in_super_class
 
-Internal use only. Lookup a type throughout class' inheritance tree. 
+Internal use only. Lookup a type throughout class inheritance tree. 
 
 return true and write super class name in $$ref_super_name if found;
 
@@ -1142,6 +1155,12 @@ sub AUTOLOAD {
         }
     };
     
+    # FIXME: the lookup logic here is not recursive
+    # which could not handle bridged typedefs
+    # like:
+    # typedef A B;
+    # typedef B C;
+    # while looking for C, B will be returned, not A
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
@@ -1213,3 +1232,13 @@ sub AUTOLOAD {
 
 &main;
 
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut

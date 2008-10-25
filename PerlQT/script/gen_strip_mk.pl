@@ -8,15 +8,6 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 
 Create strip.mk
 
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
-
 =cut
 
 sub usage {
@@ -59,3 +50,14 @@ $out_noinc_dir$1:
 }
 
 &main;
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut

@@ -338,17 +338,20 @@ clean_xscode :
 list_group_yamls : 
 	# $(_GOALS)
 	# $(GROUP_YAMLS)
-.PHONY: list_group_yamls
 
 list_typemap_yamls : 
 	# $(TYPEMAP_YAMLS)
-.PHONY: list_typemap_yamls
 
 list_template_types: $(TYPEMAP_TEMPLATE)
 	$(_Q)$(CMD_YGREP) -f name $< | sort | uniq | cut -d':' -f2
 
 list_template_def  : $(TYPEMAP_TEMPLATE)
 	$(_Q)$(CMD_YGREP) -c name=$(TEMPLATE_NAME) $<
+
+list_typemap_types :
+	$(_Q)cut -d':' -f2 $(TYPEMAP_LIST) | sort | uniq
+.PHONY: list_group_yamls list_typemap_yamls list_template_types \
+        list_template_def list_typemap_types
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \

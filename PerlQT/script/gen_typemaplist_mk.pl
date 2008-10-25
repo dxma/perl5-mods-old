@@ -11,15 +11,6 @@ Create typemaplist.mk
 
 B<NOTE>: Internal use only.
 
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
-
 =cut
 
 sub usage {
@@ -67,3 +58,14 @@ sub main {
 }
 
 &main;
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut

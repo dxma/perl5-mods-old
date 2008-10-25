@@ -79,7 +79,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2008 - 2008 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -13,15 +13,6 @@ B<NOTE>: Internal use only.
 
 B<NOTE>: Should ONLY be invoked inside group.mk
 
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
-
 =cut
 
 sub usage {
@@ -82,3 +73,14 @@ sub main {
 }
 
 &main;
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut

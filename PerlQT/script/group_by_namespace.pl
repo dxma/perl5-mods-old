@@ -28,16 +28,7 @@ B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
 normally this should not be an issue. 
 
 B<NOTE>: a special namespace - <NAMESPACE_DEFAULT()>, will hold any
-entry which doesn't belong to other namespace. 
-
-=head1 COPYRIGHT AND LICENSE
-
-Copyright (C) 2007 by Dongxu Ma <dongxu@cpan.org>
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-See L<http://dev.perl.org/licenses/artistic.html>
+entry which does not belong to other namespace. 
 
 =cut
 
@@ -759,3 +750,14 @@ sub main {
 }
 
 &main;
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut
