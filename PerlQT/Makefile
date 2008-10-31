@@ -43,6 +43,7 @@ ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
 MAKE_ROOT       := $(shell pwd)
 HEADER_DIR      := $(_HEADER_DIR)
 SCRIPT_DIR      := $(MAKE_ROOT)/script
+TEMPLATE_DIR    := $(MAKE_ROOT)/template
 
 IN_STRIP_DIR    := $(HEADER_DIR)
 OUT_STRIP_DIR   := $(MAKE_ROOT)/00strip
@@ -106,6 +107,7 @@ CMD_GROUPLIST_MK   := $(SCRIPT_DIR)/gen_grouplist_mk.pl
 CMD_XSCODE_MK      := $(SCRIPT_DIR)/gen_xscode_mk.pl
 CMD_CREAT_TP       := $(SCRIPT_DIR)/create_typemap.pl
 CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl 
+CMD_TYPEMAP        := $(SCRIPT_DIR)/finalize_typemap.pl 
 CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
@@ -127,6 +129,7 @@ TYPEMAP_DOT_DEP    := $(MAKE_ROOT)/.typemap.dep
 TYPEMAP_DOT_IGNORE := $(MAKE_ROOT)/typemap.ignore
 TYPEMAP_DOT_SIMPLE := $(MAKE_ROOT)/typemap.simple
 TYPEMAP_DOT_MANUAL := $(MAKE_ROOT)/typemap.manual
+TYPEMAP_DOT_TT2    := $(TEMPLATE_DIR)/typemap.tt2
 
 #################### TARGETS ###################################
 
@@ -146,6 +149,7 @@ GROUP_YAMLS     := $(empty)$(empty)
 TYPEMAP_YAMLS   := $(empty)$(empty)
 TYPEMAP_LIST    := $(OUT_TYPEMAP_DIR)/typemap_list
 TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
+TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 
 #################### SUBROUTINES ###############################
 
@@ -272,6 +276,9 @@ $(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
         $(TYPEMAP_DOT_IGNORE) $(TYPEMAP_DOT_SIMPLE)          \
         $(TYPEMAP_DOT_MANUAL) $(TYPEMAP_DOT_DEP)             \
         $(OUT_TYPEMAP_DIR) $(TYPEMAP_TEMPLATE) $(TYPEMAP_LIST)
+	$(_Q)echo generating $(TYPEMAP)
+	$(_Q)$(CMD_TYPEMAP) -t $(TYPEMAP_DOT_TT2) -o $(TYPEMAP)  \
+        $(TYPEMAP_LIST) $(TYPEMAP_TEMPLATE)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 

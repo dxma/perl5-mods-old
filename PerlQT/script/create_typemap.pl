@@ -202,7 +202,7 @@ sub Q3PtrList {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'Q3PTRLIST', 
+    $entry->{type}   = join('__', 'T_Q3PTRLIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'Q3PtrList<'. $sub_c_type. '>';
@@ -232,7 +232,7 @@ sub Q3ValueList {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
-    $entry->{type}   = join('__', 'Q3VALUELIST', 
+    $entry->{type}   = join('__', 'T_Q3VALUELIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'Q3ValueList<'. $sub_c_type. '>';
@@ -257,7 +257,7 @@ sub QFlags {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
-    $entry->{type}   = join('__', 'QFLAGS', 
+    $entry->{type}   = join('__', 'T_QFLAGS', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QFlags<'. $sub_c_type. '>';
@@ -282,7 +282,7 @@ sub QList {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'QLIST', 
+    $entry->{type}   = join('__', 'T_QLIST', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QList<'. $sub_c_type. '>';
@@ -307,7 +307,7 @@ sub QFuture {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'QFUTURE', 
+    $entry->{type}   = join('__', 'T_QFUTURE', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QFuture<'. $sub_c_type. '>';
@@ -332,7 +332,7 @@ sub QVector {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'QVECTOR', 
+    $entry->{type}   = join('__', 'T_QVECTOR', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QVector<'. $sub_c_type. '>';
@@ -357,7 +357,7 @@ sub QSet {
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'QSET', 
+    $entry->{type}   = join('__', 'T_QSET', 
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QSet<'. $sub_c_type. '>';
@@ -399,7 +399,7 @@ sub QMap {
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'QMAP', 
+      join('__', 'T_QMAP', 
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
@@ -444,7 +444,7 @@ sub QMultiMap {
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'QMULTIMAP', 
+      join('__', 'T_QMULTIMAP', 
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
@@ -489,7 +489,7 @@ sub QPair {
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'QPAIR', 
+      join('__', 'T_QPAIR', 
            map { $_->{t_type} } @sub_first, @sub_second);
     my $first_c_type  = join(' ', map { $_->{c_type} } @sub_first);
     my $second_c_type = join(' ', map { $_->{c_type} } @sub_second);
@@ -534,7 +534,7 @@ sub QHash {
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'QHASH', 
+      join('__', 'T_QHASH', 
            map { $_->{t_type} } @sub_key, @sub_value);
     my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
     my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
@@ -741,6 +741,8 @@ sub main {
          $typemap_dot_manual, $typemap_dot_dep, 
          $out_typemap_dir, 
          $out_template, $out_list ) = @ARGV;
+    my $rc = 0;
+    
     die "file $module_dot_conf not found" unless 
       -f $module_dot_conf;
     die "file $typemap_dot_ignore not found" unless 
@@ -913,6 +915,7 @@ sub main {
                 print UNKNOWN $_;
             }
             close UNKNOWN or die "cannot save to file: $!";
+            $rc = 1;
         }
     }
     else {
@@ -968,7 +971,7 @@ sub main {
             close LOCALMAP or die "cannot save to file: $!";
         }
     }
-    exit 0;
+    exit $rc;
 }
 
 =over
@@ -1095,8 +1098,10 @@ sub AUTOLOAD {
         else {
             $entry->{type} =
               $TYPE_DICTIONARY{$namespace_key}->{$type};
-            if ($entry->{type} !~ m/^[A-Z_0-9_\_]+$/o) { 
-                # not a primitive type
+            #print STDERR "type: ", $entry->{type}, "\n";
+            if ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) { 
+                # not constructed by primitive type and 
+                # property such as: PTR/REF/CONST
                 # recursively lookup
                 # walkthrough all possible typedef alias
                 # to get final primitive type
@@ -1105,7 +1110,7 @@ sub AUTOLOAD {
                 # by default lookup in namespace $namespace_key
                 local $CURRENT_NAMESPACE = $namespace_key;
                 my $i = 0;
-                while ($entry->{type} !~ m/^[A-Z_0-9_\_]+$/o) {
+                while ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) {
                     die "deep recursive loop detected for type ". 
                       $namespace_key. '::'. $entry->{type} if $i == 50;
                     my $result = __analyse_type($entry->{type});
@@ -1151,16 +1156,13 @@ sub AUTOLOAD {
                     $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = 
                       $type_full;
                 }
+                #use Data::Dumper;
+                #print STDERR Data::Dumper::Dumper($entry), "\n";
             }
         }
     };
     
-    # FIXME: the lookup logic here is not recursive
-    # which could not handle bridged typedefs
-    # like:
-    # typedef A B;
-    # typedef B C;
-    # while looking for C, B will be returned, not A
+    #print STDERR "$namespace :: $type => $type_full\n";
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
@@ -1176,6 +1178,7 @@ sub AUTOLOAD {
         $entry->{t_type} = $TYPE_ENUM;
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
+        #print STDERR $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
         $store_type_info_from_dictionary->($namespace, 
                                            $type, $type_full, $entry);
     }

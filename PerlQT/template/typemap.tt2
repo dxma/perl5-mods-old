@@ -1,3 +1,4 @@
+[% USE Config %]
 [% BLOCK marshal_in %]
   [% SWITCH class %]
     [% CASE 'T_SV' %]
@@ -179,6 +180,12 @@
           [% var %] = *reinterpret_cast<[% type %] *>(tmp);
       else
           Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% CASE 'T_IUV' %]
+      [% IF Config.get('ptrsize') == 8 %]
+        [% var %] = (unsigned long long)SvUV([% arg %]);
+      [% ELSE %]
+        [% var %] = (unsigned int)SvIV([% arg %]);
+      [% END %]
     [% CASE DEFAULT %]
       Perl_croak(aTHX_ "[% var %] unknown");
   [% END %]
@@ -334,6 +341,12 @@
       }
     [% CASE 'T_OBJECT' %]
       sv_setref_pv([% arg %], "[% ntype %]", (void *)new [% type %]([% var %]));
+    [% CASE 'T_IUV' %]
+      [% IF Config.get('ptrsize') == 8 %]
+        sv_setuv([% arg %], (UV)[% var %]);
+      [% ELSE %]
+        sv_setiv([% arg %], (IV)[% var %]);
+      [% END %]
     [% CASE DEFAULT %]
       Perl_croak(aTHX_ "[% arg %] unknown");
   [% END %]

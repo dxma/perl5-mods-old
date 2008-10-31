@@ -16,9 +16,9 @@ typemap_template into known primitive type.
 
 sub usage {
     print << "EOU";
-usage          : $0 [template] [template_class] <typemap_file>
+usage          : $0 [template] [output_file] <typemap> <typemap_template>
 template       : -t <template_file>
-template_class : -template
+output_file    : -o <file_path>
 EOU
     exit 1;
 }
@@ -33,6 +33,7 @@ sub study_type {
     if (exists $known_primitive_type->{$type}) {
         $type_primitive = $type;
     }
+    # class/struct
     elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)_PTR$/o) {
         $type_primitive = 'T_PTROBJ';
     }
@@ -57,15 +58,43 @@ sub study_type {
     elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)$/o) {
         $type_primitive = 'T_OBJECT';
     }
+    # template class
+    elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+(?<!_)_PTR$/o) {
+        $type_primitive = 'T_PTROBJ';
+    }
+    elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+(?<!_)_PTR(?:_REF)?$/o) {
+        $type_primitive = 'T_PTROBJ';
+        if ($type =~ m/_REF$/o) {
+            # add non-ref part as known type if it is missing
+            ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
+            $typemap->{$noref_ntype} = 'T_PTROBJ' unless 
+              exists $typemap->{$noref_ntype};
+        }
+    }
+    elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+(?<!_)_REF$/o) {
+        # FIXME: maybe need to marshal by new
+        # TODO:  switch to 'T_OBJECT'
+        $type_primitive = 'T_REFOBJ';
+        # add non-ref part as known type if it is missing
+        ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
+        $typemap->{$noref_ntype} = 'T_OBJECT' unless 
+          exists $typemap->{$noref_ntype};
+    }
+    elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+$/o) {
+        $type_primitive = 'T_OBJECT';
+    }
+    # char
     elsif ($type =~ m/^(?:CONST_)?T_(?:U_)?CHAR_PTR$/o) {
         $type_primitive = 'T_PV';
     }
     elsif ($type =~ m/^(?:CONST_)?(T_(?:U_)?CHAR)_REF$/o) {
         $type_primitive = $1;
     }
+    # fpointer
     elsif ($type =~ m/^(?:CONST_)?T_FPOINTER_/o) {
         $type_primitive = 'T_PTR';
     }
+    # generic pointer
     elsif ($type =~ m/^(?:CONST_)?T_PTR_REF$/o) {
         $type_primitive = 'T_PTRREF';
         # add non-ref part as known type if it is missing
@@ -73,9 +102,11 @@ sub study_type {
         $typemap->{$noref_ntype} = 'T_PTR' unless 
           exists $typemap->{$noref_ntype};
     }
+    # array
     elsif ($type =~ m/^T_ARRAY_/o) {
         $type_primitive = 'T_PTR';
     }
+    # built-in type
     elsif ($type =~ m/^(?:CONST_)?((T_(?:I|U|N)V)_PTR)$/o) {
         $type_primitive = $1;
     }
@@ -148,36 +179,71 @@ sub load_typemap {
     return YAML::Load($cont);
 }
 
+sub dump_typemap {
+    my ( $typemap, $fout, ) = @_;
+    
+    my $write_typemap = sub {
+        my ( $typemap, $output, ) = @_;
+        
+        print $output YAML::Dump($typemap);
+    };
+    local ( *OUTPUT, );
+    if ($fout) {
+        open OUTPUT, '>', $fout or 
+          croak("cannot open file to write: $!");
+        $write_typemap->($typemap, \*OUTPUT);
+        close OUTPUT or croak("cannot write to file: $!");
+    }
+    else {
+        $write_typemap->($typemap, \*STDOUT);
+    }
+}
+
 sub main {
     my $ftemplate   = '';
-    my $is_template = '';
+    my $fout        = '';
     my $h           = '';
     GetOptions(
-        't=s'      => \$ftemplate,
-        'template' => \$is_template,
-        'h|help'   => \$h, 
+        't=s'    => \$ftemplate,
+        'o=s'    => \$fout, 
+        'h|help' => \$h, 
     );
     usage() if $h;
     usage() unless @ARGV;
-    my $ftypemap = $ARGV[0];
+    my ( $ftypemap, $ftypemap_template, ) = @ARGV;
     croak("template not found: $ftemplate") unless -f $ftemplate;
     croak("typemap not found: $ftypemap") unless -f $ftypemap;
+    croak("typemap_template not found: $ftypemap_template") unless 
+      -f $ftypemap_template;
     
     my $known_primitive_type = get_known_primitive_types($ftemplate);
     my $typemap = load_typemap($ftypemap);
-    if ($is_template) {
-        # template typemap
-        # FIXME
-    }
-    else {
-        foreach my $ntype (keys %$typemap) {
-            my $type = $typemap->{$ntype};
-            my $type_primitive = study_type(
-                $ntype, $type, $known_primitive_type, $typemap);
-            print STDERR "unknown type: $type\n" if 
-              $type_primitive eq 'T_UNKNOWN';
+    my $typemap_template = load_typemap($ftypemap_template);
+    # merge inner types in template
+    foreach my $tt_entry (@$typemap_template) {
+        foreach my $k (keys %$tt_entry) {
+            if ($k =~ m/^(.+)_type$/o) {
+                my $ntype_key = $1. '_ntype';
+                $typemap->{$tt_entry->{$k}} = $tt_entry->{$ntype_key}
+                  unless exists $typemap->{$k};
+            }
         }
     }
+    my $rc = 0;
+    foreach my $ntype (keys %$typemap) {
+        my $type = $typemap->{$ntype};
+        my $type_primitive = study_type(
+            $ntype, $type, $known_primitive_type, $typemap);
+        if ($type_primitive eq 'T_UNKNOWN') {
+            print STDERR "unknown type: $type\n";
+            $rc = 1;
+        }
+        else {
+            $typemap->{$ntype} = $type_primitive;
+        }
+    }
+    dump_typemap($typemap, $fout);
+    return $rc;
 }
 
 &main;
