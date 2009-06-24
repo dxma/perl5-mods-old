@@ -17,7 +17,7 @@ requires        'Carp'              => 0;
 requires        'Exporter'          => 0;
 requires        'Fcntl'             => 0;
 requires        'Parse::RecDescent' => '1.94';
-requires        'YAML'              => '0.62';
+requires        'YAML::Syck'        => '0.94';
 build_requires  'Test::More'        => '0.42';
 #requires_external_bin ;
 #recommends      'Your::OtherModule' => '0.01';

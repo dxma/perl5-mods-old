@@ -1,7 +1,6 @@
 package Parse::QTEDI;
 
 # Author: Dongxu Ma <dongxu@cpan.org>
-# License: Artistic 2007
 
 use 5.005;
 use strict;
@@ -12,9 +11,9 @@ require Exporter;
 @EXPORT_OK = qw($parser);
 
 use Parse::RecDescent ();
-use YAML ();
+use YAML::Syck ();
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -47,7 +46,7 @@ __DATA__
 # CAUTION: the biggest assert here is we are working on a _VALID_ header
 begin          : <rulevar: local $stash = [] >
 begin          : 
-  loop(s) eof { print YAML::Dump($stash) } 
+  loop(s) eof { print YAML::Syck::Dump($stash) } 
 eof            : /^\Z/
 # make sure function_pointer is IN FRONT OF function
 # since function is compatible with function_pointer, unfortunately 
@@ -391,18 +390,24 @@ function_header_next_token :
 # function parameter process
 # parse parameters and simply consume __attribute__ 
 function_header_block : 
-  (   function_header_next_token 
+  (   'const'
+      { 
+        #print STDERR "const\n";
+        $return = { _subtype => 3, _value => $item[1] };
+      }
+    | function_header_next_token 
       { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
       '(' function_header_loop(s?) ')' 
       { 
+        #print STDERR "__attribute__\n";
         $return = { _subtype => 1, 
                     _value   => join("", $item[1], $item[3], 
-                                    @{$item[4]}, $item[5]) }; 
+                                    @{$item[4]}, $item[5]) }
       } 
     | function_header_next_token 
       { $item[1] =~ m/^\:/o ? 1 : undef } 
       function_header_loop(s) 
-      { $return = { _subtype => 0 }; } 
+      { $return = { _subtype => 0 } } 
     | function_header_next_token 
       { $item[1] =~ m/operator$/o ? 1 : undef } 
       '(' ')' 
@@ -410,20 +415,32 @@ function_header_block :
       ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
       ')' 
       { 
+        #print STDERR "operator\n";
         $return = { _subtype => 2, _name => $item[1].'()', }; 
-        $return->{_value} = $item[6]; 
+        $return->{_value} = $item[6];
       } 
+    | function_header_next_token 
+      { $item[1] =~ m/^\s*throw\s+$/o ? 1 : undef } 
+      '(' next_bracket_or_brace_or_semicolon ')'
+      { 
+        #print STDERR "throw\n";
+        $return = { _subtype => 3, _value => 'throw('. $item[4]. ')' }
+      }
     | function_header_next_token 
       '(' 
       ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
       ')' 
       { 
+        #print STDERR "name:$item[1]\n";
         $return = { _subtype => 2, _name => $item[1], };  
-        $return->{_value} = $item[3]; 
+        $return->{_value} = $item[3];
       } 
   ) { $return = $item[1]; } 
   | function_macro_99(s?) 
-    { $return = { _subtype => 3, _value => join("", @{$item[1]}) }; } 
+    { 
+      #print STDERR "property:", @{$item[1]}, "\n";
+      $return = { _subtype => 3, _value => join("", @{$item[1]}) }
+    } 
 # TODO: loop in more elegant way
 function_header_loop  : 
   (   function_header_next_token { $return = $item[1]; } 
