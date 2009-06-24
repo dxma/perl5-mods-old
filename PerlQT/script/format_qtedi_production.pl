@@ -1,9 +1,10 @@
 #! /usr/bin/perl -w
 
+use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDONLY O_WRONLY O_TRUNC O_CREAT);
-use YAML qw(Dump Load);
+use YAML::Syck qw(Dump Load);
 
 =head1 DESCIPTION
 
@@ -669,7 +670,11 @@ sub __format_function {
             my @pname = ();
             my @ptype = ();
             if (@pvalues == 1) {
-                # only one entry, be of param type
+                # only one entry, must be param type
+                # noop
+            }
+            elsif (@pvalues == 2 and $pvalues[0] eq 'const') {
+                # const type
                 # noop
             }
             # \w may be different on different systems

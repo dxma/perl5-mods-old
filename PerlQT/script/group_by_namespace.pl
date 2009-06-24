@@ -1,9 +1,10 @@
 #! /usr/bin/perl -w
 
+use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDWR O_TRUNC O_CREAT :flock);
-use YAML;
+use YAML::Syck;
 use File::Spec ();
 
 =head1 DESCIPTION

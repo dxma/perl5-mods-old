@@ -1,9 +1,10 @@
 #! /usr/bin/perl -w
 
+use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
-use YAML ();
+use YAML::Syck qw(Load);
 
 =head1 DESCIPTION
 
@@ -45,7 +46,7 @@ sub main {
       die "cannot open module.conf: $!";
     my $conf = do { local $/; <CONF> };
     close CONF;
-    ( my $hconf ) = YAML::Load($conf);
+    ( my $hconf ) = Load($conf);
     my $default_namespace       = $hconf->{default_namespace};
     
     foreach (@cont) {

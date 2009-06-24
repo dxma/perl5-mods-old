@@ -1,9 +1,10 @@
 #! /usr/bin/perl -w
 
+use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
-use YAML ();
+use YAML::Syck qw(Load Dump);
 use File::Spec ();
 use Config qw/%Config/;
 use Parse::RecDescent ();
@@ -593,10 +594,11 @@ sub __load_yaml {
     my ( $f ) = @_;
     
     local ( *FILE, );
-    open FILE, "<", $f or die "cannot open file: $!";
+    open FILE, "<", $f or die "cannot open file $f: $!";
+    #print STDERR "loading file: $f\n";
     my $cont = do { local $/; <FILE> };
     close FILE;
-    my $hcont= YAML::Load($cont);
+    my $hcont= Load($cont);
     return $hcont;
 }
 
@@ -726,7 +728,7 @@ sub __analyse_type {
             # mask built-in function 'int'
             local *CORE::GLOBAL::int = $my_int;
             $result = eval $TYPE;
-            die "error while eval-ing type: $@" if $@;
+            die "error while eval-ing type '$TYPE': $@" if $@;
         }
     }
     return $result;
@@ -900,7 +902,7 @@ sub main {
     }
     
     # write typemap list
-    my $hcont_typemap_list = YAML::Dump(\%TYPE_KNOWN);
+    my $hcont_typemap_list = Dump(\%TYPE_KNOWN);
     if (defined $out_list) {
         local ( *OUT, *UNKNOWN, );
         sysopen OUT, $out_list, O_CREAT|O_WRONLY|O_TRUNC or 
@@ -954,7 +956,7 @@ sub main {
         local ( *TEMPLATE, );
         sysopen TEMPLATE, $out_template, O_CREAT|O_WRONLY|O_TRUNC or 
           die "cannot open file to write: $!";
-        my ( $hcont ) = YAML::Dump(\@TYPE_TEMPLATE);
+        my ( $hcont ) = Dump(\@TYPE_TEMPLATE);
         print TEMPLATE $hcont;
         close TEMPLATE or die "cannot save to file: $!";
     }
@@ -966,7 +968,7 @@ sub main {
                                                  $ns. ".typemap");
             sysopen LOCALMAP, $localmap, O_CREAT|O_WRONLY|O_TRUNC or 
               die "cannot open file to write: $!";
-            my ( $hcont ) = YAML::Dump($TYPE_LOCALMAP{$ns});
+            my ( $hcont ) = Dump($TYPE_LOCALMAP{$ns});
             print LOCALMAP $hcont;
             close LOCALMAP or die "cannot save to file: $!";
         }
