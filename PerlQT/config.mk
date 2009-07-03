@@ -27,3 +27,25 @@ _HEADERS    := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,     \
 # keep the order
 # disable QT features here
 _IMACROS            := QtCore/qfeatures.h QtCore/qconfig.h QtCore/qglobal.h
+
+# core define modules
+CORE_DEFINE     := -DQT_CORE_LIB
+GUI_DEFINE      := -DQT_GUI_LIB
+NETWORK_DEFINE  := -DQT_NETWORK_LIB
+SQL_DEFINE      := -DQT_SQL_LIB
+XML_DEFINE      := -DQT_XML_LIB
+OPENGL_DEFINE   := -DQT_OPENGL_LIB
+QT3_DEFINE      := -DQT3_SUPPORT -DQT_QT3SUPPORT_LIB
+
+# NOTE: keep the default visibility mark as 'Q_DECL_EXPORT'
+#       or else normally it will be expanded to
+#       '__attribute__((visibility("default")))' on Linux
+#       '__declspec(dllexport)'                  on Windows
+#       parser will benefit on such uniform look
+# -DQT_VISIBILITY_AVAILABLE
+EXTRA_DEFINES   := -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_KEYWORDS     \
+                   -DQ_DECL_EXPORT="Q_DECL_EXPORT"
+
+ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
+                   $(SQL_DEFINE) $(XML_DEFINE) $(OPENGL_DEFINE)   \
+                   $(QT3_DEFINE) $(EXTRA_DEFINES)
