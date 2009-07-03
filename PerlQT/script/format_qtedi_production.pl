@@ -174,9 +174,13 @@ sub __format_class_or_struct {
     delete $entry->{property};
     # format inheritance line
     if (exists $entry->{inheritance} and $entry->{inheritance}) {
-        my @isa = split /\s*,\s*/, $entry->{inheritance};
-        foreach my $l (@isa) {
-            my ( $r, $n ) = split /\s+/, $l;
+        my @isa = split /(public|private|protected)/,
+          $entry->{inheritance};
+        shift @isa;
+        my %isa = @isa;
+        while (my ( $r, $n ) = each %isa) {
+            $n =~ s/^\s+//io;
+            $n =~ s/(?:,|\s)+$//io;
             push @{$entry->{ISA}}, { 
                 NAME => $n, RELATIONSHIP => $r, };
         }
@@ -610,10 +614,15 @@ sub __format_function {
     if (@freturn_type) {
         $return_type = shift @freturn_type;
         for (my $i = 0; $i <= $#freturn_type; ) {
+            #print STDERR "$i :", $freturn_type[$i], "\n";
             if ($freturn_type[$i] eq '::') {
                 $return_type .= $freturn_type[$i]. $freturn_type[$i+1];
                 $i += 2;
             } 
+            elsif ($freturn_type[$i] eq '>::') {
+                $return_type .= $freturn_type[$i]. $freturn_type[$i+1];
+                $i += 2;
+            }
             elsif ($freturn_type[$i] eq '<') {
                 $return_type .= $freturn_type[$i];
                 $i++;

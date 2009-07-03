@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 use Carp;
-use YAML ();
+use YAML::Syck qw/Load Dump/;
 #use English qw( -no_match_vars );
 use Getopt::Long qw/GetOptions/;
 
@@ -176,7 +176,7 @@ sub load_typemap {
       croak("cannot open file to read: $!");
     my $cont = do { local $/; <TYPEMAP> };
     close TYPEMAP;
-    return YAML::Load($cont);
+    return Load($cont);
 }
 
 sub dump_typemap {
@@ -185,7 +185,7 @@ sub dump_typemap {
     my $write_typemap = sub {
         my ( $typemap, $output, ) = @_;
         
-        print $output YAML::Dump($typemap);
+        print $output Dump($typemap);
     };
     local ( *OUTPUT, );
     if ($fout) {

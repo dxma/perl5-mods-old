@@ -557,6 +557,51 @@ sub QHash {
     $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
+sub MSHashMap {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    my @sub_key   = ();
+    my @sub_value = ();
+    # locate the start index of value part
+    # NOTE: MSHashMap< int *, QString >
+    my $index_value = 1;
+    for (my $i = 1; $i <= $#sub_entry; $i++) {
+        unless (exists $sub_entry[$i]->{IS_CONST} or 
+              exists $sub_entry[$i]->{IS_PTR} or 
+                exists $sub_entry[$i]->{IS_REF}) {
+            # not a part of key
+            $index_value = $i;
+            last;
+        }
+    }
+    @sub_key   = splice @sub_entry, 0, $index_value;
+    @sub_value = @sub_entry;
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_MSHASHMAP', 
+           map { $_->{t_type} } @sub_key, @sub_value);
+    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
+    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
+    $entry->{c_type} = 'MSHashMap<'. 
+      $key_c_type. ','. $value_c_type. '>';
+    $entry->{t_type} = $entry->{type};
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'MSHashMap';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = 2;
+        $new_entry->{key_type}   = $key_c_type;
+        $new_entry->{value_type} = $value_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
 
 =over
 
@@ -682,19 +727,36 @@ sub __analyse_type {
         $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;
     }
     else {
-        # transform
+        #print STDERR "orig  : ", $TYPE, "\n";
+        my $call_transform = sub {
+            my $type = shift;
+            
+            $type = '__final_transform( '. $type .' )';
+            #print STDERR $type, "\n";
+            # mask built-in function 'int'
+            local *CORE::GLOBAL::int = $my_int;
+            my $ret = eval $type;
+            die "error while eval-ing type '$type': $@" if $@;
+            return $ret;
+        };
+        # transforms
+        # FIXME:
+        # 'Template<A>::Type' => 'Template::Type'
+        $TYPE =~ s/<[^>]+>(?=::)//io;
         # template to a function call
         # '<' => '('
         $TYPE =~ s/\</(/gio;
         # '>' => ')'
         $TYPE =~ s/\>/)/gio;
-        #print STDERR "orig : ", $t, "\n";
+        # FIXME:
+        # '* const *' => '* *'
+        $TYPE =~ s{(.*)\*\s+const\s+\*}{$1 * *}gio;
         # recursively process any bare 'const' word
         # skip processed and something like 'const_iterator'
         while ($TYPE =~ m/\bconst\b(?!\_)\s*(?!\()/o) {
             defined $parser->start($TYPE) or die "Parse failed!";
         }
-        #print STDERR "patch: ", $TYPE, "\n";
+        #print STDERR "patch1: ", $TYPE, "\n";
         # transform rule for coutinous (two or more) 
         # pointer ('*') or reference ('&')
         # * (*|&) => PTR (PTR|REF)
@@ -704,8 +766,8 @@ sub __analyse_type {
         # '* & *' => 'PTR( REF( PTR ))'
         # FIRST GREDDY IS IMPORTANT
         while ($TYPE =~ 
-                 s{(.*(?<=(?:\*|\&))\s*)(\*|\&)}
-                  {$1.'('. ($2 eq '*' ? ' PTR' : ' REF'). ')' }gei) {
+                 s{(.*(?<=(?:\*|\&)))\s*(\*|\&)}
+                  {$1.'('. ($2 eq '*' ? 'PTR' : 'REF'). ')' }geio) {
             1;
         }
         # leading or standalone pointer or reference
@@ -715,22 +777,18 @@ sub __analyse_type {
         $TYPE =~ s/\&/, REF/gio;
         # transform signed|unsigned
         # 'signed long' => 'signed( long )'
-        $TYPE =~ s/\b((?:un)?signed)\b\s+((?>[^ ]+))/$1( $2 )/go;
+        $TYPE =~ s/\b((?:un)?signed)\s+((?>[^ ]+))/$1($2)/go;
         # mask bareword as a function call without any
         # parameter
-        $TYPE =~ s/\b(\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
+        #print STDERR "patch2: ", $TYPE, "\n";
+        $TYPE =~ s/\b([A-Z_a-z_\_]+\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
-        $TYPE = '__final_transform( '. $TYPE .' )';
-        {
-            #print $TYPE, "\n";
-            # mask built-in function 'int'
-            local *CORE::GLOBAL::int = $my_int;
-            $result = eval $TYPE;
-            die "error while eval-ing type '$TYPE': $@" if $@;
-        }
+        #print STDERR "patch3: ", $TYPE, "\n";
+        $result = $call_transform->($TYPE);
     }
+    #print STDERR "final : ", $result->{c_type}, " => ", $result->{t_type}, "\n";
     return $result;
 }
 
@@ -892,7 +950,7 @@ sub main {
         foreach my $t (@{$type{$n}}) {
             unless (exists $IGNORE_TYPEMAP{$t}) {
                 next TYPE_LOOP if exists $TYPE_KNOWN{$t};
-                
+                #print STDERR "type to analyse: $t\n";
                 my $result = __analyse_type($t);
                 $post_patch_type->($result);
                 $TYPE_KNOWN{$result->{c_type}} = $result->{type};
