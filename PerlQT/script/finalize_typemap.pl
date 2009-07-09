@@ -107,10 +107,10 @@ sub study_type {
         $type_primitive = 'T_PTR';
     }
     # built-in type
-    elsif ($type =~ m/^(?:CONST_)?((T_(?:I|U|N)V)_PTR)$/o) {
+    elsif ($type =~ m/^(?:CONST_)?((T_(?:I|U|N|P)V)_PTR)$/o) {
         $type_primitive = $1;
     }
-    elsif ($type =~ m/^(?:CONST_)?(T_(?:I|U|N)V)(?:_REF)?$/o) {
+    elsif ($type =~ m/^(?:CONST_)?(T_(?:I|U|N|P)V)(?:_REF)?$/o) {
         $type_primitive = $1;
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing

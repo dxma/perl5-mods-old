@@ -402,7 +402,7 @@ sub __format_fpointer {
         my $fullname = shift;
         my @n = split /\:\:/, $fullname;
         ( my $patched = $n[-1] ) =~
-          s/^(\*+)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
+          s/^(\*+\s*)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
         my $origin = $2;
         return [ join("::", @n[0 .. -1], $patched), 
              join("::", @n[0 .. -1], $origin)];
@@ -709,8 +709,11 @@ sub __format_function {
             # workaround for '(un)signed' keyword
             if ($ptype[$#ptype] eq 'signed' or 
                   $ptype[$#ptype] eq 'unsigned') {
-                # shift one item back from @pname
-                push @ptype, shift @pname;
+                # don't pull back 'short' unsigned like 'unsigned sec'
+                if ($pname[0] =~ m/^(?:int|long|short|char)$/io) {
+                    # shift one item back from @pname
+                    push @ptype, shift @pname;
+                }
             }
             # workaround for 'long long' keyword
             if ($ptype[$#ptype] eq 'long' and 
@@ -977,6 +980,7 @@ sub __format_typedef {
             # other simple typedef
             # NOTE: QValueList < KConfigSkeletonItem * >List
             # strip tail space
+            $entry->{body} =~ s/\n+//sio;
             $entry->{body} =~ s/\s+$//io;
             ( $entry->{FROM}, $entry->{TO} ) = 
               $entry->{body} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;

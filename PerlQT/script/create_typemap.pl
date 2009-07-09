@@ -7,6 +7,7 @@ use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use YAML::Syck qw(Load Dump);
 use File::Spec ();
 use Config qw/%Config/;
+use FindBin ();
 use Parse::RecDescent ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
@@ -125,6 +126,23 @@ sub REF {
     }
     return $entry;
 }
+# NOTE: const struct timeval
+#       self-explaining, mark as T_STRUCT
+sub struct {
+    my $entry = @_ ? shift : {};
+    if (exists $entry->{type}) {
+        $entry->{type}   = 'T_STRUCT';
+        $entry->{c_type} = 'struct '. $entry->{c_type};
+        $entry->{t_type} = 'T_STRUCT';
+    }
+    else {
+        $entry->{type}   = 'T_STRUCT';
+        # FIXME: missing struct name
+        $entry->{c_type} = 'struct';
+        $entry->{t_type} = 'T_STRUCT';
+    }
+    return $entry;
+}
 # NOTE: char * const == char const *
 sub const {
     my $entry = @_ ? shift : {};
@@ -142,14 +160,21 @@ sub const {
     return $entry;
 }
 sub unsigned {
-    my $entry = shift;
-    my $type = $entry->{type};
-    $type =~ s/T\_IV/T_UV/go;
-    $entry->{type}   = $type;
-    my $ttype = $entry->{t_type};
-    $ttype =~ s/T\_IV/T_UV/go;
-    $entry->{t_type} = $ttype;
-    $entry->{c_type} = 'unsigned '. $entry->{c_type};
+    my $entry = @_ ? shift : {};
+    if (exists $entry->{type}) {
+        my $type = $entry->{type};
+        $type =~ s/T\_IV/T_UV/go;
+        $entry->{type}   = $type;
+        my $ttype = $entry->{t_type};
+        $ttype =~ s/T\_IV/T_UV/go;
+        $entry->{t_type} = $ttype;
+        $entry->{c_type} = 'unsigned '. $entry->{c_type};
+    }
+    else {
+        $entry->{type}   = 'T_UV';
+        $entry->{c_type} = 'unsigned';
+        $entry->{t_type} = 'T_UV';
+    }
     return $entry;
 }
 sub signed {
@@ -193,415 +218,8 @@ my $my_int = sub {
     return $entry;
 };
 
-# QT template types
-# invoke of each will instantiate new xs/pm code source files from
-# specific templates 
-# to serve requested template type
-sub Q3PtrList {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'T_Q3PTRLIST', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'Q3PtrList<'. $sub_c_type. '>';
-    # t_type same as type
-    # which contains sub-type information
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        # new template type
-        my $new_entry = {};
-        $new_entry->{name}      = 'Q3PtrList';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        # mark done
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    # record in main typemap
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub Q3ValueList {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEPLATE} = 1;
-    $entry->{type}   = join('__', 'T_Q3VALUELIST', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'Q3ValueList<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'Q3ValueList';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QFlags {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEPLATE} = 1;
-    $entry->{type}   = join('__', 'T_QFLAGS', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QFlags<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'QFlags';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QList {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'T_QLIST', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QList<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'QList';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QFuture {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'T_QFUTURE', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QFuture<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'QFuture';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QVector {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'T_QVECTOR', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QVector<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'QVector';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QSet {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 1;
-    $entry->{type}   = join('__', 'T_QSET', 
-                            map { $_->{t_type} } @sub_entry);
-    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
-    $entry->{c_type} = 'QSet<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}      = 'QSet';
-        $new_entry->{type}      = $new_entry->{name};
-        $new_entry->{ntype}     = $entry->{type};
-        $new_entry->{argc}      = 1;
-        $new_entry->{item_type} = $sub_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QMap {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
-    # NOTE: QMap< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
-    }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 2;
-    $entry->{type}   = 
-      join('__', 'T_QMAP', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMap<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}       = 'QMap';
-        $new_entry->{type}       = $new_entry->{name};
-        $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QMultiMap {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
-    # NOTE: QMultiMap< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
-    }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 2;
-    $entry->{type}   = 
-      join('__', 'T_QMULTIMAP', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMultiMap<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}       = 'QMultiMap';
-        $new_entry->{type}       = $new_entry->{name};
-        $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QPair {
-    my @sub_entry  = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_first  = ();
-    my @sub_second = ();
-    # locate the start index of second part
-    # NOTE: QPair< int *, QString *>
-    my $index_second = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_second = $i;
-            last;
-        }
-    }
-    @sub_first  = splice @sub_entry, 0, $index_second;
-    @sub_second = @sub_entry;
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 2;
-    $entry->{type}   = 
-      join('__', 'T_QPAIR', 
-           map { $_->{t_type} } @sub_first, @sub_second);
-    my $first_c_type  = join(' ', map { $_->{c_type} } @sub_first);
-    my $second_c_type = join(' ', map { $_->{c_type} } @sub_second);
-    $entry->{c_type} = 'QPair<'. 
-      $first_c_type. ','. $second_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}        = 'QPair';
-        $new_entry->{type}        = $new_entry->{name};
-        $new_entry->{ntype}       = $entry->{type};
-        $new_entry->{argc}        = 2;
-        $new_entry->{first_type}  = $first_c_type;
-        $new_entry->{second_type} = $second_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub QHash {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
-    # NOTE: QHash< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
-    }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 2;
-    $entry->{type}   = 
-      join('__', 'T_QHASH', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QHash<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}       = 'QHash';
-        $new_entry->{type}       = $new_entry->{name};
-        $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
-sub MSHashMap {
-    my @sub_entry = @_;
-    
-    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
-    # NOTE: MSHashMap< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
-    }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
-    my $entry     = {};
-    $entry->{IS_TEMPLATE} = 2;
-    $entry->{type}   = 
-      join('__', 'T_MSHASHMAP', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'MSHashMap<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
-    # record type info in @TYPE_TEMPLATE
-    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
-        my $new_entry = {};
-        $new_entry->{name}       = 'MSHashMap';
-        $new_entry->{type}       = $new_entry->{name};
-        $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
-        push @TYPE_TEMPLATE, $new_entry;
-        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
-    }
-    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
-    return $entry;
-}
+# load custom AUTOLOAD methods
+BEGIN { require "$FindBin::Bin/create_typemap_custom_methods.pl"; }
 
 =over
 
@@ -696,7 +314,7 @@ template types to form the specific typemap name.
 =cut
 
 sub __analyse_type {
-    our $TYPE = shift;
+    local $TYPE = shift;
     our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
           $CURRENT_NAMESPACE, %TYPE_LOCALMAP, );
     my ( $result, $type_full, );
@@ -778,6 +396,8 @@ sub __analyse_type {
         # transform signed|unsigned
         # 'signed long' => 'signed( long )'
         $TYPE =~ s/\b((?:un)?signed)\s+((?>[^ ]+))/$1($2)/go;
+        # 'const struct timeval' => 'const struct'
+        $TYPE =~ s/\bstruct [A-Z_a-z_0-9_\_]+/struct/go;
         # mask bareword as a function call without any
         # parameter
         #print STDERR "patch2: ", $TYPE, "\n";
@@ -950,11 +570,11 @@ sub main {
         foreach my $t (@{$type{$n}}) {
             unless (exists $IGNORE_TYPEMAP{$t}) {
                 next TYPE_LOOP if exists $TYPE_KNOWN{$t};
-                #print STDERR "type to analyse: $t\n";
+                #print STDERR "analyse type : $t\n";
                 my $result = __analyse_type($t);
                 $post_patch_type->($result);
                 $TYPE_KNOWN{$result->{c_type}} = $result->{type};
-                #print STDERR $t, "\t"x3, $result->{c_type}, "\n";
+                #print STDERR "resolved as  : ", $result->{type}, "\n";
             }
         }
     }
@@ -999,6 +619,7 @@ sub main {
                 }
                 else {
                     # call analyse_type
+                    #print STDERR "template type: $type\n";
                     my $result = __analyse_type($type);
                     $post_patch_type->($result);
                     $template_class->{$k_type} = 

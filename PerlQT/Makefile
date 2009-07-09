@@ -274,21 +274,25 @@ clean_dot_mk :
 
 gen_strip    : $(STRIP_HEADERS)
 clean_strip  : 
+	$(_Q)$(call _remove_file,$(STRIP_DOT_MK))
 	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR)) 
 .PHONY: gen_strip clean_strip
 
 gen_prepro   : gen_strip $(PREPRO_HEADERS)
 clean_prepro :
+	$(_Q)$(call _remove_file,$(PREPRO_DOT_MK))
 	$(_Q)$(call _remove_dir,$(OUT_PREPRO_DIR))
 .PHONY: gen_prepro clean_prepro
 
 gen_parse    : gen_prepro $(PARSE_HEADERS)
 clean_parse  :
+	$(_Q)$(call _remove_file,$(PARSE_DOT_MK))
 	$(_Q)$(call _remove_dir,$(OUT_PARSE_DIR))
 .PHONY: gen_parse clean_parse
 
 gen_format   : gen_parse $(FORMAT_YAMLS)
 clean_format : 
+	$(_Q)$(call _remove_file,$(FORMAT_DOT_MK))
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
 
