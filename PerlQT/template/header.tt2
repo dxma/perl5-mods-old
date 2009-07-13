@@ -1,10 +1,14 @@
-MODULE = [% my_name %]			PACKAGE = [% my_package %]
+[% my_module  = root_package _ my_module %]
+[% my_package = root_package _ '::' _ my_package %]
+
+MODULE = [% my_module %]			PACKAGE = [% my_package %]
+
 PROTOTYPES: ENABLE
 
 ################################################################
 #### HEADER VARS
 #### 
-#### $my_name     : perl module name
+#### $my_module   : perl module name
 #### $my_package  : perl package namespace
 ####
 ################################################################

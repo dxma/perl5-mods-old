@@ -1,6 +1,5 @@
-[% USE Config %]
 [% BLOCK marshal_in %]
-  [% SWITCH class %]
+  [% SWITCH ptype %]
     [% CASE 'T_SV' %]
       [% var %] = [% arg %];
     [% CASE 'T_SVREF' %]
@@ -181,7 +180,7 @@
       else
           Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
     [% CASE 'T_IUV' %]
-      [% IF Config.get('ptrsize') == 8 %]
+      [% IF Config.ptrsize == 8 %]
         [% var %] = (unsigned long long)SvUV([% arg %]);
       [% ELSE %]
         [% var %] = (unsigned int)SvIV([% arg %]);
@@ -192,7 +191,7 @@
 [% END %]
 
 [% BLOCK marshal_out %]
-  [% SWITCH class %]
+  [% SWITCH ptype %]
     [% CASE 'T_SV' %]
       [% arg %] = [% var %];
     [% CASE 'T_SVREF' %]
@@ -213,7 +212,7 @@
       sv_setuv([% arg %], (UV)*[% var %]);
     [% CASE 'T_INT' %]
       sv_setiv([% arg %], (IV)[% var %]);
-    [% CASE 'T_INT_PTR %]
+    [% CASE 'T_INT_PTR' %]
       sv_setiv([% arg %], (IV)*[% var %]);
     [% CASE 'T_SYSRET' %]
       if ([% var %] != -1) {
@@ -342,7 +341,7 @@
     [% CASE 'T_OBJECT' %]
       sv_setref_pv([% arg %], "[% ntype %]", (void *)new [% type %]([% var %]));
     [% CASE 'T_IUV' %]
-      [% IF Config.get('ptrsize') == 8 %]
+      [% IF Config.ptrsize == 8 %]
         sv_setuv([% arg %], (UV)[% var %]);
       [% ELSE %]
         sv_setiv([% arg %], (IV)[% var %]);

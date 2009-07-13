@@ -8,12 +8,12 @@
 #### 
 #### $t1.type      : T1 c type name
 #### $t1.package   : T1 perl package name
-#### $t1.class     : T1 class
+#### $t1.ptype     : T1 primitive type
 #### $t1.is_object : T1 is object or not
 #### 
 #### $t2.type      : T2 c type name
 #### $t2.package   : T2 perl package name
-#### $t2.class     : T2 class
+#### $t2.ptype     : T2 primitive type
 #### $t2.is_object : T2 is object or not
 ####
 ################################################################
@@ -30,14 +30,14 @@
       arg   = my_arg
       type  = t1.type
       ntype = t1.package
-      class = 'T_PTROBJ'
+      ptype = 'T_PTROBJ'
     %]
   [% ELSE %]
     [% INCLUDE marshal_in 
       var   = my_var
       arg   = my_arg
       type  = t1.type
-      class = t1.class
+      ptype = t1.ptype
     %]
   [% END %]
 [% END %]
@@ -48,14 +48,14 @@
       arg   = my_arg
       type  = t2.type
       ntype = t2.package
-      class = 'T_PTROBJ'
+      ptype = 'T_PTROBJ'
     %]
   [% ELSE %]
     [% INCLUDE marshal_in 
       var   = my_var
       arg   = my_arg
       type  = t2.type
-      class = t2.class
+      ptype = t2.ptype
     %]
   [% END %]
 [% END %]
