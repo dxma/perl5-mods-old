@@ -1,10 +1,17 @@
 #! /usr/bin/perl -w
 
+################################################################
+# $Id: $
+# $Author: $
+# $Date: $
+# $Rev: $
+################################################################
+
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use File::Spec ();
-use YAML ();
+use YAML::Syck qw(Load);
 
 =head1 DESCRIPTION
 
@@ -48,7 +55,7 @@ sub main {
             open META, "<", $m or die "cannot open file $m: $!";
             my $hcont = do { local $/; <META> };
             close META;
-            my $entry = YAML::Load($hcont);
+            my $entry = Load($hcont);
             my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
             my @module = split /\:\:/, $module;
         

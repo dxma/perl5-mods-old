@@ -1,12 +1,19 @@
 #! /usr/bin/perl -w
 
+################################################################
+# $Id: $
+# $Author: $
+# $Date: $
+# $Rev: $
+################################################################
+
 use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Carp;
 use Getopt::Long qw/GetOptions/;
 
-use YAML ();
+use YAML::Syck qw/Load Dump/;
 
 =head1 DESCRIPTION
 
@@ -39,7 +46,7 @@ sub main {
     open YAML, '<', $yaml_file or 
       croak("cannot open file to read: $!");
     my $cont = do { local $/; <YAML> };
-    my $inputs  = YAML::Load($cont);
+    my $inputs  = Load($cont);
     my $outputs = [];
     HASH_LOOP:
     foreach my $hash (@$inputs) {
@@ -72,7 +79,7 @@ sub main {
             push @$outputs, $hash;
         }
     }
-    print YAML::Dump($outputs), "\n";
+    print Dump($outputs), "\n";
 }
 
 &main;

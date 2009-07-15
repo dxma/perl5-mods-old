@@ -1,5 +1,12 @@
 #!/bin/sh
 
+################################################################
+# $Id: $
+# $Author: $
+# $Date: $
+# $Rev: $
+################################################################
+
 # sanity check for stuff inside 04grouped
 
 num_of_class=`ls $1 | gawk --field-separator=. '{ print $1 }' | sort | uniq | wc -l`

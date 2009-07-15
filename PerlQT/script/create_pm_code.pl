@@ -1,5 +1,12 @@
 #! /usr/bin/perl -w
 
+################################################################
+# $Id: $
+# $Author: $
+# $Date: $
+# $Rev: $
+################################################################
+
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);

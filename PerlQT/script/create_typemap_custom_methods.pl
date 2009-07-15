@@ -1,5 +1,12 @@
 #!/usr/bin/perl -w
 
+################################################################
+# $Id$
+# $Author$
+# $Date$
+# $Rev$
+################################################################
+
 =head1 DESCRIPTION
 
 A fake bin which contains custom methods for __analysis_type AUTOLOAD.
