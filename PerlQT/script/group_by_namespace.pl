@@ -1,18 +1,19 @@
 #! /usr/bin/perl -w
 
 ################################################################
-# $Id: $
-# $Author: $
-# $Date: $
-# $Rev: $
+# $Id$
+# $Author$
+# $Date$
+# $Rev$
 ################################################################
 
 use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDWR O_TRUNC O_CREAT :flock);
-use YAML::Syck;
 use File::Spec ();
+use FindBin    ();
+use YAML::Syck;
 
 =head1 DESCIPTION
 
@@ -477,9 +478,11 @@ sub __process_function {
     }
 }
 
+# load __get_custom_module_name
+BEGIN { require "$FindBin::Bin/group_by_namespace_custom_methods.pl"; }
 # extract QT-specific module info from file path
 sub __get_qt_module_name {
-    return (File::Spec::->splitdir($ARGV[ARGV_INDEX_FILE_INPUT]))[-2];
+    return __get_custom_module_name(@_, $ARGV[ARGV_INDEX_FILE_INPUT]);
 }
 
 # internal 
@@ -525,7 +528,8 @@ sub __process_class_or_struct {
               $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
             push @$namespace, $new_namespace;
             # get QT module info 
-            $entry_to_create->{MODULE} = __get_qt_module_name();
+            ( $entry_to_create->{MODULE}, $entry_to_create->{PERL_NAME} ) = 
+              __get_qt_module_name($namespace->[-1]);
             # store
             my $TYPE = 'meta';    
             $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
