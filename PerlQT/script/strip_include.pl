@@ -36,6 +36,12 @@ sub main {
     close HEADER;
     $cont =~ s{^\s*#\s*include\s.+$}{}igmo;
     $cont =~ s{^\s*#\s*error\s.+$}{}igmo;
+    # comment vcsid strings
+    $cont =~ s{^static const char\* .[^=]+ = "@\(\#\) "$}{//$&}mo;
+    $cont =~ s{^"\$Header\: }{//$&}mo;
+    $cont =~ s{^"\$Change\: }{//$&}mo;
+    $cont =~ s{^"\$DateTime\: }{//$&}mo;
+    $cont =~ s{^"\$Author\: }{//$&}mo;
     if (defined $out) {
         local ( *STRIPPED );
         sysopen STRIPPED, $out, O_CREAT|O_WRONLY|O_TRUNC or 

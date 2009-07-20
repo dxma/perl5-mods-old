@@ -12,7 +12,8 @@ use strict;
 #use English qw( -no_match_vars );
 
 use Fcntl qw(O_CREAT O_WRONLY O_TRUNC);
-use lib qw(../Parse-QTEDI/lib);
+use FindBin ();
+use lib qq($FindBin::Bin/../../Parse-QTEDI/lib);
 # uncomment to enable parsing debug
 #BEGIN { $Parse::QTEDI::DEBUG = 1; }
 use Parse::QTEDI qw($parser);
