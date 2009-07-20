@@ -26,7 +26,7 @@ differentiate with QTEDI output, except meta field such as 'subtype'.
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <qtedi_production.yaml> [<output_file>]
+usage: $0 <qtedi_production.yml> [<output_file>]
 EOU
     exit 1;
 }

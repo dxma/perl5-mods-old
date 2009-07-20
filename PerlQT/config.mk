@@ -22,6 +22,8 @@ _HEADERS    := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,     \
                        $(addprefix $(_HEADER_DIR)/,              \
                            $(addsuffix /*.h, $(_QT)))))
 
+HEADER_PREFIX  := h
+
 # imacros list
 # which will be passed to preprocessor
 # keep the order
@@ -49,3 +51,7 @@ EXTRA_DEFINES   := -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_KEYWORDS     \
 ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
                    $(SQL_DEFINE) $(XML_DEFINE) $(OPENGL_DEFINE)   \
                    $(QT3_DEFINE) $(EXTRA_DEFINES)
+
+# gcc
+# only available on x86_64
+_CMD_CC        := g++

@@ -21,7 +21,7 @@ use YAML::Syck qw/Load Dump/;
 
 sub usage {
     print << "EOU";
-usage     : $0 <conditions> <fields> file.yaml
+usage     : $0 <conditions> <fields> file.yml
 conditions: -c field1=value1 ...
 fields    : -f field1 -f field2 ...
 EOU

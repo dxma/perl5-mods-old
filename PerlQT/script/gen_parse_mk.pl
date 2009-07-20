@@ -37,12 +37,12 @@ sub main {
     my $cont = do { local $/; <IN> };
     close IN;
     $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.h:\s*$}
-              {$out_parse_dir$1.yaml: $in_parse_dir$1.i
+              {$out_parse_dir$1.yml: $in_parse_dir$1.i
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
 \t\$(_Q)\$(CMD_PARSE_HD) \$< \$@.tmp
 \t\$(_Q)\$(CMD_MV) \$@.tmp \$@
-$out_parse_dir$1.yaml: 
+$out_parse_dir$1.yml: 
 }miogx;
     
     if (defined $out) {

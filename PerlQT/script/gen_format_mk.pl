@@ -36,13 +36,13 @@ sub main {
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
     close IN;
-    $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.h:\s*$}
-              {$out_format_dir$1.yaml: $in_format_dir$1.yaml
+    $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.(?:h|H):\s*$}
+              {$out_format_dir$1.yml: $in_format_dir$1.yml
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
 \t\$(_Q)\$(CMD_FORMAT_YML) \$< \$@.tmp
 \t\$(_Q)\$(CMD_MV) \$@.tmp \$@
-$out_format_dir$1.yaml: 
+$out_format_dir$1.yml: 
 }miogx;
     
     if (defined $out) {

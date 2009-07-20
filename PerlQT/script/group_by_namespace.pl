@@ -43,7 +43,7 @@ entry which does not belong to other namespace.
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <default_namespace> <formatted_qtedi_output.yaml> <output_directory>
+usage: $0 <default_namespace> <formatted_qtedi_output.yml> <output_directory>
 EOU
     exit 1;
 }

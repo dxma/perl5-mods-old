@@ -36,12 +36,12 @@ sub main {
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
     close IN;
-    $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.h:\s*$}
-              {$out_prepro_dir$1.i: $in_prepro_dir$1.h
+    $cont =~ s{^\Q$in_noinc_dir\E(.*?)\.(h|H):\s*$}
+              {$out_prepro_dir$1.i: $in_prepro_dir$1.$2
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
 \t\$(_Q)\$(CMD_PREPRO_HD) \$(call _generate_imacros,\$<) \$(OPT_CC_INPUT) \$< \$(OPT_CC_OUTPUT) \$@
-\t\$(_Q)\$(CMD_RM) \$@.h
+\t\$(_Q)\$(CMD_RM) \$@.$2
 $out_prepro_dir$1.i: 
 }miogx;
     

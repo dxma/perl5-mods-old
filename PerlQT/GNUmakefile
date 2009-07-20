@@ -18,7 +18,8 @@ SHELL=/bin/bash
 
 MAKE_ROOT       := $(shell pwd)
 HEADER_DIR      := $(_HEADER_DIR)
-SCRIPT_DIR      := $(MAKE_ROOT)/script
+# NOTE: ugly hack to permit custom PERL5LIB
+SCRIPT_DIR      := $(_PERL5) $(MAKE_ROOT)/script
 TEMPLATE_DIR    := $(MAKE_ROOT)/template
 
 IN_STRIP_DIR    := $(HEADER_DIR)
@@ -52,7 +53,8 @@ _Q := $(empty)$(empty)
 endif
 
 # FIXME: check available options for all involved commands
-CMD_CC             := g++
+CMD_CC             := $(_CMD_CC)
+CMD_CC             ?= g++
 # intepretable echo
 CMD_ECHO           := echo -e
 CMD_PREPRO         := $(CMD_CC) -E
@@ -114,11 +116,11 @@ HEADERS_NO_ROOT := $(patsubst $(HEADER_DIR)/%,%,$(HEADERS))
 
 STRIP_HEADERS   := $(addprefix $(OUT_STRIP_DIR)/,$(HEADERS_NO_ROOT))
 PREPRO_HEADERS  := $(addprefix $(OUT_PREPRO_DIR)/,\
-                       $(patsubst %.h,%.i,$(HEADERS_NO_ROOT)))
+                       $(patsubst %.$(HEADER_PREFIX),%.i,$(HEADERS_NO_ROOT)))
 PARSE_HEADERS   := $(addprefix $(OUT_PARSE_DIR)/,\
-                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
+                       $(patsubst %.$(HEADER_PREFIX),%.yml,$(HEADERS_NO_ROOT)))
 FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
-                       $(patsubst %.h,%.yaml,$(HEADERS_NO_ROOT)))
+                       $(patsubst %.$(HEADER_PREFIX),%.yml,$(HEADERS_NO_ROOT)))
 # initially empty, overriden inside grouplist.mk
 GROUP_YAMLS     := $(empty)$(empty)
 # initially empty, overriden inside xscode.mk
@@ -146,8 +148,8 @@ _generate_imacros = $(addprefix -imacros ,$(addprefix             \
 all: 
 .PHONY: all
 
-.SUFFIXES: .h .i .yaml .meta .function .public .protected .signal \
-                       .typedef .enum
+.SUFFIXES: .$(HEADER_PREFIX) .i .yml .meta                        \
+           .function .public .protected .signal .typedef .enum
 
 FORCE: ;
 

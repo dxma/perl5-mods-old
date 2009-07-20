@@ -59,7 +59,7 @@ sub main {
     foreach (@cont) {
         chomp;
         if (s/\Q$in_noinc_dir\E/$in_group_dir/ge) {
-            s/\.h\s*\:\s*$/.yaml/gio;
+            s/\.h\s*\:\s*$/.yml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
               "'$default_namespace' $_ \$(OUT_GROUP_DIR)\n";
