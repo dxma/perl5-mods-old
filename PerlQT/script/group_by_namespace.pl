@@ -242,6 +242,10 @@ sub __process_typedef {
                 push @$entries_to_create,
                   [$gen_type->(), $type_without_pointer];
             }
+            elsif ($entry->{FROM} eq $entry->{TO}) {
+                # NOTE: "typedef struct A A"
+                $entry->{FROM} = 'T_'. uc($entry->{subtype});
+            }
             else {
                 push @$entries_to_create, 
                   [$gen_type->(), $entry->{FROM}];

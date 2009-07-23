@@ -38,6 +38,9 @@ sub main {
     my $xscode_dot_mk = '';
     my $excl_std_dot_meta = File::Spec::->catfile(
         $in_xscode_dir, 'std.meta');
+    my @xs_files = ();
+    my @pm_files = ();
+    my ( $xs_file, $pm_file, );
     
     foreach my $m (glob(File::Spec::->catfile(
         $in_xscode_dir, '*.meta'))) {
@@ -60,9 +63,10 @@ sub main {
             my @module = split /\:\:/, $module;
         
             # deps for module.xs
-            $xscode_dot_mk .= File::Spec::->catfile(
-                $out_xscode_dir, "xs", @module, "$classname.xs"). 
-                  ": ". join(" ", @deps). "\n";
+            $xs_file = File::Spec::->catfile(
+                $out_xscode_dir, "xs", @module, "$classname.xs");
+            push @xs_files, $xs_file;
+            $xscode_dot_mk .= $xs_file. ": ". join(" ", @deps). "\n";
             # rule for module.xs
             $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
             $xscode_dot_mk .= 
@@ -70,12 +74,14 @@ sub main {
             $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
         
             # deps for module.pm
-            $xscode_dot_mk .= File::Spec::->catfile(
+            $pm_file = File::Spec::->catfile(
                 $out_xscode_dir, "pm", @module, 
-                split /\_\_/, "$classname.pm"). 
-                  ": $m ". File::Spec::->catfile(
-                      $in_xscode_dir,
-                      "$classname.function.public"). "\n"; 
+                split /\_\_/, "$classname.pm");
+            push @pm_files, $pm_file;
+            $xscode_dot_mk .= $pm_file. ": $m ". 
+              File::Spec::->catfile(
+                  $in_xscode_dir,
+                  "$classname.function.public"). "\n"; 
             # rule for module.pm
             $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
             $xscode_dot_mk .= 
@@ -83,6 +89,10 @@ sub main {
             $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
         }
     }
+    
+    # write XS_FILES and PM_FILES
+    $xscode_dot_mk .= "XS_FILES := ". join(" ", @xs_files). "\n";
+    $xscode_dot_mk .= "PM_FILES := ". join(" ", @pm_files). "\n";
     
     if (defined $out) {
         local ( *OUT, );

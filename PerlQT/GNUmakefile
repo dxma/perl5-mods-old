@@ -317,10 +317,14 @@ clean_typemap:
 
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode   : gen_typemap $(XSCODE_DOT_MK)
-clean_xscode : 
-	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
+gen_xscode_dot_mk   : gen_typemap $(XSCODE_DOT_MK)
+clean_xscode_dot_mk : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
+.PHONY: gen_xscode_dot_mk clean_xscode_dot_mk
+
+gen_xscode   : gen_xscode_dot_mk $(XS_FILES)
+clean_xscode : clean_xscode_dot_mk
+	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
 .PHONY: gen_xscode clean_xscode
 
 # internal use
@@ -344,7 +348,8 @@ list_typemap_types :
 
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \
-       clean_format clean_group clean_typemap clean_xscode
+       clean_format clean_group clean_typemap            \
+       clean_xscode_dot_mk clean_xscode
 .PHONY: clean
 
-all: gen_xscode
+all: gen_xscode_dot_mk
