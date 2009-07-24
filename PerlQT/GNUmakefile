@@ -209,7 +209,7 @@ $(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
                      $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
-        $(XSCODE_DOT_MK)
+        $(OUT_TYPEMAP_DIR) $(XSCODE_DOT_MK)
 
 # generate xs && pm code
 # GROUP_YAMLS from grouplist.mk

@@ -23,7 +23,7 @@ B<NOTE>: Invoked after group of formatted qtedi productions completed.
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <in_xscode_dir> <out_xscode_dir> [<output_file>]
+usage: $0 <in_xscode_dir> <out_xscode_dir> <out_typemap_dir> [<output_file>]
 EOU
     exit 1;
 }
@@ -31,7 +31,8 @@ EOU
 sub main {
     usage if @ARGV < 2;
     
-    my ( $in_xscode_dir, $out_xscode_dir, $out, ) = @ARGV;
+    my ( $in_xscode_dir, $out_xscode_dir, $out_typemap_dir, 
+         $out, ) = @ARGV;
     die "directory $in_xscode_dir not found!" unless 
       -d $in_xscode_dir; 
     
@@ -48,9 +49,13 @@ sub main {
         ( my $classname = $meta ) =~ s/\.meta$//io;
         # no need to include classname.function
         # which has member function implementations
-        my @deps = grep { not m/\.function$/io } 
+        my @deps = grep { not m/\.(?:function|protected|typedef)$/io } 
           glob(File::Spec::->catfile(
-              $in_xscode_dir, "$classname.*"));
+              $in_xscode_dir, $classname. ".*"));
+        push @deps, File::Spec::->catfile(
+            $out_typemap_dir, $classname. ".typemap") if 
+              -f File::Spec::->catfile($out_typemap_dir, 
+                                       $classname. ".typemap");
         # skip namespace std
         unless ($m eq $excl_std_dot_meta) {
             # get module name from .meta
@@ -71,22 +76,23 @@ sub main {
             $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
             $xscode_dot_mk .= 
               "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$^\n\n";
+            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$<\n\n";
         
             # deps for module.pm
             $pm_file = File::Spec::->catfile(
                 $out_xscode_dir, "pm", @module, 
                 split /\_\_/, "$classname.pm");
             push @pm_files, $pm_file;
+            # .function.public for operator (function) overload
             $xscode_dot_mk .= $pm_file. ": $m ". 
-              File::Spec::->catfile(
-                  $in_xscode_dir,
-                  "$classname.function.public"). "\n"; 
+              File::Spec::->catfile($in_xscode_dir, 
+                                    $classname. ".function.public"). 
+                                      "\n"; 
             # rule for module.pm
             $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
             $xscode_dot_mk .= 
               "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$^\n\n";
+            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$<\n\n";
         }
     }
     
