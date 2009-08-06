@@ -49,51 +49,57 @@ sub main {
         ( my $classname = $meta ) =~ s/\.meta$//io;
         # no need to include classname.function
         # which has member function implementations
-        my @deps = grep { not m/\.(?:function|protected|typedef)$/io } 
-          glob(File::Spec::->catfile(
-              $in_xscode_dir, $classname. ".*"));
+        my @deps = 
+          grep { not m/\.(?:function|protected|typedef|friend)$/io } 
+            glob(File::Spec::->catfile(
+                $in_xscode_dir, $classname. ".*"));
         push @deps, File::Spec::->catfile(
             $out_typemap_dir, $classname. ".typemap") if 
               -f File::Spec::->catfile($out_typemap_dir, 
                                        $classname. ".typemap");
         # skip namespace std
-        unless ($m eq $excl_std_dot_meta) {
-            # get module name from .meta
-            local ( *META );
-            open META, "<", $m or die "cannot open file $m: $!";
-            my $hcont = do { local $/; <META> };
-            close META;
-            my $entry = Load($hcont);
-            my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
-            my @module = split /\:\:/, $module;
+        next if $m eq $excl_std_dot_meta;
+        # skip those have neither .enum nor .public
+        my %deps = map { (split /\./)[-1] => 1 } @deps;
+        next unless exists $deps{enum} or exists $deps{public};
         
-            # deps for module.xs
-            $xs_file = File::Spec::->catfile(
-                $out_xscode_dir, "xs", @module, "$classname.xs");
-            push @xs_files, $xs_file;
-            $xscode_dot_mk .= $xs_file. ": ". join(" ", @deps). "\n";
-            # rule for module.xs
-            $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
-            $xscode_dot_mk .= 
-              "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) \$@ \$<\n\n";
+        # get module name from .meta
+        local ( *META );
+        open META, "<", $m or die "cannot open file $m: $!";
+        my $hcont = do { local $/; <META> };
+        close META;
+        my $entry = Load($hcont);
+        my $module = exists $entry->{MODULE} ? $entry->{MODULE} : '';
+        my @module = split /\:\:/, $module;
         
-            # deps for module.pm
-            $pm_file = File::Spec::->catfile(
-                $out_xscode_dir, "pm", @module, 
-                split /\_\_/, "$classname.pm");
-            push @pm_files, $pm_file;
-            # .function.public for operator (function) overload
-            $xscode_dot_mk .= $pm_file. ": $m ". 
-              File::Spec::->catfile($in_xscode_dir, 
-                                    $classname. ".function.public"). 
-                                      "\n"; 
-            # rule for module.pm
-            $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
-            $xscode_dot_mk .= 
-              "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-            $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) \$@ \$<\n\n";
-        }
+        # deps for module.xs
+        $xs_file = File::Spec::->catfile(
+            $out_xscode_dir, "xs", @module, "$classname.xs");
+        push @xs_files, $xs_file;
+        # enum implemented by enum.pm in dot pm
+        $xscode_dot_mk .= $xs_file. ": ". 
+          join(" ", grep { not m/\.enum$/o } @deps). "\n";
+        # rule for module.xs
+        $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
+        $xscode_dot_mk .= 
+          "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
+          "-t \$(TEMPLATE_DIR) \$@ \$^\n\n";
+        
+        # deps for module.pm
+        $pm_file = File::Spec::->catfile(
+            $out_xscode_dir, "pm", @module, 
+            split /\_\_/, "$classname.pm");
+        push @pm_files, $pm_file;
+        # .function.public for operator (function) overload
+        $xscode_dot_mk .= $pm_file. ": ". 
+          join(" ", grep { m/\.(?:meta|public|enum)$/o } @deps). "\n";
+        # rule for module.pm
+        $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
+        $xscode_dot_mk .= 
+          "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ". 
+          "-t \$(TEMPLATE_DIR) \$@ \$^\n\n";
     }
     
     # write XS_FILES and PM_FILES

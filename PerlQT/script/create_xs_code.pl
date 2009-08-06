@@ -10,8 +10,10 @@
 use strict;
 #use English qw( -no_match_vars );
 use Carp;
+use Getopt::Long qw(GetOptions);
 
-use YAML::Syck qw/Load/;
+use YAML::Syck qw/Load Dump/;
+use Template;
 
 =head1 DESCRIPTION
 
@@ -25,7 +27,7 @@ Create <module>.xs accordingly to
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <module.pm> <module>.*
+usage: $0 <module.xs> <module>.*
 EOU
     exit 1;
 }
@@ -40,17 +42,72 @@ sub load_yaml {
 }
 
 sub main {
-    usage() unless @ARGV < 3;
+    my $template_dir = '';
+    GetOptions(
+        't=s' => \$template_dir, 
+    );
+    usage() unless @ARGV >= 2;
     
-    my $pm_file = shift;
+    my $xs_file = shift @ARGV;
     my %f  = map { (split /\./)[-1] => $_ } @ARGV;
     
     # open source files
+    # class name, mod name, class hierarchy
+    croak "no meta file found for $xs_file" unless $f{meta};
     my $meta    = load_yaml($f{meta});
-    my $public  = load_yaml($f{public});
-    my $enum    = exists $f{enum} ? load_yaml($f{enum}) : {};
+    # publish methods
+    carp "no public file found for $xs_file" unless $f{public};
+    my $publics = exists $f{public} ? load_yaml($f{public}) : [];
+    # typedef info
     my $typemap = exists $f{typemap} ? load_yaml($f{typemap}) : {};
+    my $subst_with_fullname = sub {
+        my ( $type, ) = @_;
+        
+        return $type unless keys %$typemap;
+        foreach my $t (keys %$typemap) {
+            $type =~ s/(?<!\:)\b\Q$t\E/$typemap->{$t}/e;
+        }
+        #print STDERR $_[0], " => ", $type, "\n" if $_[0] ne $type;
+        return $type;
+    };
     
+    # loop into each public method, group by name
+    my $public_by_name = {};
+    foreach my $i (@$publics) {
+        # convert relevant field key to lowcase
+        # no conflict with template commands
+        my $name         = delete $i->{NAME};
+        $i->{parameters} = delete $i->{PARAMETER};
+        $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
+        # substitude with full typename for entries in typemap
+        $i->{return} = $subst_with_fullname->($i->{return}) 
+          if exists $i->{return};
+        foreach my $p (@{$i->{parameters}}) {
+            $p->{name} = delete $p->{NAME} if exists $p->{NAME};
+            $p->{type} = delete $p->{TYPE};
+            $p->{type} = $subst_with_fullname->($p->{type});
+        }
+        push @{$public_by_name->{$name}}, $i;
+    }
+    
+    # generate xs file from template
+    my $template = Template::->new({
+        INCLUDE_PATH => $template_dir, 
+        INTERPOLATE  => 0, 
+        PRE_CHOMP    => 1, 
+        PRE_PROCESS  => 'header.tt2', 
+        EVAL_PERL    => 1, 
+    });
+    my $out = '';
+    my $var = {
+        my_name    => $meta->{NAME}, 
+        my_module  => $meta->{PERL_NAME}, 
+        my_package => $meta->{MODULE}, 
+        my_method  => $public_by_name, 
+    };
+    $template->process('body.tt2', $var, \$out) or 
+      croak $template->error. "\n";
+    print STDERR $out, "\n";
     
     exit 0;
 }

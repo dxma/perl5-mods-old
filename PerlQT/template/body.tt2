@@ -1,0 +1,19 @@
+################################################################
+#### 
+#### MEMBER FUNCTIONS
+#### 
+################################################################
+
+[% FOREACH method_name = my_method.keys.sort %]
+  [% methods = my_method.$method_name %]
+  [% FOREACH method = methods %]
+    [% display_params = [] %]
+    [% FOREACH p = method.parameters %]
+      [% name  = p.exists("name") ? p.name : "" %]
+      [% param = p.type _ " " _ name IF name %]
+      [% display_params.push(param) %]
+    [% END %]
+# [% IF method.static %]static[% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
+  [% END %]
+[% END %]
+

@@ -43,7 +43,7 @@ entry which does not belong to other namespace.
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <default_namespace> <formatted_qtedi_output.yml> <output_directory>
+usage: $0 <default_namespace> <root_namespace> <formatted_qtedi_output.yml> <output_directory>
 EOU
     exit 1;
 }
@@ -51,10 +51,12 @@ EOU
 # private consts
 # TODO: Getopt::Long
 sub ARGV_INDEX_NAMESPACE_DEFAULT() { 0 }
+sub ARGV_INDEX_NAMESPACE_ROOT()    { 1 }
 # see __qt_get_module_name
-sub ARGV_INDEX_FILE_INPUT() { 1 }
+sub ARGV_INDEX_FILE_INPUT()        { 2 }
 
 sub NAMESPACE_DEFAULT { $ARGV[ARGV_INDEX_NAMESPACE_DEFAULT] }
+sub NAMESPACE_ROOT    { $ARGV[ARGV_INDEX_NAMESPACE_ROOT]    }
 
 sub VISIBILITY_PUBLIC { 
     +{ type => 'accessibility', VALUE => [ 'public' ], } 
@@ -486,7 +488,9 @@ sub __process_function {
 BEGIN { require "$FindBin::Bin/group_by_namespace_custom_methods.pl"; }
 # extract QT-specific module info from file path
 sub __get_qt_module_name {
-    return __get_custom_module_name(@_, $ARGV[ARGV_INDEX_FILE_INPUT]);
+    my ( $module, $name ) = __get_custom_module_name(
+        @_, $ARGV[ARGV_INDEX_FILE_INPUT]);
+    return(join('::', NAMESPACE_ROOT, $module), $name);
 }
 
 # internal 
@@ -534,6 +538,7 @@ sub __process_class_or_struct {
             # get QT module info 
             ( $entry_to_create->{MODULE}, $entry_to_create->{PERL_NAME} ) = 
               __get_qt_module_name($namespace->[-1]);
+            $entry_to_create->{NAME} = $namespace->[-1];
             # store
             my $TYPE = 'meta';    
             $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
@@ -750,8 +755,8 @@ sub _process {
 }
 
 sub main {
-    usage() unless @ARGV == 3;
-    my ( undef, $in, $out ) = @ARGV;
+    usage() unless @ARGV == 4;
+    my ( undef, undef, $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
     die "directory not found" unless -d $out;
     

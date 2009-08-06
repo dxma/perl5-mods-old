@@ -864,8 +864,11 @@ sub __format_enum {
     delete $entry->{name};
     delete $entry->{property};
     # normalize value entries
-    foreach my $v (@{$entry->{value}}) {
+    foreach my $i (@{$entry->{value}}) {
+        my $index = @$i == 2 ? 1 : 0;
+        my $v = $i->[$index];
         $v =~ s/\s+$//o;
+        $i->[$index] = $v;
     }
     if (@{$entry->{value}}) {
         $entry->{VALUE} = $entry->{value};

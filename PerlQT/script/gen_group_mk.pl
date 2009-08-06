@@ -54,7 +54,8 @@ sub main {
     my $conf = do { local $/; <CONF> };
     close CONF;
     ( my $hconf ) = Load($conf);
-    my $default_namespace       = $hconf->{default_namespace};
+    my $default_namespace = $hconf->{default_namespace};
+    my $root_namespace    = $hconf->{root_namespace};
     
     foreach (@cont) {
         chomp;
@@ -62,7 +63,7 @@ sub main {
             s/\.h\s*\:\s*$/.yml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
-              "'$default_namespace' $_ \$(OUT_GROUP_DIR)\n";
+              "'$default_namespace' '$root_namespace' $_ \$(OUT_GROUP_DIR)\n";
         }
     }
     # command to create grouplist.mk

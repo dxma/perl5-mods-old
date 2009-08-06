@@ -13,11 +13,11 @@ A fake bin which contains custom methods for __get_qt_module_name
 =cut
 
 sub __get_custom_module_name {
-    my ($name, $path ) = @_;
+    my ($module, $path ) = @_;
     
     require File::Spec;
-    my $module = (File::Spec::->splitdir($path))[-2];
-    return ($name, $module);
+    my $name = (File::Spec::->splitdir($path))[-2];
+    return($module, $name);
 }
 
 1;
