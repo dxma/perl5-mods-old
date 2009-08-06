@@ -13,7 +13,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML::Syck ();
 
-$VERSION = '0.15';
+$VERSION = '0.16';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -625,12 +625,13 @@ enum_name          :
 enum_body          : 
     '{' '}' { $return = [] }
   | '{' enum_unit(s) '}'
-    { $return = $item[2] }
+    { $return = [ grep { ref $_ } @{$item[2]} ] }
     #{ print STDERR "enum_body: ", join(" ", @{$item[2]}), "\n" if $::RD_DEBUG } 
   | { $return = ''       }
 enum_unit          : 
-  next_dot_or_end_brace ( ',' | )
-  { $return = (split /=/, $item[1])[0] }
+    comment { $return = '' }
+  | next_dot_or_end_brace ( ',' | )
+    { $return = [ split /\s*=\s*/, $item[1] ] }
   #{ print STDERR "enum_unit: $return\n" if $::RD_DEBUG } 
 
 # template related

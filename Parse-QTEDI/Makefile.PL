@@ -25,6 +25,7 @@ build_requires  'Test::More'        => '0.42';
 #no_index        'directory'         => 'examples';
 
 install_script  'bin/parse_qtedi_header';
+install_script  'bin/format_qtedi_production';
 
 auto_install;
 WriteAll;

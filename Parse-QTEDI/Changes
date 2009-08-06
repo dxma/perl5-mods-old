@@ -1,5 +1,9 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.16    20090806
+    - strip comment between enum values
+0.15    20090724
+    - function parameter with namespace
 0.13    20080823
     - 'const' property on function and function pointer
 
