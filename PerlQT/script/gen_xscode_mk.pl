@@ -77,6 +77,7 @@ sub main {
             $out_xscode_dir, "xs", @module, "$classname.xs");
         push @xs_files, $xs_file;
         # enum implemented by enum.pm in dot pm
+        # FIXME: TYPEMAP not added as dependency
         $xscode_dot_mk .= $xs_file. ": ". 
           join(" ", grep { not m/\.enum$/o } @deps). "\n";
         # rule for module.xs
@@ -84,7 +85,7 @@ sub main {
         $xscode_dot_mk .= 
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
-          "-t \$(TEMPLATE_DIR) \$@ \$^\n\n";
+          "-t \$(TEMPLATE_DIR) -m \$(TYPEMAP) \$@ \$^\n\n";
         
         # deps for module.pm
         $pm_file = File::Spec::->catfile(

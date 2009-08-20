@@ -626,7 +626,9 @@ sub __process_namespace {
     my $entry_to_create = {};
     $entry_to_create->{NAME}   = $entry->{NAME};
     $entry_to_create->{TYPE}   = $entry->{type};
-    $entry_to_create->{MODULE} = '';
+    # FIXME
+    $entry_to_create->{MODULE} = 
+      @$namespace ? join('::', @$namespace) : '';
     # push new namespace
     # namespace could _ONLY_ be nested in another namespace
     my $new_namespace = @$namespace ?
@@ -742,7 +744,9 @@ sub _process {
     __process_loop($list, $entries, $namespace, $type, $visibility);
     # make <NAMESPACE_DEFAULT>.meta
     $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
-        type => 'namespace', MODULE => '', };
+        type   => 'namespace', 
+        MODULE => NAMESPACE_DEFAULT, 
+    };
     # special patch to <NAMESPACE_DEFAULT>.function
     # rename to <NAMESPACE_DEFAULT>.function.public
     if (exists $entries->{NAMESPACE_DEFAULT. '.function'}) {

@@ -43,8 +43,10 @@ sub load_yaml {
 
 sub main {
     my $template_dir = '';
+    my $typemap_file = '';
     GetOptions(
         't=s' => \$template_dir, 
+        'm=s' => \$typemap_file, 
     );
     usage() unless @ARGV >= 2;
     
@@ -59,13 +61,15 @@ sub main {
     carp "no public file found for $xs_file" unless $f{public};
     my $publics = exists $f{public} ? load_yaml($f{public}) : [];
     # typedef info
-    my $typemap = exists $f{typemap} ? load_yaml($f{typemap}) : {};
+    my $typedef = exists $f{typemap} ? load_yaml($f{typemap}) : {};
+    # global typemap
+    my $typemap = load_yaml($typemap_file);
     my $subst_with_fullname = sub {
         my ( $type, ) = @_;
         
-        return $type unless keys %$typemap;
-        foreach my $t (keys %$typemap) {
-            $type =~ s/(?<!\:)\b\Q$t\E/$typemap->{$t}/e;
+        return $type unless keys %$typedef;
+        foreach my $t (keys %$typedef) {
+            $type =~ s/(?<!\:)\b\Q$t\E/$typedef->{$t}/e;
         }
         #print STDERR $_[0], " => ", $type, "\n" if $_[0] ne $type;
         return $type;
@@ -100,10 +104,14 @@ sub main {
     });
     my $out = '';
     my $var = {
-        my_name    => $meta->{NAME}, 
-        my_module  => $meta->{PERL_NAME}, 
-        my_package => $meta->{MODULE}, 
+        my_cclass  => $meta->{NAME}, 
+        my_type    => $meta->{type}, 
+        my_module  => $meta->{MODULE}, 
+        my_package => ( exists $meta->{PERL_NAME} ? 
+          join('::', $meta->{MODULE},$meta->{PERL_NAME}) :
+            $meta->{MODULE} ), 
         my_method  => $public_by_name, 
+        my_typemap => $typemap, 
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";

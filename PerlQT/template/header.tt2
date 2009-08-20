@@ -2,3 +2,4 @@ MODULE = [% my_module %]			PACKAGE = [% my_package %]
 
 PROTOTYPES: ENABLE
 
+# classname: [% my_cclass %]

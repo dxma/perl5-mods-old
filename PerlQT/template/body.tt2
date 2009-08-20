@@ -1,19 +1,17 @@
+[% PROCESS function.tt2 %]
 ################################################################
 #### 
-#### MEMBER FUNCTIONS
+#### PUBLIC MEMBER FUNCTIONS
 #### 
 ################################################################
 
-[% FOREACH method_name = my_method.keys.sort %]
-  [% methods = my_method.$method_name %]
-  [% FOREACH method = methods %]
-    [% display_params = [] %]
-    [% FOREACH p = method.parameters %]
-      [% name  = p.exists("name") ? p.name : "" %]
-      [% param = p.type _ " " _ name IF name %]
-      [% display_params.push(param) %]
-    [% END %]
-# [% IF method.static %]static[% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
-  [% END %]
+[% constructors = my_method.$my_cclass %]
+[% my_method.delete(my_cclass, '~' _ my_cclass) %]
+
+[% INCLUDE print_c_prototypes method_name = my_cclass, methods = constructors %]
+
+[% FOREACH name = my_method.keys.sort %]
+  [% entries = my_method.$name %]
+  [% INCLUDE print_c_prototypes method_name = name, methods = entries %]
 [% END %]
 
