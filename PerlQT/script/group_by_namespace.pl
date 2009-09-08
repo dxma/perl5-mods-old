@@ -744,7 +744,8 @@ sub _process {
     __process_loop($list, $entries, $namespace, $type, $visibility);
     # make <NAMESPACE_DEFAULT>.meta
     $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
-        type   => 'namespace', 
+        NAME   => NAMESPACE_DEFAULT, 
+        TYPE   => 'namespace', 
         MODULE => NAMESPACE_DEFAULT, 
     };
     # special patch to <NAMESPACE_DEFAULT>.function

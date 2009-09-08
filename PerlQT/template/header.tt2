@@ -1,5 +1,4 @@
 MODULE = [% my_module %]			PACKAGE = [% my_package %]
-
-PROTOTYPES: ENABLE
+PROTOTYPES: DISABLE
 
 # classname: [% my_cclass %]

@@ -85,7 +85,8 @@ sub main {
         $xscode_dot_mk .= 
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
-          "-t \$(TEMPLATE_DIR) -m \$(TYPEMAP) \$@ \$^\n\n";
+          "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ". 
+            "-packagemap \$(PACKAGEMAP) \$@ \$^\n\n";
         
         # deps for module.pm
         $pm_file = File::Spec::->catfile(
@@ -100,7 +101,8 @@ sub main {
         $xscode_dot_mk .= 
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ". 
-          "-t \$(TEMPLATE_DIR) \$@ \$^\n\n";
+          "-template \$(TEMPLATE_DIR) -packagemap \$(PACKAGEMAP) ". 
+            "\$@ \$^\n\n";
     }
     
     # write XS_FILES and PM_FILES

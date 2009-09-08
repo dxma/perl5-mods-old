@@ -3,9 +3,9 @@
     [% display_params = [] %]
     [% FOREACH p = method.parameters %]
       [% name  = p.exists("name") ? p.name : "" %]
-      [% param = p.type _ " " _ name IF name %]
+      [% param = p.type _ " " _ name %]
       [% display_params.push(param) %]
     [% END %]
-# [% IF method.static %]static[% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
+# [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
   [% END %]
 [% END %]

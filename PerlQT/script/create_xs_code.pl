@@ -27,7 +27,7 @@ Create <module>.xs accordingly to
 
 sub usage {
     print STDERR << "EOU";
-usage: $0 <module.xs> <module>.*
+usage: $0 -template <template_dir> -typemap <typemap> -packagemap <packagemap> <module>.* <module.xs>
 EOU
     exit 1;
 }
@@ -42,11 +42,13 @@ sub load_yaml {
 }
 
 sub main {
-    my $template_dir = '';
-    my $typemap_file = '';
+    my $template_dir    = '';
+    my $typemap_file    = '';
+    my $packagemap_file = '';
     GetOptions(
-        't=s' => \$template_dir, 
-        'm=s' => \$typemap_file, 
+        'template=s'   => \$template_dir, 
+        'typemap=s'    => \$typemap_file, 
+        'packagemap=s' => \$packagemap_file, 
     );
     usage() unless @ARGV >= 2;
     
@@ -64,6 +66,8 @@ sub main {
     my $typedef = exists $f{typemap} ? load_yaml($f{typemap}) : {};
     # global typemap
     my $typemap = load_yaml($typemap_file);
+    # global packagemap
+    my $packagemap = load_yaml($packagemap_file);
     my $subst_with_fullname = sub {
         my ( $type, ) = @_;
         
@@ -104,14 +108,13 @@ sub main {
     });
     my $out = '';
     my $var = {
-        my_cclass  => $meta->{NAME}, 
-        my_type    => $meta->{type}, 
-        my_module  => $meta->{MODULE}, 
-        my_package => ( exists $meta->{PERL_NAME} ? 
-          join('::', $meta->{MODULE},$meta->{PERL_NAME}) :
-            $meta->{MODULE} ), 
-        my_method  => $public_by_name, 
-        my_typemap => $typemap, 
+        my_cclass     => $meta->{NAME}, 
+        my_type       => $meta->{type}, 
+        my_module     => $meta->{MODULE}, 
+        my_package    => $packagemap->{$meta->{NAME}}, 
+        my_method     => $public_by_name, 
+        my_typemap    => $typemap, 
+        my_packagemap => $packagemap, 
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";

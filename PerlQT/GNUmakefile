@@ -86,6 +86,7 @@ CMD_XSCODE_MK      := $(SCRIPT_DIR)/gen_xscode_mk.pl
 CMD_CREAT_TP       := $(SCRIPT_DIR)/create_typemap.pl
 CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl 
 CMD_TYPEMAP        := $(SCRIPT_DIR)/finalize_typemap.pl 
+CMD_PKGMAP         := $(SCRIPT_DIR)/create_packagemap.pl
 CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
@@ -128,6 +129,7 @@ TYPEMAP_YAMLS   := $(empty)$(empty)
 TYPEMAP_LIST    := $(OUT_TYPEMAP_DIR)/typemap_list
 TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
 TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
+PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
 
 #################### SUBROUTINES ###############################
 
@@ -209,7 +211,7 @@ $(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
                      $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
-        $(OUT_TYPEMAP_DIR) $(XSCODE_DOT_MK)
+        $(OUT_TYPEMAP_DIR) $@
 
 # generate xs && pm code
 # GROUP_YAMLS from grouplist.mk
@@ -260,6 +262,11 @@ $(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 
+$(PACKAGEMAP): $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
+	$(_Q)echo generating $@
+	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
+	$(_Q)$(CMD_PKGMAP) $(OUT_GROUP_DIR) $@
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk :
@@ -309,15 +316,21 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-gen_typemap  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
-clean_typemap: 
+gen_typemap     : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
+clean_typemap   : 
 	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
 .PHONY: gen_typemap clean_typemap
 
+gen_packagemap  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) \
+                  $(PACKAGEMAP)
+clean_packagemap: 
+	$(_Q)$(call _remove_file,$(PACKAGEMAP))
+.PHONY: gen_packagemap clean_packagemap
+
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode_dot_mk   : gen_typemap $(XSCODE_DOT_MK)
+gen_xscode_dot_mk   : gen_typemap gen_packagemap $(XSCODE_DOT_MK)
 clean_xscode_dot_mk : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode_dot_mk clean_xscode_dot_mk
