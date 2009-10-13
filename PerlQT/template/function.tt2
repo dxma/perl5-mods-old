@@ -1,4 +1,4 @@
-[% BLOCK print_c_prototypes %]
+[% BLOCK echo_func_proto %]
   [% FOREACH method = methods %]
     [% display_params = [] %]
     [% FOREACH p = method.parameters %]
@@ -7,5 +7,30 @@
       [% display_params.push(param) %]
     [% END %]
 # [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
+  [% END %]
+[% END %]
+
+[% BLOCK make_param_xscode %]
+  [% FOREACH i = method.parameters %]
+    [% IF my_packagemap.exists(p.type) %]
+    [% END %]
+  [% END %]
+[% END %]
+
+[% BLOCK make_func_xscode %]
+void
+[%+ my_package %]::[% method_name %](...)
+PREINIT:
+PPCODE:
+  [% IF methods.size > 1 %]
+    switch(items) {
+    [% FOREACH method = methods %]
+      [% INCLUDE make_param_xscode method = methods.last %]
+    [% END %]
+    default:
+        croak("wrong number of arguments");
+    }
+  [% ELSE %]
+    [% INCLUDE make_param_xscode method = methods.last %]
   [% END %]
 [% END %]

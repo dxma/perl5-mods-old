@@ -8,10 +8,11 @@
 [% constructors = my_method.$my_cclass %]
 [% my_method.delete(my_cclass, '~' _ my_cclass) %]
 
-[% INCLUDE print_c_prototypes method_name = my_cclass, methods = constructors %]
+[% INCLUDE echo_func_proto method_name = my_cclass, methods = constructors %]
 
 [% FOREACH name = my_method.keys.sort %]
   [% entries = my_method.$name %]
-  [% INCLUDE print_c_prototypes method_name = name, methods = entries %]
+  [% INCLUDE echo_func_proto method_name = name, methods = entries %]
+  [% INCLUDE make_func_xscode method_name = name, methods = entries %]
 [% END %]
 

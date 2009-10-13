@@ -85,13 +85,15 @@ sub main {
         # convert relevant field key to lowcase
         # no conflict with template commands
         my $name         = delete $i->{NAME};
-        $i->{parameters} = delete $i->{PARAMETER};
+        $i->{parameters} = exists $i->{PARAMETER} ? 
+          delete $i->{PARAMETER} : [];
         $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
         # substitude with full typename for entries in typemap
         $i->{return} = $subst_with_fullname->($i->{return}) 
           if exists $i->{return};
-        foreach my $p (@{$i->{parameters}}) {
-            $p->{name} = delete $p->{NAME} if exists $p->{NAME};
+        for (my $j = 0; $j < @{$i->{parameters}}; $j++) {
+            my $p = $i->{parameters}->[$j];
+            $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
             $p->{type} = delete $p->{TYPE};
             $p->{type} = $subst_with_fullname->($p->{type});
         }
