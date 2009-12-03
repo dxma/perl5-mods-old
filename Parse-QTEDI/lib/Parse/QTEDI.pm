@@ -13,7 +13,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML::Syck ();
 
-$VERSION = '0.16';
+$VERSION = '0.17';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -179,13 +179,14 @@ namespace:
   { foreach my $a (@{$item[4]}) { push @{$return->{body}}, @$a }    }
   { print STDERR "namespace: ", $item[2], "\n" if $::RD_DEBUG }
 class    : 
-  keyword_class class_name class_inheritance class_body variables ';'
+  keyword_class class_name class_inheritance class_body class_attribute variables ';'
   { 
     $return = { type => $item[1][0], name => $item[2] };
     $return->{property} = $item[1][1] if @{$item[1][1]};
     $return->{inheritance} = $item[3] if $item[3];
     $return->{body} = $item[4] if $item[4];
-    $return->{variable} = $item[5] if $item[5];
+    $return->{attribute} = $item[5] if $item[5];
+    $return->{variable} = $item[6] if $item[6];
     unless($item[4]) { 
         # no class body, possibly inside typedef or forward decl
         # split variables from enum_name
@@ -390,10 +391,10 @@ function_header_next_token :
 # function parameter process
 # parse parameters and simply consume __attribute__ 
 function_header_block : 
-  (   'const'
+  (   /const\b/o
       { 
         #print STDERR "const\n";
-        $return = { _subtype => 3, _value => $item[1] };
+        $return = { _subtype => 3, _value => 'const' };
       }
     | function_header_next_token 
       { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
@@ -688,6 +689,8 @@ kde_accessibility_content:
   'k_dcop' 
 class_accessibility_content : 
   'public' | 'private' | 'protected' 
+class_attribute: 
+  /__attribute__\s*\(\((.+?)\)\)/io { $return = $1 } | { $return = '' }
 
 #namespace related
 namespace_name : 
