@@ -36,9 +36,9 @@ is($i->version(), "Version2") 									or
 	diag("method version() failed");
 cmp_ok($i->layer(), "==", 3) 									or 
 	diag("method layer() failed");
-is($i->channelMode(), "Stereo") 								or 
+is($i->channelMode(), "JointStereo") 								or 
 	diag("method channelMode() failed");
 ok(not $i->isCopyrighted()) 									or 
 	diag("method isCopyrighted() failed");
-ok(not $i->isOriginal()) 										or 
+ok($i->isOriginal()) 										or 
 	diag("method isOriginal() failed");
