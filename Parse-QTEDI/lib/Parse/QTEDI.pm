@@ -13,7 +13,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML::Syck ();
 
-$VERSION = '0.17';
+$VERSION = '0.18';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -301,8 +301,10 @@ next_begin_or_end_bracket :
   /(?>[^\(\)]+)/sio   { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_bracket_or_brace_or_semicolon : 
   /(?>[^\(\)\{\}\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
-next_bracket_or_square_bracket_or_brace_or_semicolon : 
-  /(?>[^\(\)\{\}\[\]\;]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
+next_bracket_or_brace_or_semicolon_or_equal : 
+  /(?>[^\(\)\{\}\;\=]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
+next_bracket_or_square_bracket_or_brace_or_semicolon_or_equal : 
+  /(?>[^\(\)\{\}\[\]\;\=]+)/sio { ( $return = $item[1] ) =~ s/\n/ /go } 
 next_semicolon : 
   /(?>[^\;]+)/sio     { ( $return = $item[1] ) =~ s/\n/ /go }
 next_begin_brace_or_colon_or_semicolon : 
@@ -333,21 +335,25 @@ balanced_angle_bracket :
 # array declaration should be handled carefully
 # FIXME: __attribute__()
 expression_next_token : 
-    next_bracket_or_square_bracket_or_brace_or_semicolon 
+    next_bracket_or_square_bracket_or_brace_or_semicolon_or_equal 
     { $return = $item[1] }
   | { $return = ''       } 
 array_dimention_next_token : 
     next_square_bracket { $return = $item[1] } 
   | { $return = ''       } 
 expression_body : 
-  expression_next_token array_dimention(s?) expression_value(?) 
-  { $return = join(" ", $item[1], @{$item[2]}) } 
+  expression_next_token 
+  { $item[1] =~ m/\boperator\W?$/o ? undef : 1 } 
+  array_dimention(s?) 
+  expression_value(?) 
+  { $return = join(" ", $item[1], @{$item[3]}, $item[4]) } 
 array_dimention : 
   '[' (   next_square_bracket { $return = $item[1] } 
         | { $return = '' } ) ']' 
   { $return = join(" ", @item[1 .. 3]) } 
 expression_value: 
   '=' ( '{' balanced_brace(s) '}' | next_semicolon ) 
+  { $return = '= '. $item[2] }
 # variable related
 variables : next_semicolon { $return = $item[1] } | { $return = '' } 
 
@@ -378,15 +384,9 @@ function_header       :
       } 
     } 
 function_header_next_token : 
-  next_bracket_or_brace_or_semicolon 
+  next_bracket_or_brace_or_semicolon_or_equal 
     { $return = $item[1] } 
   | { $return = ''       } 
-# old backup 
-#function_header_block_old_unused : 
-#  function_header_next_token '(' function_header_loop(s?) ')' 
-#    { $return = join("", $item[1], $item[2], @{$item[3]}, $item[4]) }
-#  | function_macro_99(s?) 
-#    { $return = join("", @{$item[1]}) } 
 
 # function parameter process
 # parse parameters and simply consume __attribute__ 
@@ -410,15 +410,15 @@ function_header_block :
       function_header_loop(s) 
       { $return = { _subtype => 0 } } 
     | function_header_next_token 
-      { $item[1] =~ m/operator$/o ? 1 : undef } 
-      '(' ')' 
+      { $item[1] =~ m/\boperator\b/o ? 1 : undef } 
+      ( '(' ')' { $return = '()' } | next_begin_bracket { $return = $item[1] } )
       '(' 
       ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
       ')' 
       { 
         #print STDERR "operator\n";
-        $return = { _subtype => 2, _name => $item[1].'()', }; 
-        $return->{_value} = $item[6];
+        $return = { _subtype => 2, _name => $item[1].$item[3], }; 
+        $return->{_value} = $item[5];
       } 
     | function_header_next_token 
       { $item[1] =~ m/^\s*throw\s+$/o ? 1 : undef } 
@@ -486,6 +486,8 @@ function_parameter_declaration            :
         { $return = { subtype => 'fpointer', value => $item[1] }; } 
       | function_parameter_template_type 
         { $return = { subtype => 'template', value => $item[1] }; } 
+      | function_parameter_array_pointer 
+        { $return = { subtype => 'apointer', value => $item[1] }; }
       | { $return = { subtype => 'simple' }; } 
     ) 
     { 
@@ -498,8 +500,17 @@ function_parameter_declaration            :
           $return = $item[2]->{value};
           $return->{return}  = $item[1];
           $return->{subtype} = 'fpointer'; 
-      } 
+      } elsif ($item[2]->{subtype} eq 'apointer') {
+          $return = $item[2]->{value};
+          $return->{type} = $item[1]. $return->{type};
+          $return->{subtype} = 'apointer';
+      }
     } 
+
+function_parameter_array_pointer : 
+  '(' '&' function_parameter_declaration_next_token ')' 
+  '[' /(?>[^\]]+)/iso ']' 
+  { $return = { type => join("", @item[1,2,4..7]), name => $item[3] } }
 
 function_parameter_template_type_next_token : 
     /(?>[^\<\>]+)/iso { ( $return = $item[1] ) =~ s/\n/ /go } 

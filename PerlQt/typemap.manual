@@ -40,3 +40,21 @@ QUintForType<void *>::Type		T_IUV
 
 # Qt 4.5.0
 QOCIResult::ValueCache			T_CLASS
+
+# Qt 4.6.2
+QGLFramebufferObjectFormat::GLenum	T_ENUM
+NativeWindowType			T_PTR
+NativePixmapType			T_PTR
+QGenericMatrix				T_CLASS
+QGraphicsWidget::GraphicsItemChange	T_ENUM
+QBrush::QScopedPointer			T_CLASS
+QIntegerForSizeof<void*>::Unsigned	T_UV
+QGLFramebufferObject::GLbitfield	T_UV
+QPicture::QExplicitlySharedDataPointer	T_CLASS
+QGLShader::GLuint			T_UV
+QGLShaderProgram::GLuint		T_UV
+QGLShaderProgram::GLfloat		T_FLOAT
+QGLShaderProgram::GLint			T_IV
+QDragMoveEvent::Type			T_CLASS
+QDropEvent::Type			T_CLASS
+QWSClient::QWS_SOCK_BASE		T_CLASS
