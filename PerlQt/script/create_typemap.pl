@@ -44,7 +44,7 @@ EOU
 our $AUTOLOAD;
 our $TYPE;
 
-our $NAMESPACE_DELIMITER = '__';
+our $NAMESPACE_DELIMITER = '___';
 our $DEFAULT_NAMESPACE   = '';
 # the namespace in which the type is involved
 our $CURRENT_NAMESPACE   = '';
@@ -832,7 +832,8 @@ sub AUTOLOAD {
             }
             else {
                 $entry->{c_type} = $type_full;
-                $entry->{t_type} = uc($type_full);
+                ( my $t_type = $type_full ) =~ s/::/__/go;
+                $entry->{t_type} = uc($t_type);
                 if ($namespace_key ne $DEFAULT_NAMESPACE and 
                       $type_full !~ m/\:\:/io) {
                     # located local type $type in namespace typedef
@@ -892,12 +893,14 @@ sub AUTOLOAD {
           exists $GLOBAL_TYPEMAP{$type_full} ?
             $GLOBAL_TYPEMAP{$type_full} : $SIMPLE_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
     }
     elsif (exists $MANUAL_TYPEMAP{$type_full}) {
         $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
         #$TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
     }
     elsif (exists $MANUAL_TYPEMAP{
@@ -907,7 +910,8 @@ sub AUTOLOAD {
         $type_full = join("::", $namespace, $type_full);
         $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
         $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
     }
     else {
