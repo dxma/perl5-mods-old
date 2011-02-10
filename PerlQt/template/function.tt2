@@ -11,9 +11,22 @@
 [% END %]
 
 [% BLOCK make_param_xscode %]
-  [% FOREACH i = method.parameters %]
-    [% IF my_packagemap.exists(p.type) %]
-    [% END %]
+  [% FOREACH p = method.parameters %]
+    [% s_item = 'ST(' _ loop.count _ ')' %]
+    [% c_type = p.type %]
+    [% p_type = my_typemap.$c_type %]
+# var = [% p.name %]
+# arg = [% s_item %]
+# type= [% p.type %]
+#ptype= [% p_type %]
+#ntype= [% my_packagemap.$c_type %]
+    [%+ INCLUDE marshal_in 
+      var   = p.name, 
+      arg   = s_item, 
+      type  = p.type, 
+      ptype = p_type, 
+      ntype = my_packagemap.$c_type
+     %]
   [% END %]
 [% END %]
 
@@ -21,16 +34,31 @@
 void
 [%+ my_package %]::[% method_name %](...)
 PREINIT:
+[% IF method_name == 'new' %]
+[%+ my_cclass %] *ret;
+[% END %]
 PPCODE:
-  [% IF methods.size > 1 %]
+    [% IF methods.size > 1 %]
     switch(items) {
-    [% FOREACH method = methods %]
-      [% INCLUDE make_param_xscode method = methods.last %]
-    [% END %]
+      [% FOREACH method = methods %]
+    case [% method.parameters.size %]:
+        [%+ INCLUDE make_param_xscode %]
+      [% END %]
     default:
-        croak("wrong number of arguments");
+        Perl_croak(aTHX_ "wrong number/type of arguments passed in");
     }
-  [% ELSE %]
-    [% INCLUDE make_param_xscode method = methods.last %]
-  [% END %]
+    [% ELSE %]
+      [% INCLUDE make_param_xscode method = methods.last %]
+      [% IF method_name == 'new' %]
+    ret = new [% my_cclass %]();
+    [%+ INCLUDE marshal_out
+      var   = 'ret',
+      arg   = 'ST(0)',
+      ntype = my_package,
+      ptype = 'T_PTROBJ'
+    %]
+    sv_2mortal(ST(0));
+    XSRETURN(1);
+      [% END %]
+    [% END %]
 [% END %]
