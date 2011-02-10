@@ -45,14 +45,15 @@ sub main {
     my $template_dir    = '';
     my $typemap_file    = '';
     my $packagemap_file = '';
+    my $xs_file         = '';
     GetOptions(
         'template=s'   => \$template_dir, 
         'typemap=s'    => \$typemap_file, 
         'packagemap=s' => \$packagemap_file, 
+        'o|outoput=s'  => \$xs_file, 
     );
-    usage() unless @ARGV >= 2;
+    usage() unless @ARGV >= 1;
     
-    my $xs_file = shift @ARGV;
     my %f  = map { (split /\./)[-1] => $_ } @ARGV;
     
     # open source files
@@ -80,7 +81,7 @@ sub main {
     };
     
     # loop into each public method, group by name
-    my $public_by_name = {};
+    my $pub_method_by_name = {};
     foreach my $i (@$publics) {
         # convert relevant field key to lowcase
         # no conflict with template commands
@@ -97,7 +98,7 @@ sub main {
             $p->{type} = delete $p->{TYPE};
             $p->{type} = $subst_with_fullname->($p->{type});
         }
-        push @{$public_by_name->{$name}}, $i;
+        push @{$pub_method_by_name->{$name}}, $i;
     }
     
     # generate xs file from template
@@ -105,7 +106,8 @@ sub main {
         INCLUDE_PATH => $template_dir, 
         INTERPOLATE  => 0, 
         PRE_CHOMP    => 1, 
-        PRE_PROCESS  => 'header.tt2', 
+        POST_CHOMP   => 0, 
+        TRIM         => 1,
         EVAL_PERL    => 1, 
     });
     my $out = '';
@@ -114,7 +116,7 @@ sub main {
         my_type       => $meta->{type}, 
         my_module     => $meta->{MODULE}, 
         my_package    => $packagemap->{$meta->{NAME}}, 
-        my_method     => $public_by_name, 
+        my_method     => $pub_method_by_name, 
         my_typemap    => $typemap, 
         my_packagemap => $packagemap, 
     };

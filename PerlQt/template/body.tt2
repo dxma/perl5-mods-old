@@ -1,18 +1,44 @@
-[% PROCESS function.tt2 %]
+[% INCLUDE header.tt2 %]
 ################################################################
 #### 
 #### PUBLIC MEMBER FUNCTIONS
 #### 
 ################################################################
 
+[% PROCESS typemap.tt2  %]
+[% PROCESS function.tt2 %]
+
 [% constructors = my_method.$my_cclass %]
 [% my_method.delete(my_cclass, '~' _ my_cclass) %]
+[% INCLUDE echo_func_proto 
+  method_name = my_cclass, 
+  methods     = constructors 
+%]
 
-[% INCLUDE echo_func_proto method_name = my_cclass, methods = constructors %]
+[% INCLUDE make_func_xscode 
+  method_name = 'new', 
+  methods     = constructors
+%]
+
+void
+[%+ my_package %]::DESTROY()
+CODE:
+    if(THIS != 0 && !SvREADONLY(SvRV(ST(0))))
+        delete THIS;
+
 
 [% FOREACH name = my_method.keys.sort %]
   [% entries = my_method.$name %]
-  [% INCLUDE echo_func_proto method_name = name, methods = entries %]
-  [% INCLUDE make_func_xscode method_name = name, methods = entries %]
+  [% INCLUDE echo_func_proto 
+    method_name = name, 
+    methods     = entries 
+  %]
+
+  [% INCLUDE make_func_xscode 
+    method_name = name, 
+    methods     = entries 
+  %]
+
+
 [% END %]
 
