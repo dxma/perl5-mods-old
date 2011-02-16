@@ -759,7 +759,7 @@ sub __format_function {
         # store param unit
         my $p = { TYPE => $ptype };
         $p->{NAME} = $pname if $pname;
-        $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value;
+        $p->{DEFAULT_VALUE} = $pdefault_value if $pdefault_value ne '';
         if ($psubtype eq 'fpointer') {
             # attach FPOINTERINFO for function pointer
             $p->{FPOINTERINFO} = $fpinfo;

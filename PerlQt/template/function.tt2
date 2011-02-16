@@ -1,32 +1,71 @@
+[% BLOCK get_pn_type %]
+  [% p_type = my_typemap.$c_type %]
+  [% c_type2 = c_type.remove('\s+(?:\*|\&)$').remove('^const\s+') %]
+  [% n_type = p_type.search('^T_(?:PTR|REF)OBJ$') ? c_type2 : c_type %]
+[% END %]
+
 [% BLOCK echo_func_proto %]
   [% FOREACH method = methods %]
     [% display_params = [] %]
     [% FOREACH p = method.parameters %]
-      [% name  = p.exists("name") ? p.name : "" %]
-      [% param = p.type _ " " _ name %]
-      [% display_params.push(param) %]
+      [% name  = p.exists('name') ? p.name : '' %]
+      [% param = p.type _ ' ' _ name %]
+      [% value = p.exists('default') ? ' = ' _ p.default : '' %]
+      [% display_params.push(param _ value ) %]
     [% END %]
-# [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
+# [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(', ') %])
   [% END %]
 [% END %]
 
-[% BLOCK make_param_xscode %]
+[% BLOCK make_param_ppcode %]
   [% FOREACH p = method.parameters %]
+    [% NEXT IF p.exists('default') %]
     [% s_item = 'ST(' _ loop.count _ ')' %]
-    [% c_type = p.type %]
-    [% p_type = my_typemap.$c_type %]
-# var = [% p.name %]
-# arg = [% s_item %]
-# type= [% p.type %]
-#ptype= [% p_type %]
-#ntype= [% my_packagemap.$c_type %]
+    [% PROCESS get_pn_type c_type = p.type %]
     [%+ INCLUDE marshal_in 
-      var   = p.name, 
+      var   = 'arg' _ mindex _ loop.index, 
       arg   = s_item, 
       type  = p.type, 
       ptype = p_type, 
-      ntype = my_packagemap.$c_type
+      ntype = my_packagemap.$n_type
      %]
+  [% END %]
+[% END %]
+
+[% BLOCK make_func_ppcode %]
+  [% IF method.parameters.size > 0 %]
+    [%+ INCLUDE make_param_ppcode %]
+  [% END %]
+  [% params = [] %]
+  [% FOREACH param = method.parameters %]
+    [% params.push('arg' _ mindex _ loop.index) %]
+  [% END %]
+  [% IF method_name == 'new' %]
+    ret = new [% my_cclass %]([% params.join(', ') %]);
+    [%+ INCLUDE marshal_out
+      var   = 'ret',
+      arg   = 'ST(0)',
+      ptype = 'T_PTROBJ'
+      ntype = my_package,
+    %]
+    sv_2mortal(ST(0));
+    XSRETURN(1);
+  [% ELSE %]
+    [% IF method.return != 'void' %]
+    ret = THIS->[% method_name %]([% params.join(', ') %]);
+      [% PROCESS get_pn_type c_type = method.return %]
+    [%+ INCLUDE marshal_out
+      var   = 'ret',
+      arg   = 'ST(0)',
+      ptype = p_type
+      ntype = my_packagemap.$n_type
+    %]
+    sv_2mortal(ST(0));
+    XSRETURN(1);
+    [% ELSE %]
+    (void)THIS->[% method_name %]([% params.join(', ') %]);
+    XSRETURN(0);
+    [% END %]
   [% END %]
 [% END %]
 
@@ -37,28 +76,38 @@ PREINIT:
 [% IF method_name == 'new' %]
 [%+ my_cclass %] *ret;
 [% END %]
+[% FOREACH method = methods %]
+  [% mindex = loop.index %]
+  [% FOREACH param = method.parameters %]
+[%+ param.type %] arg[% mindex %][% loop.index %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+  [% END %]
+  [% IF loop.index == 0 and method.exists('return') and method.return != 'void' %]
+[%+ method.return %] ret;
+  [% END %]
+[% END %]
 PPCODE:
+    // body begin
     [% IF methods.size > 1 %]
     switch(items) {
       [% FOREACH method = methods %]
-    case [% method.parameters.size %]:
-        [%+ INCLUDE make_param_xscode %]
+        [% param_number_without_default = 0 %]
+        [% FOREACH param = method.parameters %]
+          [% IF not param.exists('default') %]
+	    [% param_number_without_default = param_number_without_default + 1 %]
+	  [% END %]
+	[% END %]
+    case [% param_number_without_default %]:
+        [%+ INCLUDE make_func_ppcode
+	  mindex = loop.index
+	%]
       [% END %]
     default:
         Perl_croak(aTHX_ "wrong number/type of arguments passed in");
     }
     [% ELSE %]
-      [% INCLUDE make_param_xscode method = methods.last %]
-      [% IF method_name == 'new' %]
-    ret = new [% my_cclass %]();
-    [%+ INCLUDE marshal_out
-      var   = 'ret',
-      arg   = 'ST(0)',
-      ntype = my_package,
-      ptype = 'T_PTROBJ'
+    [%+ INCLUDE make_func_ppcode
+      method = methods.last,
+      mindex = 0
     %]
-    sv_2mortal(ST(0));
-    XSRETURN(1);
-      [% END %]
     [% END %]
 [% END %]

@@ -1,0 +1,1 @@
+#include [% my_module.remove('::') %]/[% my_cclass %]

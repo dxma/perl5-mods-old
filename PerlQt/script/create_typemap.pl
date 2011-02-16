@@ -585,7 +585,13 @@ sub main {
             }
         }
     }
-    
+    # add all existing classes
+    foreach my $k (keys %META_DICTIONARY) {
+        my $meta = $META_DICTIONARY{$k};
+        if ($meta->{TYPE} eq 'class') {
+            $TYPE_KNOWN{$meta->{NAME}} = 'T_CLASS';
+        }
+    }
     # write typemap list
     my $hcont_typemap_list = Dump(\%TYPE_KNOWN);
     if (defined $out_list) {
@@ -929,7 +935,7 @@ sub AUTOLOAD {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
