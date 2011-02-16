@@ -17,14 +17,15 @@ sub __get_custom_module_name {
     
     require File::Spec;
     my $name = (File::Spec::->splitdir($path))[-2];
-    return($module, $name);
+    $name =~ s/^Qt//o;
+    return($name, $module);
 }
 
 1;
 
 =head1 AUTHOR
 
-Copyright (C) 2007 - 2009 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

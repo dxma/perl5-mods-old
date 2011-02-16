@@ -1,3 +1,5 @@
+[% INCLUDE include.tt2 %]
+
 MODULE = [% my_module %]			PACKAGE = [% my_package %]
 PROTOTYPES: DISABLE
 

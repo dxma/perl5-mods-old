@@ -249,6 +249,13 @@ sub main {
             $typemap->{$ntype} = $type_primitive;
         }
     }
+    # auto map class into class * and class &
+    foreach my $ntype (keys %$typemap) {
+        if ($typemap->{$ntype} eq 'T_OBJECT') {
+            $typemap->{$ntype. ' *'} = 'T_PTROBJ';
+            $typemap->{$ntype. ' &'} = 'T_REFOBJ';
+        }
+    }
     dump_typemap($typemap, $fout);
     return $rc;
 }
@@ -257,7 +264,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2008 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

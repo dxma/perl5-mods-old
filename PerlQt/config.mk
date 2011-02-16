@@ -11,8 +11,9 @@ _HEADER_DIR := /usr/include/qt4
 # QT = QtCore   + QtGui + 
 #      QtOpenGL + QtSvg + QtNetwork + QtSql + QtXml + 
 #      Qt3Support
-_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
-               Qt3Support 
+#_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
+#               Qt3Support 
+_QT         := QtCore
 
 # QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
 _QT_EXTRA   := QtAssistant QtDBus QtUiTools QtDesigner QtTest

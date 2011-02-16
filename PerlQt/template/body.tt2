@@ -1,4 +1,5 @@
 [% INCLUDE header.tt2 %]
+[% USE Dumper(Indent=1) %]
 ################################################################
 #### 
 #### PUBLIC MEMBER FUNCTIONS
@@ -20,6 +21,11 @@
   methods     = constructors
 %]
 
+
+[% INCLUDE echo_func_proto 
+  method_name = '~' _ my_cclass, 
+  methods     = [ {} ]
+%]
 void
 [%+ my_package %]::DESTROY()
 CODE:
