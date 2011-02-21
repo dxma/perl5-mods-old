@@ -13,6 +13,7 @@ unsigned short          T_UV
 char                    T_CHAR
 unsigned char           T_U_CHAR
 char *                  T_PV
+uchar *                 T_PV
 unsigned char *         T_PV
 const char *            T_PV
 caddr_t                 T_PV
@@ -62,27 +63,58 @@ long long		T_IV
 signed long long	T_IV
 unsigned long long	T_UV
 # typedef inside QtCore/qglobal.h
-#qint8			T_IV
-#quint8			T_UV
-#qint16			T_IV
-#quint16			T_UV
-#qint32			T_IV
-#quint32			T_UV
-#qint64			T_IV
-#quint64			T_UV
-#qlonglong		T_IV
-#qulonglong		T_UV
-#qreal			T_DOUBLE
+qint8			T_IV
+qint8 &			T_IV
+qint8 *			T_IV_PTR
+quint8			T_UV
+quint8 &		T_UV
+quint8 *		T_UV_PTR
+qint16			T_IV
+qint16 &		T_IV
+qint16 *		T_IV_PTR
+quint16			T_UV
+quint16 &		T_UV
+quint16 *		T_UV_PTR
+qint32			T_IV
+qint32 &		T_IV
+qint32 *		T_IV_PTR
+quint32			T_UV
+quint32 &		T_UV
+quint32 *		T_UV_PTR
+qint64			T_IV
+qint64 &		T_IV
+qint64 *		T_IV_PTR
+quint64			T_UV
+quint64 &		T_UV
+quint64 *		T_UV_PTR
+qlonglong		T_IV
+qlonglong &		T_IV
+qlonglong *		T_IV_PTR
+qulonglong		T_UV
+qulonglong &		T_UV
+qulonglong *		T_UV_PTR
+qreal			T_DOUBLE
+qreal &			T_DOUBLE
+qreal *			T_DOUBLE_PTR
 #qreal			T_FLOAT
 signed char		T_CHAR
 signed int		T_IV
 signed short		T_IV
 signed long		T_IV
 uint			T_UV
+uint &			T_UV
+uint *			T_UV_PTR
 ushort			T_UV
+ushort &		T_UV
+ushort *		T_UV_PTR
 ulong			T_UV
+ulong &			T_UV
+ulong *			T_UV_PTR
 
 uchar			T_U_CHAR
+const uchar *		T_PV
+const uint *		T_IV_PTR
+const ushort *		T_UV_PTR
 # va_list could be either char* or void*
 #va_list			T_PV
 va_list			T_PTR

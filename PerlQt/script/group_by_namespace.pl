@@ -15,6 +15,8 @@ use File::Spec ();
 use FindBin    ();
 use YAML::Syck;
 
+my $filename;
+
 =head1 DESCIPTION
 
 Group formatted QTEDI production by namespace.
@@ -520,6 +522,7 @@ sub __process_class_or_struct {
             # make sure not an anymous struct/class variable like
             # struct { int i; } d;
             my $entry_to_create = {};
+            $entry_to_create->{FILE} = $filename;
             # keep PROPERTY for future reference
             $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
               exists $entry->{PROPERTY};
@@ -727,7 +730,7 @@ B<NOTE>: Function PROPERTY field is stripped in this phase.
 =cut
 
 sub _process {
-    my ( $list, $root_dir ) = @_;
+    my ( $list, $root_dir, ) = @_;
     
     # internal stacks
     # namespace stack
@@ -770,6 +773,8 @@ sub main {
     my $cont = do { local $/; <HEADER>; };
     close HEADER;
     my ( $entries ) = Load($cont);
+    $filename = (split /\//, $in)[-1];
+    $filename =~ s/\.yml$//o;
     _process($entries, $out);
     
     exit 0;
@@ -779,7 +784,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

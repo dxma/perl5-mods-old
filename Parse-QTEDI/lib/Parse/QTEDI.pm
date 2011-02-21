@@ -13,7 +13,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML::Syck ();
 
-$VERSION = '0.18';
+$VERSION = '0.19';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
@@ -223,7 +223,9 @@ qt_macro_2 :
   'Q_DECLARE_MUTABLE_SEQUENTIAL_ITERATOR' | 
   'Q_DUMMY_COMPARISON_OPERATOR' 
 qt_macro_3 : 
-  'Q_PRIVATE_SLOT' | 'Q_PROPERTY'
+  'Q_PRIVATE_SLOT' | 'Q_PROPERTY' 
+qt_macro_10: 
+ 'Q_INVOKABLE' 
 qt_macro_99: 
   'Q_REQUIRED_RESULT' 
 qt_macro : 
@@ -363,10 +365,10 @@ variables : next_semicolon { $return = $item[1] } | { $return = '' }
 function_header       : 
     (   keyword_comment | keyword_class | keyword_enum 
       | keyword_typedef ) <commit> <reject>
-  | function_header_block(s) 
+  | ( qt_macro_10 | ) function_header_block(s) 
     { 
       $return->{name} = ''; 
-      foreach my $i (@{$item[1]}) { 
+      foreach my $i (@{$item[2]}) { 
           if ($i->{_subtype} == 1) { 
               # attribute
               # stripped currently
