@@ -66,6 +66,8 @@ sub main {
     # class name, mod name, class hierarchy
     croak "no meta file found for $xs_file" unless $f{meta};
     my $meta    = load_yaml($f{meta});
+    exit 0 if $meta->{TYPE} ne 'class';
+    
     # public methods
     #carp "no public file found for $xs_file" unless grep { /public$/ } keys %f;
     my $publics = [];
@@ -98,14 +100,8 @@ sub main {
     # add hidden typemap (for function pointer and enum)
     # in class typedef file
     foreach my $t (keys %$typedef) {
-        next if $t =~ /^T_/o;
-        if ($typedef->{$t} =~ /^T_/o) {
-            if ($typedef->{$t} =~ /^T_FPOINTER/) {
-                $typemap->{$t} = 'T_FPOINTER';
-            }
-            else {
-                $typemap->{$t} = $typedef->{$t};
-            }
+        if ($t =~ /^T_FPOINTER/) {
+            $typemap->{$t} = 'T_FPOINTER';
         }
     }
     # global packagemap
@@ -113,18 +109,35 @@ sub main {
     my $subst_with_fullname = sub {
         my ( $type, ) = @_;
         
-        foreach my $k (keys %$localtype) {
-            $type =~ s/(?<!\:)\b\Q$k\E/$localtype->{$k}/e;
+        # translate local typedef to full class name
+        if (exists $localtype->{$type}) {
+            $type = $localtype->{$type};
         }
+        # foreach my $k (keys %$localtype) {
+        #     $type =~ s/(?<!\:)\b\Q$k\E\b/$localtype->{$k}/e;
+        # }
+        # foreach my $t (keys %$typedef) {
+        #     next if $t =~ /^T_/o;
+        #     if ($typedef->{$t} !~ /^T_/o) {
+        #         $type =~ s/(?<!\:)\b\Q$t\E\b/$typedef->{$t}/e;
+        #     }
+        #     $type =~ s/(?<!\:)\b\Q$t\E\b/$meta->{NAME}. '::'. $t/e;
+        # }
         return $type;
     };
     
     # loop into each public method, group by name
     my $pub_method_by_name = {};
+    METHOD_LOOP:
     foreach my $i (@$publics) {
         # convert relevant field key to lowcase
         # no conflict with template commands
         my $name         = delete $i->{NAME};
+        if ($i->{operator} and $name =~ /^operator\s+(.+)$/o) {
+            # operator int => operator_int
+            $i->{return} = $1;
+            $name =~ s/\s+/_/go;
+        }
         $i->{parameters} = exists $i->{PARAMETER} ? 
           delete $i->{PARAMETER} : [];
         $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
@@ -133,16 +146,32 @@ sub main {
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
             # FIXME: skip template class for now
-            next if $i->{return} =~ /</io;
+            next METHOD_LOOP if $i->{return} =~ /</io;
         }
-        for (my $j = 0; $j < @{$i->{parameters}}; $j++) {
+        my $param_num = @{$i->{parameters}};
+        # handle foo(void)
+        if ($param_num == 1 and $i->{parameters}->[0]->{TYPE} eq 'void') {
+            splice @{$i->{parameters}}, 0, 1;
+        }
+        PARAM_LOOP:
+        for (my $j = 0; $j < $param_num; $j++) {
             my $p = $i->{parameters}->[$j];
             $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
             $p->{type} = delete $p->{TYPE};
             $p->{type} = $subst_with_fullname->($p->{type});
             $p->{default} = delete $p->{DEFAULT_VALUE} if exists $p->{DEFAULT_VALUE};
             # FIXME: skip template class for now
-            next if $p->{type} =~ /</io;
+            next METHOD_LOOP if $p->{type} =~ /</io;
+            # transform sprintf(format,...) to sprintf(char *)
+            # the implementation will be:
+            # 1) in perl code, call perl's sprintf
+            # 2) return SvPV to XS code
+            if ($p->{type} eq '...' and $param_num == 2) {
+                splice @{$i->{parameters}}, 0, $param_num, {
+                    name => 'string',
+                    type => 'char *',
+                };
+            }
         }
         push @{$pub_method_by_name->{$name}}, $i;
     }
@@ -222,13 +251,14 @@ sub main {
         my_type       => $meta->{type}, 
         my_module     => $meta->{MODULE}, 
         my_package    => $packagemap->{$meta->{NAME}}, 
+	my_file       => $meta->{FILE},
         my_method     => $pub_method_by_name, 
         my_typemap    => $typemap, 
         my_packagemap => $packagemap, 
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";
-    print STDERR $out, "\n";
+    print $out, "\n";
     
     exit 0;
 }

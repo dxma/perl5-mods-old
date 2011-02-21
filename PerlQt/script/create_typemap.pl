@@ -107,7 +107,10 @@ sub PTR {
     if (exists $entry->{type}) {
         # take existing type value
         # '(&|*)*' => 'PTR'
-        # '(&|*)&' => 'REF'
+        # '&&'     => 'REF'
+        # CAUTION:
+        # '*&'     => 'PTR'
+        $entry->{type} = 'PTR' if $entry->{type} eq 'REF';
         $entry->{c_type} = '*'. $entry->{c_type};
     }
     else {
@@ -349,7 +352,8 @@ sub __analyse_type {
         $result->{type}   = $MANUAL_TYPEMAP{$type_full};
         $result->{c_type} = $type_full;
         $result->{t_type} = $result->{type};
-        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        $TYPE_LOCALMAP{$ns}->{$TYPE} = $type_full;
     }
     else {
         #print STDERR "orig  : ", $TYPE, "\n";
@@ -456,13 +460,13 @@ sub main {
             if (m/\.meta$/o) {
                 push @meta, $_;
             }
-            elsif (m/\.(function)\.(?:public|protected)$/o) {
+            elsif (m/\.(function)\.(?:public)$/o) {
                 push @{$member{$1}}, $_;
             } 
             elsif (m/\.(signal)$/o) {
                 push @{$member{$1}}, $_;
             } 
-            elsif (m/\.(slot)\.(?:public|protected)$/o) {
+            elsif (m/\.(slot)\.(?:public)$/o) {
                 push @{$member{$1}}, $_;
             } 
             elsif (m/\.(fpointer)$/o) {
@@ -490,11 +494,19 @@ sub main {
     }
     # pre-cache all type info
     our %TYPE_DICTIONARY;
+    our %TYPE_KNOWN;
     foreach my $f (@typedef) {
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.typedef$//o;
         $n =~ s/\_\_/::/gio;
         $TYPE_DICTIONARY{$n} = __load_yaml($f);
+        # cache anonymous class/enum into known type directly
+        foreach my $c (keys %{$TYPE_DICTIONARY{$n}}) {
+            next if $c =~ /^T_/o;
+            if ($TYPE_DICTIONARY{$n}->{$c} =~ /^T_/o) {
+                $TYPE_KNOWN{$n. '::'. $c} = $TYPE_DICTIONARY{$n}->{$c};
+            }
+        }
     }
     # pre-cache all function info
     my %method = ();
@@ -543,7 +555,7 @@ sub main {
     # in case failed lookup, push it into @TYPE_UNKNOWN
     our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
           %MANUAL_TYPEMAP, 
-          %TYPE_KNOWN, @TYPE_UNKNOWN, %TYPE_LOCALMAP, @TYPE_TEMPLATE, );
+          @TYPE_UNKNOWN, %TYPE_LOCALMAP, @TYPE_TEMPLATE, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
@@ -577,11 +589,16 @@ sub main {
         foreach my $t (@{$type{$n}}) {
             unless (exists $IGNORE_TYPEMAP{$t}) {
                 next TYPE_LOOP if exists $TYPE_KNOWN{$t};
-                #print STDERR "analyse type : $t\n";
                 my $result = __analyse_type($t);
                 $post_patch_type->($result);
                 $TYPE_KNOWN{$result->{c_type}} = $result->{type};
-                #print STDERR "resolved as  : ", $result->{type}, "\n";
+                if ($result->{c_type} ne $t) {
+                    # maybe a typedef or local type without class name
+                    # record it in local map
+                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                    $TYPE_LOCALMAP{$ns}->{$t} = $result->{c_type};
+                }
+                #print STDERR $t, " resolved as  : ", $result->{type}, "\n";
             }
         }
     }
@@ -792,7 +809,7 @@ sub AUTOLOAD {
         else {
             $entry->{type} =
               $TYPE_DICTIONARY{$namespace_key}->{$type};
-            #print STDERR "type: ", $entry->{type}, "\n";
+            #print STDERR "$type: ", $entry->{type}, "\n";
             if ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) { 
                 # not constructed by primitive type and 
                 # property such as: PTR/REF/CONST
@@ -811,8 +828,8 @@ sub AUTOLOAD {
                     for my $k (keys %$result) {
                         $entry->{$k} = $result->{$k};
                     }
-                    #use Data::Dumper ();
-                    #print Data::Dumper::Dumper($result);
+                    #use Data::Dumper;
+                    #print Data::Dumper::Dumper($entry);
                     #exit 0;
                     $i++;
                 }
@@ -832,8 +849,8 @@ sub AUTOLOAD {
                     $type_full = 
                       join("::", $CURRENT_NAMESPACE, $type_full);
                     $entry->{c_type} = $type_full;
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} =
-                      $type_full;
+                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                    $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
                 }
             }
             else {
@@ -848,8 +865,8 @@ sub AUTOLOAD {
                     $type_full = 
                       join("::", $namespace_key, $type_full);
                     $entry->{c_type} = $type_full;
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = 
-                      $type_full;
+                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                    $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
                 }
                 #use Data::Dumper;
                 #print STDERR Data::Dumper::Dumper($entry), "\n";
@@ -869,11 +886,13 @@ sub AUTOLOAD {
 #         }
         $entry->{type}   = $TYPE_ENUM;
         $entry->{c_type} = join("::", 
-                                $template_namespace, $template_type);
+                                $template_namespace, $template_type, $type);
         $entry->{t_type} = $TYPE_ENUM;
+        #use Data::Dumper;
+        #print STDERR Data::Dumper::Dumper($entry);
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
-        #print STDERR $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
+        #print STDERR $type, ' => ', $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
         $store_type_info_from_dictionary->($namespace, 
                                            $type, $type_full, $entry);
     }
@@ -907,7 +926,8 @@ sub AUTOLOAD {
         $entry->{c_type} = $type_full;
         ( my $t_type = $type_full ) =~ s/::/__/go;
         $entry->{t_type} = uc($t_type);
-        #$TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        #$TYPE_LOCALMAP{$ns}->{$type} = $type_full;
     }
     elsif (exists $MANUAL_TYPEMAP{
         join("::", $namespace, $type_full)}) {
@@ -918,7 +938,8 @@ sub AUTOLOAD {
         $entry->{c_type} = $type_full;
         ( my $t_type = $type_full ) =~ s/::/__/go;
         $entry->{t_type} = uc($t_type);
-        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
     }
     else {
         # unknown
@@ -928,6 +949,8 @@ sub AUTOLOAD {
         $entry->{t_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;
     }
+    #use Data::Dumper;
+    #print STDERR Data::Dumper::Dumper($entry);
     return $entry;
 }
 

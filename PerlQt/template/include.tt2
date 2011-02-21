@@ -1,1 +1,1 @@
-#include [% my_module.remove('::') %]/[% my_cclass %]
+#include [% my_module.remove('::') %]/[% my_file %].h

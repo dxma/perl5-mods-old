@@ -206,13 +206,24 @@ sub dump_typemap {
     }
 }
 
+sub load_yaml {
+    my $path = shift;
+    local ( *YAML, );
+    open YAML, "<", $path or croak "cannot open file to read: $!";
+    my $cont = do { local $/; <YAML> };
+    close YAML;
+    return Load($cont);
+}
+
 sub main {
     my $ftemplate   = '';
     my $fout        = '';
+    my $group_dir   = '';
     my $h           = '';
     GetOptions(
         't=s'    => \$ftemplate,
         'o=s'    => \$fout, 
+        'd=s'    => \$group_dir,
         'h|help' => \$h, 
     );
     usage() if $h;
@@ -222,6 +233,7 @@ sub main {
     croak("typemap not found: $ftypemap") unless -f $ftypemap;
     croak("typemap_template not found: $ftypemap_template") unless 
       -f $ftypemap_template;
+    croak("group dir not found: $group_dir") unless -d $group_dir;
     
     my $known_primitive_type = get_known_primitive_types($ftemplate);
     my $typemap = load_typemap($ftypemap);
@@ -236,6 +248,20 @@ sub main {
             }
         }
     }
+    # load subtypes in .typedef
+    foreach my $f (glob("$group_dir/*.typedef")) {
+        my ( $class ) = $f =~ /.+\/([^\.]+)\.typedef$/o;
+        $class =~ s/__/::/go;
+        my $typedef = load_yaml($f);
+        foreach my $t (keys %$typedef) {
+            next if $t =~ /^T_/o;
+            if ($typedef->{$t} =~ /^T_/o) {
+                $typemap->{$class. '::'. $t} = 
+                  $typedef->{$t} =~ /^T_FPOINTER_/ ? 'T_FPOINTER' : $typedef->{$t};
+            }
+        }
+    }
+    
     my $rc = 0;
     foreach my $ntype (keys %$typemap) {
         my $type = $typemap->{$ntype};
@@ -254,6 +280,8 @@ sub main {
         if ($typemap->{$ntype} eq 'T_OBJECT') {
             $typemap->{$ntype. ' *'} = 'T_PTROBJ';
             $typemap->{$ntype. ' &'} = 'T_REFOBJ';
+            $typemap->{'const '. $ntype. ' *'} = 'T_PTROBJ';
+            $typemap->{'const '. $ntype. ' &'} = 'T_REFOBJ';
         }
     }
     dump_typemap($typemap, $fout);

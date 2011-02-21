@@ -188,7 +188,7 @@
   [% CASE 'T_FPOINTER' %]
     [%+ var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
   [% CASE DEFAULT %]
-    [% PERL %]die('marshal_in unknown type: '. $stash->get('type'). ' '. $stash->get('ptype'))[% END %]
+    [% PERL %] warn('marshal_in unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
 [% END %]
 [% END %]
 [% BLOCK marshal_out %]
@@ -350,6 +350,6 @@
   [% CASE 'T_FPOINTER' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE DEFAULT %]
-    [% PERL %]die('marshal_out unknown type: '. $stash->get('type'). ' '. $stash->get('ptype'))[% END %]
+    [% PERL %] warn('marshal_out unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
 [% END %]
 [% END %]
