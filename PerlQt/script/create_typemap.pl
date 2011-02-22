@@ -266,6 +266,7 @@ Internal use. Load a YAML-ish file and return its yaml-ed content.
 sub __load_yaml {
     my ( $f ) = @_;
     
+    #print STDERR $f, "\n";
     local ( *FILE, );
     open FILE, "<", $f or die "cannot open file $f: $!";
     #print STDERR "loading file: $f\n";
