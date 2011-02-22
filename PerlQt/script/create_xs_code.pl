@@ -46,6 +46,7 @@ sub main {
     my @typemap_files   = ();
     my $packagemap_file = '';
     my $xs_file         = '';
+    my $out             = '';
     GetOptions(
         'template=s'   => \$template_dir, 
         'typemap=s'    => \@typemap_files, 
@@ -66,7 +67,10 @@ sub main {
     # class name, mod name, class hierarchy
     croak "no meta file found for $xs_file" unless $f{meta};
     my $meta    = load_yaml($f{meta});
-    exit 0 if $meta->{TYPE} ne 'class';
+    if ($meta->{TYPE} !~ /^(?:class|struct)$/o) {
+        print STDERR "skip $f{meta}, not a class or struct\n";
+        goto WRITE_FILE;
+    }
     
     # public methods
     #carp "no public file found for $xs_file" unless grep { /public$/ } keys %f;
@@ -75,7 +79,10 @@ sub main {
         my $methods = load_yaml($f{$k});
         push @$publics, @$methods;
     }
-    exit 0 if @$publics == 0;
+    if (@$publics == 0) {
+        print STDERR "skip $f{meta}, no public method\n";
+        goto WRITE_FILE;
+    }
     # class localtype
     my $localtype = exists $f{typemap} ? load_yaml($f{typemap}) : {};
     # typedef info
@@ -127,7 +134,7 @@ sub main {
     };
     
     # loop into each public method, group by name
-    my $pub_method_by_name = {};
+    my $pub_methods_by_name = {};
     METHOD_LOOP:
     foreach my $i (@$publics) {
         # convert relevant field key to lowcase
@@ -166,14 +173,21 @@ sub main {
             # the implementation will be:
             # 1) in perl code, call perl's sprintf
             # 2) return SvPV to XS code
-            if ($p->{type} eq '...' and $param_num == 2) {
-                splice @{$i->{parameters}}, 0, $param_num, {
-                    name => 'string',
-                    type => 'char *',
-                };
+            if ($p->{type} eq '...') {
+                if ($param_num == 2) {
+                    # sprint(format, ...)
+                    splice @{$i->{parameters}}, 0, $param_num, {
+                        name => 'string',
+                        type => 'char *',
+                    };
+                }
+                elsif ($param_num == 1) {
+                    # foo(...)
+                    next METHOD_LOOP;
+                }
             }
         }
-        push @{$pub_method_by_name->{$name}}, $i;
+        push @{$pub_methods_by_name->{$name}}, $i;
     }
     # map method with default param value
     # foo(int, int = 0, int = 0)
@@ -202,10 +216,10 @@ sub main {
         }
         return $clone;
     };
-    foreach my $name (keys %$pub_method_by_name) {
+    foreach my $name (keys %$pub_methods_by_name) {
         my $new_methods = [];
         
-        foreach my $method (@{$pub_method_by_name->{$name}}) {
+        foreach my $method (@{$pub_methods_by_name->{$name}}) {
             my $cloned = 0;
             for (my $i = $#{$method->{parameters}}; $i >= 0; $i--) {
                 my $p = $method->{parameters}->[$i];
@@ -229,7 +243,7 @@ sub main {
                 push @$new_methods, $method;
             }
         }
-        $pub_method_by_name->{$name} = [
+        $pub_methods_by_name->{$name} = [
             sort { scalar(@{$a->{parameters}}) <=>
                      scalar(@{$b->{parameters}}) } 
               @$new_methods
@@ -239,26 +253,46 @@ sub main {
     # generate xs file from template
     my $template = Template::->new({
         INCLUDE_PATH => $template_dir, 
-        INTERPOLATE  => 1,
+        INTERPOLATE  => 0,
         PRE_CHOMP    => 1,
         POST_CHOMP   => 0,
         TRIM         => 1,
         EVAL_PERL    => 1,
     });
-    my $out = '';
+    # workaround a bug in ttk when a key of hash is 'keys'
+    # it gets wrong
+    my $mem_methods = [];
+    my $cname = (split /\:\:/, $meta->{NAME})[-1];
+    foreach my $m (sort keys %$pub_methods_by_name) {
+        next if $m eq $cname;
+        next if $m eq '~'. $cname;
+        push @$mem_methods, $m;
+    }
+    #use Data::Dumper;
+    #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
-        my_cclass     => $meta->{NAME}, 
-        my_type       => $meta->{type}, 
-        my_module     => $meta->{MODULE}, 
-        my_package    => $packagemap->{$meta->{NAME}}, 
-	my_file       => $meta->{FILE},
-        my_method     => $pub_method_by_name, 
-        my_typemap    => $typemap, 
-        my_packagemap => $packagemap, 
+        my_cclass          => $meta->{NAME}, 
+        my_type            => $meta->{type}, 
+        my_module          => $meta->{MODULE}, 
+        my_package         => $packagemap->{$meta->{NAME}}, 
+        my_file            => $meta->{FILE},
+        my_methods         => $mem_methods,
+        my_methods_by_name => $pub_methods_by_name, 
+        my_typemap         => $typemap, 
+        my_packagemap      => $packagemap, 
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";
-    print $out, "\n";
+WRITE_FILE:
+    if ($xs_file) {
+        open my $F, '>', $xs_file or 
+          croak "cannot open file to write: $!";
+        print $F $out;
+        close $F or croak "cannot save to file: $!";
+    }
+    else {
+        print $out, "\n";
+    }
     
     exit 0;
 }

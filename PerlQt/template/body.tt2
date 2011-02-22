@@ -1,5 +1,5 @@
-[% INCLUDE header.tt2 %]
 [% USE Dumper(Indent=1) %]
+[% INCLUDE header.tt2 %]
 ################################################################
 #### 
 #### PUBLIC MEMBER FUNCTIONS
@@ -10,9 +10,9 @@
 [% PROCESS function.tt2 %]
 
 [% my_cclass2 = my_cclass.remove('.+\:\:') %]
-[% IF my_method.exists(my_cclass2) %]
-  [% constructors = my_method.$my_cclass2 %]
-  [% my_method.delete(my_cclass2) %]
+[% IF my_methods_by_name.exists(my_cclass2) %]
+  [% constructors = my_methods_by_name.$my_cclass2 %]
+  [% my_methods_by_name.delete(my_cclass2) %]
   [% INCLUDE echo_func_proto 
     method_name = my_cclass, 
     methods     = constructors 
@@ -25,8 +25,8 @@
 [% END %]
 
 
-[% IF my_method.exists('~' _ my_cclass2) %]
-  [% my_method.delete('~' _ my_cclass2) %]
+[% IF my_methods_by_name.exists('~' _ my_cclass2) %]
+  [% my_methods_by_name.delete('~' _ my_cclass2) %]
   [% INCLUDE echo_func_proto 
     method_name = '~' _ my_cclass2, 
     methods     = [ {} ]
@@ -39,8 +39,8 @@ CODE:
 [% END %]
 
 
-[% FOREACH name = my_method.keys.sort %]
-  [% entries = my_method.$name %]
+[% FOREACH name = my_methods %]
+  [% entries = my_methods_by_name.$name %]
   [% INCLUDE echo_func_proto 
     method_name = name, 
     methods     = entries 

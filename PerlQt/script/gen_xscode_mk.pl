@@ -74,7 +74,7 @@ sub main {
         
         # deps for module.xs
         $xs_file = File::Spec::->catfile(
-            $out_xscode_dir, "xs", @module, "$classname.xs");
+            $out_xscode_dir, @module, "$classname.xs");
         push @xs_files, $xs_file;
         # enum implemented by enum.pm in dot pm
         # FIXME: TYPEMAP not added as dependency
@@ -86,7 +86,7 @@ sub main {
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
           "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ". 
-            "-packagemap \$(PACKAGEMAP) \$@ \$^\n\n";
+            "-packagemap \$(PACKAGEMAP) -o \$@ \$^\n\n";
         
         # deps for module.pm
         $pm_file = File::Spec::->catfile(
@@ -102,7 +102,7 @@ sub main {
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ". 
           "-template \$(TEMPLATE_DIR) -packagemap \$(PACKAGEMAP) ". 
-            "\$@ \$^\n\n";
+            "-o \$@ \$^\n\n";
     }
     
     # write XS_FILES and PM_FILES
