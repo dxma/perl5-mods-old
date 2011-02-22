@@ -50,7 +50,7 @@ sub main {
         # no need to include classname.function
         # which has member function implementations
         my @deps = 
-          grep { not m/\.(?:function|protected|typedef|friend)$/io } 
+          grep { not m/\.(?:function|protected|friend)$/io } 
             glob(File::Spec::->catfile(
                 $in_xscode_dir, $classname. ".*"));
         push @deps, File::Spec::->catfile(
@@ -126,7 +126,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
