@@ -1,1 +1,7 @@
+################################################################
+# THE FOLLOWING CODE IS AUTOMATED, ANY MODIFICATION WILL BE LOST!
+# This library is free software; you can redistribute it and/or 
+# modify it under the same terms as Perl itself.
+# See http://dev.perl.org/licenses/artistic.html
+################################################################
 #include [% my_module.remove('::') %]/[% my_file %].h
