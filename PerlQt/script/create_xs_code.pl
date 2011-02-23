@@ -15,6 +15,51 @@ use Getopt::Long qw(GetOptions);
 use YAML::Syck qw/Load Dump/;
 use Template;
 
+my %OPERATOR_MAP = (
+    '='   => 'assign',
+    '+'   => 'add',
+    '-'   => 'min',
+    '*'   => 'mul',
+    '/'   => 'div',
+    '%'   => 'mod',
+    '++'  => 'incr',
+    '--'  => 'decr',
+    '=='  => 'equal_to',
+    '!='  => 'not_equal',
+    '<'   => 'lt',
+    '>'   => 'gt',
+    '<='  => 'le',
+    '>='  => 'ge',
+    '!'   => 'not',
+    '&&'  => 'and',
+    '||'  => 'or',
+    '~'   => 'bit_not',
+    '&'   => 'bit_and',
+    '|'   => 'bit_or',
+    '^'   => 'bit_xor',
+    '<<'  => 'bit_left',
+    '>>'  => 'bit_right',
+    '+='  => 'add_assign',
+    '-='  => 'min_assign',
+    '*='  => 'mul_assign',
+    '/='  => 'div_assign',
+    '%='  => 'mod_assign',
+    '&='  => 'bit_and_assign',
+    '|='  => 'bit_or_assign',
+    '^='  => 'bit_not_assign',
+    '<<=' => 'bit_left_assign',
+    '>>=' => 'bit_right_assign',
+    '[]'  => 'array',
+    # FIXME
+    #'*'   => 'deref',
+    #'&'   => 'ref',
+    '->'  => 'mem_of_ptr',
+    '.'   => 'mem_of_obj',
+    ','   => 'comma',
+    'new[]'    => 'alloc_array',
+    'delete[]' => 'del_array',
+);
+
 =head1 DESCRIPTION
 
 Create <module>.xs accordingly to 
@@ -140,10 +185,25 @@ sub main {
         # convert relevant field key to lowcase
         # no conflict with template commands
         my $name         = delete $i->{NAME};
-        if ($i->{operator} and $name =~ /^operator\s+(.+)$/o) {
-            # operator int => operator_int
-            $i->{return} = $1;
-            $name =~ s/\s+/_/go;
+        if ($i->{operator}) {
+            my $name2 = $name;
+            if ($name2 =~ /^operator\s(.+)$/) {
+                # operator int => operator_int
+                $i->{return} = $1;
+                $name2 =~ s/\s+/_/go;
+                $name2 =~ s/\*/ptr/go;
+                $name2 =~ s/\&/ref/go;
+            }
+            else {
+                my ( $op ) = $name2 =~ /^operator(.+)$/o;
+                if (exists $OPERATOR_MAP{$op}) {
+                    $name2 = 'operator_'. $OPERATOR_MAP{$op};
+                }
+                else {
+                    print STDERR "no operator op match: operator$op\n";
+                }
+            }
+            $i->{name2} = $name2;
         }
         $i->{parameters} = exists $i->{PARAMETER} ? 
           delete $i->{PARAMETER} : [];
@@ -166,7 +226,12 @@ sub main {
             $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
             $p->{type} = delete $p->{TYPE};
             $p->{type} = $subst_with_fullname->($p->{type});
-            $p->{default} = delete $p->{DEFAULT_VALUE} if exists $p->{DEFAULT_VALUE};
+            if (exists $p->{DEFAULT_VALUE}) {
+                $p->{default} = delete $p->{DEFAULT_VALUE};
+                # a bug in the parser, default value ' ' becomes ''
+                $p->{default} =~ s/\(''\)/(' ')/o;
+                $p->{default} = q(' ') if $p->{default} eq q('');
+            }
             # FIXME: skip template class for now
             next METHOD_LOOP if $p->{type} =~ /</io;
             # transform sprintf(format,...) to sprintf(char *)
