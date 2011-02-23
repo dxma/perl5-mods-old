@@ -121,7 +121,8 @@
   [% CASE 'T_PTROBJ' %]
     if (sv_derived_from([% arg %], "[% ntype %]")) {
         IV tmp = SvIV((SV*)SvRV([% arg %]));
-        [%+ var %] = reinterpret_cast<[% type %]>(tmp);
+        [%+ var %] = reinterpret_cast<[% type.remove('^const ') %]>(tmp);
+    }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
   [% CASE 'T_PTRDESC' %]
@@ -142,7 +143,7 @@
   [% CASE 'T_REFOBJ' %]
     if (sv_isa([% arg %], "[% ntype %]")) {
         IV tmp = SvIV((SV*)SvRV([% arg %]));
-        [%+ var %] = *interpret_cast<[% type.replace('&$','*') %]>(tmp);
+        [%+ var %] = *reinterpret_cast<[% type.replace('&$','*').remove('^const ') %]>(tmp);
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
@@ -176,7 +177,8 @@
   [% CASE 'T_OBJECT' %]
     if (sv_isobject([% arg %])) {
         IV tmp = SvIV((SV*)SvRV([% arg %]));
-        [%+ var %] = *reinterpret_cast<[% type %] *>(tmp);
+        [%+ var %] = *reinterpret_cast<[% type.remove('^const ') %] *>(tmp);
+    }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
   [% CASE 'T_IUV' %]

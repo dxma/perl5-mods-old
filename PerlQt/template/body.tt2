@@ -32,7 +32,7 @@
     methods     = [ {} ]
   %]
 void
-[%+ my_package %]::DESTROY()
+[%+ my_cclass %]::DESTROY()
 CODE:
     if(THIS != 0 && !SvREADONLY(SvRV(ST(0))))
         delete THIS;

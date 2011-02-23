@@ -4,4 +4,3 @@
 # modify it under the same terms as Perl itself.
 # See http://dev.perl.org/licenses/artistic.html
 ################################################################
-#include [% my_module.remove('::') %]/[% my_file %].h

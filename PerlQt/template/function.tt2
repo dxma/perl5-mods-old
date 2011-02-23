@@ -73,7 +73,7 @@
 
 [% BLOCK make_func_xscode %]
 void
-[%+ my_package %]::[% method_name %](...)
+[%+ my_cclass %]::[% methods.last.operator ? methods.last.name2 : method_name %](...)
 PREINIT:
 [% IF method_name == 'new' %]
 [%+ my_cclass %] *ret;
@@ -81,16 +81,17 @@ PREINIT:
 [% FOREACH method = methods %]
   [% mindex = loop.index %]
   [% FOREACH param = method.parameters %]
-[%+ param.type.remove('\s+&\s*$') %] arg[% mindex %][% loop.index %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+[%+ param.type.remove('\s+&\s*$').remove('^const ') %] arg[% mindex %][% loop.index %] [% param.exists('default') ? ' = ' _ param.default : '' %];
   [% END %]
   [% IF loop.index == 0 and method.exists('return') and method.return != 'void' %]
-[%+ method.return.remove('\s+&\s*$') %] ret;
+[%+ method.return.remove('\s+&\s*$').remove('^const ') %] ret;
   [% END %]
 [% END %]
 PPCODE:
     // body begin
     [% IF methods.size > 1 %]
     switch(items) {
+      [% param_number = {} %]
       [% FOREACH method = methods %]
         [% param_number_without_default = 0 %]
         [% FOREACH param = method.parameters %]
@@ -98,13 +99,24 @@ PPCODE:
 	    [% param_number_without_default = param_number_without_default + 1 %]
 	  [% END %]
 	[% END %]
+	[% IF param_number.exists(param_number_without_default) %]
+	  [% NEXT %]
+	[% ELSE %]
+	  [% param_number.$param_number_without_default = 1 %]
+	[% END %]
     case [% param_number_without_default %]:
+      {
         [%+ INCLUDE make_func_ppcode
-	  mindex = loop.index
-	%]
+          mindex = loop.index
+        %]
+        break;
+      }
       [% END %]
     default:
+      {
         Perl_croak(aTHX_ "wrong number/type of arguments passed in");
+        break;
+      }
     }
     [% ELSE %]
     [%+ INCLUDE make_func_ppcode
