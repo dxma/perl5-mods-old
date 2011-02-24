@@ -28,12 +28,12 @@
     [%+ var %] = ([% type %])SvUV([% arg %]);
   [% CASE 'T_UV_PTR' %]
     UV tmp_uv = SvUV([% arg %]);
-    [%+ var %] = ([% type %])&tmp_uv;
+    [%+ var %] = ([% type.remove('^const ') %])&tmp_uv;
   [% CASE 'T_IV' %]
     [%+ var %] = ([% type %])SvIV([% arg %]);
   [% CASE 'T_IV_PTR' %]
     IV tmp_iv = SvIV([% arg %]);
-    [%+ var %] = ([% type %])&tmp_iv;
+    [%+ var %] = ([% type.remove('^const ') %])&tmp_iv;
   [% CASE 'T_INT' %]
     [%+ var %] = (int)SvIV([% arg %]);
   [% CASE 'T_INT_PTR' %]
@@ -94,9 +94,9 @@
     double tmp_double = (double)SvUV([% arg %]);
     [%+ var %] = &tmp_double;
   [% CASE 'T_PV' %]
-    [%+ var %] = ([% type %])SvPV_nolen([% arg %]);
+    [%+ var %] = ([% type.remove('^const ') %])SvPV_nolen([% arg %]);
   [% CASE 'T_PTR' %]
-    [%+ var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
+    [%+ var %] = reinterpret_cast<[% type.remove('^const ') %]>(SvIV([% arg %]));
   [% CASE 'T_PTRREF' %]
     if (SvROK([% arg %])) {
        IV tmp = SvIV((SV*)SvRV([% arg %]));
@@ -143,7 +143,7 @@
   [% CASE 'T_REFOBJ' %]
     if (sv_isa([% arg %], "[% ntype %]")) {
         IV tmp = SvIV((SV*)SvRV([% arg %]));
-        [%+ var %] = *reinterpret_cast<[% type.replace('&$','*').remove('^const ') %]>(tmp);
+        [%+ var %] = reinterpret_cast<[% type.replace('\s+&$',' *').remove('^const ') %]>(tmp);
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
@@ -269,7 +269,7 @@
   [% CASE 'T_DOUBLE_PTR' %]
     sv_setnv([% arg %], (double)*[% var %]);
   [% CASE 'T_PV' %]
-    sv_setpv((SV*)[% arg %], [% var %]);
+    sv_setpv((SV*)[% arg %], [% type.search('^const ') ? var : 'const_cast<const ' _ type _ '>(' _ var _ ')' %]);
   [% CASE 'T_PTR' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE 'T_PTRREF' %]
@@ -285,7 +285,7 @@
   [% CASE 'T_REFREF' %]
     NOT IMPLEMENTED
   [% CASE 'T_REFOBJ' %]
-    sv_setref_pv([% arg %], "[% ntype %]", (void *)&[% var %]);
+    sv_setref_pv([% arg %], "[% ntype %]", (void *)[% var %]);
   [% CASE 'T_OPAQUE' %]
     sv_setpvn([% arg %], (char *)&[% var %], sizeof([% var %]));
   [% CASE 'T_OPAQUEPTR' %]

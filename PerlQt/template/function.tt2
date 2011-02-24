@@ -23,7 +23,7 @@
     [% s_item = 'ST(' _ loop.count _ ')' %]
     [% PROCESS get_pn_type c_type = p.type %]
     [%+ INCLUDE marshal_in 
-      var   = 'arg' _ mindex _ loop.index, 
+      var   = 'arg' _ Math.hex(mindex) _ Math.hex(loop.index), 
       arg   = s_item, 
       type  = p.type, 
       ptype = p_type, 
@@ -38,7 +38,14 @@
   [% END %]
   [% params = [] %]
   [% FOREACH param = method.parameters %]
-    [% params.push('arg' _ mindex _ loop.index) %]
+    [% c_type = param.type %]
+    [% p_type = my_typemap.$c_type %]
+    [% IF p_type.search('OBJ$') and c_type.search('\s+&$') %]
+      [% arg = '*arg' %]
+    [% ELSE %]
+      [% arg = 'arg' %]
+    [% END %]
+    [% params.push(arg _ Math.hex(mindex) _ Math.hex(loop.index)) %]
   [% END %]
   [% IF method_name == 'new' %]
     ret = new [% my_cclass %]([% params.join(', ') %]);
@@ -52,8 +59,17 @@
     sv_2mortal(ST(0));
     XSRETURN(1);
   [% ELSE %]
-    [% IF method.return != 'void' %]
-    ret = THIS->[% method_name %]([% params.join(', ') %]);
+    [% IF method.exists('return') and method.return != 'void' %]
+      [% c_type = method.return %]
+      [% p_type = my_typemap.$c_type %]
+      [% IF p_type.search('OBJ$') and c_type.search('\s+&$') %]
+        [% c_type2 = c_type.replace('\s+&$', ' *') %]
+	[% r_prefix = '&' %]
+      [% ELSE %]
+        [% c_type2 = c_type %]
+        [% r_prefix = '' %]
+      [% END %]
+    [%+ c_type2 %] ret = [% r_prefix %]THIS->[% method_name %]([% params.join(', ') %]);
       [% PROCESS get_pn_type c_type = method.return %]
     [%+ INCLUDE marshal_out
       var   = 'ret',
@@ -81,14 +97,23 @@ PREINIT:
 [% FOREACH method = methods %]
   [% mindex = loop.index %]
   [% FOREACH param = method.parameters %]
-[%+ param.type.remove('\s+&\s*$').remove('^const ') %] arg[% mindex %][% loop.index %] [% param.exists('default') ? ' = ' _ param.default : '' %];
-  [% END %]
-  [% IF loop.index == 0 and method.exists('return') and method.return != 'void' %]
-[%+ method.return.remove('\s+&\s*$').remove('^const ') %] ret;
+    [% c_type = param.type %]
+    [% p_type = my_typemap.$c_type %]
+    [% IF p_type.search('OBJ$') %]
+      [% IF param.exists('default') %]
+        [% IF param.default.search('^\d+$') %]
+	  [% v_default = param.default %]
+	[% ELSE %]
+	  [% v_default = '&' _ param.default %]
+	[% END %]
+      [% END %]
+[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% Math.hex(mindex) %][% Math.hex(loop.index) %] [% param.exists('default') ? ' = ' _ v_default : '' %];
+    [% ELSE %]
+[%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% Math.hex(mindex) %][% Math.hex(loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+    [% END %]
   [% END %]
 [% END %]
 PPCODE:
-    // body begin
     [% IF methods.size > 1 %]
     switch(items) {
       [% param_number = {} %]

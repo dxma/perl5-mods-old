@@ -228,6 +228,17 @@ sub main {
             $p->{type} = $subst_with_fullname->($p->{type});
             if (exists $p->{DEFAULT_VALUE}) {
                 $p->{default} = delete $p->{DEFAULT_VALUE};
+                if (exists $typemap->{$p->{type}} and
+                      $typemap->{$p->{type}} eq 'T_ENUM') {
+                    if ($p->{default} !~ /\:\:/o) {
+                        # stamp with class name
+                        my @type = split /\:\:/, $p->{type};
+                        if (@type > 1) {
+                            pop @type;
+                            $p->{default} = join('::', @type, $p->{default});
+                        }
+                    }
+                }
                 # a bug in the parser, default value ' ' becomes ''
                 $p->{default} =~ s/\(''\)/(' ')/o;
                 $p->{default} = q(' ') if $p->{default} eq q('');

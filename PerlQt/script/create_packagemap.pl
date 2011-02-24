@@ -16,7 +16,7 @@ use YAML::Syck qw/Load Dump/;
 
 =head1 DESCRIPTION
 
-Create 05typemap/packagemap accordingly to 04group/<module>.meta
+Create 05typemap/packagemap according to 04group/<module>.meta
 
 =cut
 

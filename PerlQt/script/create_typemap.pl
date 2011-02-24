@@ -505,7 +505,12 @@ sub main {
         foreach my $c (keys %{$TYPE_DICTIONARY{$n}}) {
             next if $c =~ /^T_/o;
             if ($TYPE_DICTIONARY{$n}->{$c} =~ /^T_/o) {
-                $TYPE_KNOWN{$n. '::'. $c} = $TYPE_DICTIONARY{$n}->{$c};
+                if ($n eq $DEFAULT_NAMESPACE) {
+                    $TYPE_KNOWN{$c} = $TYPE_DICTIONARY{$n}->{$c};
+                }
+                else {
+                    $TYPE_KNOWN{$n. '::'. $c} = $TYPE_DICTIONARY{$n}->{$c};
+                }
             }
         }
     }
@@ -846,12 +851,15 @@ sub AUTOLOAD {
                 $entry->{t_type} = $entry->{type};
                 # $type same as $type_full this case
                 if ($CURRENT_NAMESPACE ne $DEFAULT_NAMESPACE) {
-                    # change c_type to full qualified name
-                    $type_full = 
-                      join("::", $CURRENT_NAMESPACE, $type_full);
-                    $entry->{c_type} = $type_full;
-                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
-                    $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
+                    # skip type in default namespace
+                    if (!exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type_full}) {
+                        # change c_type to full qualified name
+                        $type_full = 
+                          join("::", $CURRENT_NAMESPACE, $type_full);
+                        $entry->{c_type} = $type_full;
+                        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                        $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
+                    }
                 }
             }
             else {
