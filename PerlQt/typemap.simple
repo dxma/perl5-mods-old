@@ -13,7 +13,7 @@ unsigned short          T_UV
 char                    T_CHAR
 unsigned char           T_U_CHAR
 char *                  T_PV
-uchar *                 T_PV
+uchar *                 T_IV_PTR
 unsigned char *         T_PV
 const char *            T_PV
 caddr_t                 T_PV
@@ -112,7 +112,7 @@ ulong &			T_UV
 ulong *			T_UV_PTR
 
 uchar			T_U_CHAR
-const uchar *		T_PV
+const uchar *		T_IV_PTR
 const uint *		T_IV_PTR
 const ushort *		T_UV_PTR
 # va_list could be either char* or void*

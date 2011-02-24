@@ -368,6 +368,7 @@ function_header       :
   | ( qt_macro_10 | ) function_header_block(s) 
     { 
       $return->{name} = ''; 
+      my $seen_function_name = 0; 
       foreach my $i (@{$item[2]}) { 
           if ($i->{_subtype} == 1) { 
               # attribute
@@ -375,6 +376,7 @@ function_header       :
               #$return->{name} .= " ". $i->{_value}; 
           } elsif ($i->{_subtype} == 2) { 
               # function name with params
+              $seen_function_name = 1;
               $return->{name} .= $i->{_name};
               $return->{parameter} = $i->{_value} if 
                   @{$i->{_value}};
@@ -382,7 +384,17 @@ function_header       :
               # other macros
               push @{$return->{property}}, $i->{_value} if 
                   $i->{_value};
-          } 
+          } elsif ($i->{_subtype} == 4) {
+              # const
+              if ($i->{_value}) {
+                  if ($seen_function_name) {
+                      push @{$return->{property}}, $i->{_value};
+                  }
+                  else {
+                      $return->{name} = $i->{_value}. ' '. $return->{name};
+                  }
+              }
+          }
       } 
     } 
 function_header_next_token : 
@@ -396,7 +408,7 @@ function_header_block :
   (   /const\b/o
       { 
         #print STDERR "const\n";
-        $return = { _subtype => 3, _value => 'const' };
+        $return = { _subtype => 4, _value => 'const' };
       }
     | function_header_next_token 
       { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 

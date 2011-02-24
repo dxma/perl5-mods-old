@@ -56,3 +56,5 @@ ALL_DEFINES     := $(CORE_DEFINE) $(GUI_DEFINE) $(NETWORK_DEFINE) \
 # gcc
 # only available on x86_64
 _CMD_CC        := g++
+
+override MAKE_ROOT  = .
