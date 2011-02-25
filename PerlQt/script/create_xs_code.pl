@@ -101,11 +101,12 @@ sub main {
     usage() unless @ARGV >= 1;
     
     my %f = ();
-    foreach my $f (@ARGV) {
+    foreach my $p (@ARGV) {
+        my $f = (split /\//, $p)[-1];
         my @f = split /\./, $f;
         shift @f;
         my $k = join(".", @f);
-        $f{$k} = $f;
+        $f{$k} = $p;
     }
     
     # open source files
