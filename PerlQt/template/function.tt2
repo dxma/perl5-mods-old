@@ -129,7 +129,7 @@ PPCODE:
 	[% ELSE %]
 	  [% param_number.$param_number_without_default = 1 %]
 	[% END %]
-    case [% param_number_without_default %]:
+    case [% param_number_without_default + 1 %]:
       {
         [%+ INCLUDE make_func_ppcode
           mindex = loop.index

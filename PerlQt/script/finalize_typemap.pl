@@ -280,8 +280,15 @@ sub main {
         if ($typemap->{$ntype} eq 'T_OBJECT') {
             $typemap->{$ntype. ' *'} = 'T_PTROBJ';
             $typemap->{$ntype. ' &'} = 'T_REFOBJ';
-            $typemap->{'const '. $ntype. ' *'} = 'T_PTROBJ';
-            $typemap->{'const '. $ntype. ' &'} = 'T_REFOBJ';
+            if ($ntype =~ /^const /io) {
+                ( my $ntype2 = $ntype ) =~ s/^const //o;
+                $typemap->{$ntype2. ' *'} = 'T_PTROBJ';
+                $typemap->{$ntype2. ' &'} = 'T_REFOBJ';
+            }
+            else {
+                $typemap->{'const '. $ntype. ' *'} = 'T_PTROBJ';
+                $typemap->{'const '. $ntype. ' &'} = 'T_REFOBJ';
+            }
         }
     }
     dump_typemap($typemap, $fout);

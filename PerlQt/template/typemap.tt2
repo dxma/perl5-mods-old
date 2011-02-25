@@ -279,12 +279,14 @@
   [% CASE 'T_REF_IV_PTR' %]
     sv_setref_pv([% arg %], "[% ntype %]", (void *)[% var %]);
   [% CASE 'T_PTROBJ' %]
+    [% arg %] = sv_newmortal();
     sv_setref_pv([% arg %], "[% ntype %]", (void *)[% var %]);
   [% CASE 'T_PTRDESC' %]
     sv_setref_pv([% arg %], "[% ntype %]", (void *)new[% type FILTER upper %]_DESC([% var %]));
   [% CASE 'T_REFREF' %]
     NOT IMPLEMENTED
   [% CASE 'T_REFOBJ' %]
+    [% arg %] = sv_newmortal();
     sv_setref_pv([% arg %], "[% ntype %]", (void *)[% var %]);
   [% CASE 'T_OPAQUE' %]
     sv_setpvn([% arg %], (char *)&[% var %], sizeof([% var %]));
