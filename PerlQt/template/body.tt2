@@ -1,5 +1,6 @@
 [% USE Dumper(Indent=1) %]
-[% USE Math %]
+[% USE format %]
+[% gen_arg_num = format("%x%x") %]
 [% INCLUDE header.tt2 %]
 ################################################################
 #### 

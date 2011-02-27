@@ -23,7 +23,7 @@
     [% s_item = 'ST(' _ loop.count _ ')' %]
     [% PROCESS get_pn_type c_type = p.type %]
     [%+ INCLUDE marshal_in 
-      var   = 'arg' _ Math.hex(mindex) _ Math.hex(loop.index), 
+      var   = 'arg' _ gen_arg_num(mindex, loop.index), 
       arg   = s_item, 
       type  = p.type, 
       ptype = p_type, 
@@ -45,9 +45,12 @@
     [% ELSE %]
       [% arg = 'arg' %]
     [% END %]
-    [% params.push(arg _ Math.hex(mindex) _ Math.hex(loop.index)) %]
+    [% params.push(arg _ gen_arg_num(mindex, loop.index)) %]
   [% END %]
   [% IF method_name == 'new' %]
+    [% IF my_abstract %]
+    Perl_croak(aTHX_ "Trying to create abstract class object");
+    [% ELSE %]
     ret = new [% my_cclass %]([% params.join(', ') %]);
     [%+ INCLUDE marshal_out
       var   = 'ret',
@@ -58,6 +61,7 @@
     %]
     sv_2mortal(ST(0));
     XSRETURN(1);
+    [% END %]
   [% ELSE %]
     [% IF method.exists('return') and method.return != 'void' %]
       [% c_type = method.return %]
@@ -107,9 +111,9 @@ PREINIT:
 	  [% v_default = '&' _ param.default %]
 	[% END %]
       [% END %]
-[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% Math.hex(mindex) %][% Math.hex(loop.index) %] [% param.exists('default') ? ' = ' _ v_default : '' %];
+[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ v_default : '' %];
     [% ELSE %]
-[%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% Math.hex(mindex) %][% Math.hex(loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+[%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
     [% END %]
   [% END %]
 [% END %]

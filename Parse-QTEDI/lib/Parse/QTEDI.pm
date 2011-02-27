@@ -205,7 +205,12 @@ function :
     keyword_template <commit> <reject>
   | class_accessibility <commit> <reject> 
   | function_header function_body
-    { $return = { type => 'function', %{$item[1]} }; } 
+    { 
+      $return = { type => 'function', %{$item[1]} }; 
+      if ($item[2]) {
+        push @{$return->{property}}, $item[2];
+      }
+    } 
     { print STDERR "function: ", $item[1]->{name}, "\n" if $::RD_DEBUG }
 # QT-specific macros
 qt_macro_1 : 
@@ -634,7 +639,7 @@ function_parameter_default_value_loop       :
 
 function_body         : 
     ';' { $return = '' } 
-  | '=' '0' ';' { $return = '' }
+  | '=' '0' ';' { $return = 'pure virtual' }
   | '{' balanced_brace(s) '}' ( ';' | ) { $return = '' }
 balanced_brace_next_token : 
     next_begin_or_end_brace { $return = $item[1] }

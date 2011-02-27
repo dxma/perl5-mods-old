@@ -9,13 +9,16 @@
 
 use warnings;
 use strict;
+use Carp;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDWR O_TRUNC O_CREAT :flock);
 use File::Spec ();
 use FindBin    ();
+use Getopt::Long qw(GetOptions);
+
 use YAML::Syck;
 
-my $filename;
+my %opt;
 
 =head1 DESCIPTION
 
@@ -52,13 +55,8 @@ EOU
 
 # private consts
 # TODO: Getopt::Long
-sub ARGV_INDEX_NAMESPACE_DEFAULT() { 0 }
-sub ARGV_INDEX_NAMESPACE_ROOT()    { 1 }
-# see __qt_get_module_name
-sub ARGV_INDEX_FILE_INPUT()        { 2 }
-
-sub NAMESPACE_DEFAULT { $ARGV[ARGV_INDEX_NAMESPACE_DEFAULT] }
-sub NAMESPACE_ROOT    { $ARGV[ARGV_INDEX_NAMESPACE_ROOT]    }
+sub NAMESPACE_DEFAULT { $opt{nsdefault} }
+sub NAMESPACE_ROOT    { $opt{nsroot}    }
 
 sub VISIBILITY_PUBLIC { 
     +{ type => 'accessibility', VALUE => [ 'public' ], } 
@@ -491,7 +489,7 @@ BEGIN { require "$FindBin::Bin/group_by_namespace_custom_methods.pl"; }
 # extract QT-specific module info from file path
 sub __get_qt_module_name {
     my ( $module, $name ) = __get_custom_module_name(
-        @_, $ARGV[ARGV_INDEX_FILE_INPUT]);
+        @_, $opt{file});
     return(join('::', NAMESPACE_ROOT, $module), $name);
 }
 
@@ -522,7 +520,7 @@ sub __process_class_or_struct {
             # make sure not an anymous struct/class variable like
             # struct { int i; } d;
             my $entry_to_create = {};
-            $entry_to_create->{FILE} = $filename;
+            $entry_to_create->{FILE} = $opt{name};
             # keep PROPERTY for future reference
             $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
               exists $entry->{PROPERTY};
@@ -763,19 +761,27 @@ sub _process {
 }
 
 sub main {
-    usage() unless @ARGV == 4;
-    my ( undef, undef, $in, $out ) = @ARGV;
-    die "file not found" unless -f $in;
-    die "directory not found" unless -d $out;
+    GetOptions(
+        \%opt,
+        'file=s',
+        'dir=s',
+        'name=s',
+        'nsdefault=s',
+        'nsroot=s',
+    );
+    #usage() unless @ARGV;
+    croak "file not found: $opt{file}" if !-f $opt{file};
+    croak "directory not found: $opt{dir}" if !-d $opt{dir};
+    croak "filename not found" if !$opt{name};
+    croak "default namespace not found" if !$opt{nsdefault};
+    croak "root namespace not found" if !$opt{nsroot};
     
     local ( *HEADER );
-    open HEADER, '<', $in or die "cannot open file: $!";
+    open HEADER, '<', $opt{file} or die "cannot open file: $!";
     my $cont = do { local $/; <HEADER>; };
     close HEADER;
     my ( $entries ) = Load($cont);
-    $filename = (split /\//, $in)[-1];
-    $filename =~ s/\.yml$//o;
-    _process($entries, $out);
+    _process($entries, $opt{dir});
     
     exit 0;
 }

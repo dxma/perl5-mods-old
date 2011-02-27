@@ -38,7 +38,8 @@ NETWORK_DEFINE  := -DQT_NETWORK_LIB
 SQL_DEFINE      := -DQT_SQL_LIB
 XML_DEFINE      := -DQT_XML_LIB
 OPENGL_DEFINE   := -DQT_OPENGL_LIB
-QT3_DEFINE      := -DQT3_SUPPORT -DQT_QT3SUPPORT_LIB
+#QT3_DEFINE      := -DQT3_SUPPORT -DQT_QT3SUPPORT_LIB
+QT3_DEFINE      := $(empty)$(empty)
 
 # NOTE: keep the default visibility mark as 'Q_DECL_EXPORT'
 #       or else normally it will be expanded to
