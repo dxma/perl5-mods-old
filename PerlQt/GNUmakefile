@@ -88,8 +88,11 @@ CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl
 CMD_TYPEMAP        := $(SCRIPT_DIR)/finalize_typemap.pl 
 CMD_PKGMAP         := $(SCRIPT_DIR)/create_packagemap.pl
 CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
+CMD_TYPEMAP_XS     := $(SCRIPT_DIR)/create_xs_typemap.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
+CMD_GET_NSROOT     := $(SCRIPT_DIR)/get_xs_root_namespace.pl
+CMD_ROOT_XS        := $(SCRIPT_DIR)/create_top_dot_xs.pl
 
 MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
 HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
@@ -130,6 +133,9 @@ TYPEMAP_LIST    := $(OUT_TYPEMAP_DIR)/typemap_list
 TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
 TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
+TYPEMAP_XS      := $(MAKE_ROOT)/typemap
+ROOT_XS         := $(MAKE_ROOT)/$(shell $(CMD_GET_NSROOT) \
+                       -conf $(MODULE_DOT_CONF)).xs
 
 #################### SUBROUTINES ###############################
 
@@ -267,6 +273,16 @@ $(PACKAGEMAP): $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_PKGMAP) $(OUT_GROUP_DIR) $@
 
+$(TYPEMAP_XS): $(TYPEMAPLIST_DOT_MK) $(PACKAGEMAP) $(GROUP_YAMLS)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_TYPEMAP_XS) -manifest $(TYPEMAP_DOT_DEP) -packagemap  \
+        $(PACKAGEMAP) -o $@
+
+$(ROOT_XS): $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_ROOT_XS) -manifest $(TYPEMAP_DOT_DEP) \
+        -conf $(MODULE_DOT_CONF) -mk $(XSCODE_DOT_MK) -o $@
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk :
@@ -335,9 +351,11 @@ clean_xscode_dot_mk :
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode_dot_mk clean_xscode_dot_mk
 
-gen_xscode   : gen_xscode_dot_mk $(XS_FILES)
+gen_xscode   : gen_xscode_dot_mk $(XS_FILES) $(TYPEMAP_XS) $(ROOT_XS)
 clean_xscode : clean_xscode_dot_mk
 	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
+	$(_Q)$(call _remove_file,$(TYPEMAP_XS))
+	$(_Q)$(call _remove_file,$(ROOT_XS))
 .PHONY: gen_xscode clean_xscode
 
 # internal use

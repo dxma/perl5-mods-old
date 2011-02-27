@@ -63,7 +63,7 @@ sub main {
             s/\.h\s*\:\s*$/.yml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
-              "'$default_namespace' '$root_namespace' $_ \$(OUT_GROUP_DIR)\n";
+              "-nsdefault \"$default_namespace\" -nsroot \"$root_namespace\" -file $_ -dir \$(OUT_GROUP_DIR) -name \$(patsubst %.yml,%.\$(HEADER_PREFIX),\$(patsubst \$(IN_GROUP_DIR)/%,%,$_))\n";
         }
     }
     # command to create grouplist.mk

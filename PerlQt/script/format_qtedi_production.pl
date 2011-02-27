@@ -75,6 +75,7 @@ my $FUNCTION_PROPERTIES = {
     explicit         => P_IGNORE,
     implicit         => P_IGNORE,
     virtual          => P_KEEP,
+    'pure virtual'   => P_KEEP,
     inline           => P_IGNORE,
     static           => P_KEEP,
     friend           => P_KEEP,
@@ -204,17 +205,19 @@ sub __format_class_or_struct {
     }
     # process body
     # strip private part
+    my $abstract_class;
     if (exists $entry->{body}) {
         if ($type == 0) {
             # class
-            $entry->{BODY} = 
+            ( $entry->{BODY}, $abstract_class ) = 
               _format_class_body($entry->{body});
         }
         else {
             # struct
-            $entry->{BODY} = 
+            ( $entry->{BODY}, $abstract_class ) = 
               _format_struct_body($entry->{body});
         }
+        push @{$entry->{PROPERTY}}, 'abstract' if $abstract_class;
         delete $entry->{body};
     }
     return 1;
@@ -1210,6 +1213,7 @@ sub _format_with_accessibility {
     my $private           = shift;
     $private = defined $private ? $private : 1;
     my $formatted_entries = [];
+    my $abstract_class    = 0;
     
     # strip strategy: comment/template/expression
     LOOP_BODY:
@@ -1239,6 +1243,12 @@ sub _format_with_accessibility {
                   push @$formatted_entries, $entry;
             }
             else {
+                if ($entry->{type} eq 'function') {
+                    # check for pure virtual function
+                    if (grep { $_ eq 'pure virtual' } @{$entry->{property}}) {
+                        $abstract_class = 1;
+                    }
+                }
                 _format_primitive_loop($entry, $formatted_entries);
             }
         }
@@ -1263,9 +1273,15 @@ sub _format_with_accessibility {
                       push @$formatted_entries, $entry;
                 }
             }
+            elsif ($entry->{type} eq 'function') {
+                # check for pure virtual function
+                if (grep { $_ eq 'pure virtual' } @{$entry->{property}}) {
+                    $abstract_class = 1;
+                }
+            }
         }
     }
-    return $formatted_entries;
+    return +( $formatted_entries, $abstract_class );
 }
 
 sub _format_keep_expression {
@@ -1326,7 +1342,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

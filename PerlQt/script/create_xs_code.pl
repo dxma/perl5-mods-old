@@ -163,7 +163,7 @@ sub main {
         my ( $type, ) = @_;
         
         # translate local typedef to full class name
-        if (exists $localtype->{$type}) {
+        if (exists $localtype->{$type} and $type !~ /^T_FPOINTER_/o) {
             $type = $localtype->{$type};
         }
         # foreach my $k (keys %$localtype) {
@@ -345,6 +345,10 @@ sub main {
         next if $m eq '~'. $cname;
         push @$mem_methods, $m;
     }
+    my $abstract_class = 0;
+    if (exists $meta->{PROPERTY}) {
+        $abstract_class = 1 if grep { $_ eq 'abstract' } @{$meta->{PROPERTY}};
+    }
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
@@ -357,6 +361,7 @@ sub main {
         my_methods_by_name => $pub_methods_by_name, 
         my_typemap         => $typemap, 
         my_packagemap      => $packagemap, 
+        my_abstract        => $abstract_class,
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";
