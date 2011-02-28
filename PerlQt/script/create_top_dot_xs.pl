@@ -74,10 +74,31 @@ sub main {
             $header{$meta->{FILE}}++ if exists $meta->{FILE};
         }
         elsif (/\.typedef$/o) {
+            ( my $m = $_ ) =~ s/\.typedef$/.meta/o;
+            my $meta    = load_yaml($m);
+            my $class = $meta->{NAME};
+            my @class = split /\:\:/, $class;
+            my @path  = File::Spec::->splitdir($_);
+            pop @path;
+            my $path  = File::Spec::->catdir(@path);
             my $typedef = load_yaml($_);
             foreach my $k (keys %$typedef) {
-                push @typedef, $typedef->{$k} if 
-                  $k =~ /^T_(?:ARRAY|FPOINTER)_/o;
+                if ($k =~ /^T_(?:ARRAY|FPOINTER)_/o) {
+                    my $v = $typedef->{$k};
+                    if ($class ne $mod_conf->{default_namespace}) {
+                        # subst with full name
+                        for (my $i = $#class; $i >= 0; $i--) {
+                            my $file = File::Spec::->catdir($path, join('__', @class[0..$i]). '.typedef');
+                            next if !-f $file;
+                            my $typedef2 = load_yaml($file);
+                            foreach my $j (keys %$typedef2) {
+                                next if $j eq $k;
+                                $v =~ s/(?<!\:\:)\b\Q$j\E\b/$class. '::'. $j/ge;
+                            }
+                        }
+                    }
+                    push @typedef, $v;
+                }
             }
         }
     }

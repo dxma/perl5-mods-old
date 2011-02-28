@@ -11,7 +11,11 @@ use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDONLY O_WRONLY O_TRUNC O_CREAT);
+use File::Spec;
+
 use YAML::Syck qw(Dump Load);
+
+my $filename;
 
 =head1 DESCIPTION
 
@@ -412,7 +416,7 @@ sub __format_fpointer {
         my $fullname = shift;
         my @n = split /\:\:/, $fullname;
         ( my $patched = $n[-1] ) =~
-          s/^(\*+\s*)(.+)/$1.$FP_TYPE_PREFIX.uc($2)/eio;
+          s/^(\*+\s*)(.+)/$1.$FP_TYPE_PREFIX.uc($2).'_'.uc($filename)/eio;
         my $origin = $2;
         return [ join("::", @n[0 .. -1], $patched), 
              join("::", @n[0 .. -1], $origin)];
@@ -676,9 +680,20 @@ sub __format_function {
             # similar to fpointer
             # store variable name in TYPE
             # fall decl string    in NAME
-            $pname_with_type =~ s{^(.*?)\b(\w+)\b(\s*\[)}
-                                 {$1.$2.' T_ARRAY_'.uc($2).$3}eio;
-            $ptype = 'T_ARRAY_'. uc($2);
+            # NOTE: transform char array[] into char *array
+            if ($pname_with_type =~ /^(.+?)\b(\w+)(\s*\[\])/o) {
+                $pname_with_type = $1. '* T_ARRAY_'. uc($2);
+                $ptype = 'T_ARRAY_'. uc($2);
+            }
+            elsif ($pname_with_type =~ /^(.+?\*)\s*(\w+)(\s*\[)/o) {
+                $pname_with_type = $1. ' T_ARRAY_'. uc($2). $3;
+                $ptype = 'T_ARRAY_'. uc($2);
+            }
+            else {
+                $pname_with_type =~ s{^(.+?)\b(\w+)(\s*\[)}
+                                     {$1.$2.' T_ARRAY_'.uc($2).$3}eio;
+                $ptype = 'T_ARRAY_'. uc($2);
+            }
             $pname = $pname_with_type;
         }
         else {
@@ -1317,7 +1332,9 @@ sub main {
     usage() unless @ARGV;
     my ( $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
-    
+    my @path = File::Spec::->splitdir($in);
+    $filename = $path[-1];
+    $filename =~ s/\.yml$//o;
     local ( *INPUT );
     open INPUT, '<', $in or die "cannot open file: $!";
     my $cont = do { local $/; <INPUT>; };
