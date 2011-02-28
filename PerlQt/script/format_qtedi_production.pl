@@ -677,7 +677,7 @@ sub __format_function {
             # store variable name in TYPE
             # fall decl string    in NAME
             $pname_with_type =~ s{^(.*?)\b(\w+)\b(\s*\[)}
-                                 {$1.'T_ARRAY_'.uc($2).$3}eio;
+                                 {$1.$2.' T_ARRAY_'.uc($2).$3}eio;
             $ptype = 'T_ARRAY_'. uc($2);
             $pname = $pname_with_type;
         }

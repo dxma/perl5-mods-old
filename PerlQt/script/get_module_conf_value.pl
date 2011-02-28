@@ -25,8 +25,9 @@ my %opt;
 
 sub usage {
     print << "EOU";
-usage        : $0 [mod_conf]
+usage        : $0 [mod_conf] [field_name]
 mod_conf     : -conf <module.conf>
+field_name   : -f <field_name>
 EOU
     exit 1;
 }
@@ -44,6 +45,7 @@ sub main {
     GetOptions(
         \%opt,
         'conf=s',
+        'f=s',
         'h|help',
     );
     usage() if $opt{h};
@@ -51,7 +53,8 @@ sub main {
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
     
     my $mod_conf= load_yaml($opt{conf});
-    print $mod_conf->{root_namespace}, "\n";
+    croak "no such field: $opt{f}" if !exists $mod_conf->{$opt{f}};
+    print $mod_conf->{$opt{f}}, "\n";
     exit 0;
 }
 

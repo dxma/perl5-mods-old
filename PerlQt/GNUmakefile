@@ -91,7 +91,7 @@ CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_TYPEMAP_XS     := $(SCRIPT_DIR)/create_xs_typemap.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
-CMD_GET_NSROOT     := $(SCRIPT_DIR)/get_xs_root_namespace.pl
+CMD_GET_NSROOT     := $(SCRIPT_DIR)/get_module_conf_value.pl
 CMD_ROOT_XS        := $(SCRIPT_DIR)/create_top_dot_xs.pl
 
 MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
@@ -135,7 +135,7 @@ TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
 TYPEMAP_XS      := $(MAKE_ROOT)/typemap
 ROOT_XS         := $(MAKE_ROOT)/$(shell $(CMD_GET_NSROOT) \
-                       -conf $(MODULE_DOT_CONF)).xs
+                       -conf $(MODULE_DOT_CONF) -f 'root_filename').xs
 
 #################### SUBROUTINES ###############################
 

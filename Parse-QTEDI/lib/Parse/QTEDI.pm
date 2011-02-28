@@ -702,6 +702,8 @@ class_body          :
 class_body_content  : 
     class_accessibility 
     { $return = $item[1] } 
+  | noop(s) 
+    { $return = { type => 'noop' } } 
   | primitive_loop_inside_class
     { $return = $item[1] } 
     #{ print STDERR "class_body_content: ", $return, "\n" if $::RD_DEBUG }
@@ -721,6 +723,8 @@ class_accessibility_content :
   'public' | 'private' | 'protected' 
 class_attribute: 
   /__attribute__\s*\(\((.+?)\)\)/io { $return = $1 } | { $return = '' }
+noop :
+  ';'
 
 #namespace related
 namespace_name : 
