@@ -63,7 +63,7 @@ sub main {
     croak "xscode.mk not found: $opt{mk}" if !-f $opt{mk};
     
     my $mod_conf= load_yaml($opt{conf});
-    my @header  = ();
+    my %header  = ();
     my @typedef = ();
     my @xscode  = ();
     open my $F, $opt{manifest} or croak "cannot open file to read: $!";
@@ -71,7 +71,7 @@ sub main {
         chomp;
         if (/\.meta$/o) {
             my $meta = load_yaml($_);
-            push @header, $meta->{FILE} if exists $meta->{FILE};
+            $header{$meta->{FILE}}++ if exists $meta->{FILE};
         }
         elsif (/\.typedef$/o) {
             my $typedef = load_yaml($_);
@@ -100,6 +100,17 @@ sub main {
     print $OUT <<EOL;
 // WARNING: ANY CHANGE TO THIS FILE WILL BE LOST!
 // MADE BY: $0
+
+EOL
+    my %skip_include = map { $_ => 1 } 
+      exists $mod_conf->{skip_includes} ?
+        @{$mod_conf->{skip_includes}} : ();
+    foreach my $f (sort keys %header) {
+        next if exists $skip_include{$f};
+        print $OUT "#include \"", $f, "\"\n";
+    }
+    print $OUT <<EOL;
+
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -109,15 +120,6 @@ sub main {
 #undef do_close
 
 EOL
-    my %skip_include = map { $_ => 1 } 
-      exists $mod_conf->{skip_includes} ?
-        @{$mod_conf->{skip_includes}} : ();
-    for (my $i = 0 ; $i < @header; $i++) {
-        next if exists $skip_include{$header[$i]};
-        print $OUT "#include \"", $header[$i], "\"\n";
-    }
-    print $OUT "\n";
-
     for (my $i = 0; $i < @typedef; $i++) {
         print $OUT "typedef ", $typedef[$i], ";\n";
     }

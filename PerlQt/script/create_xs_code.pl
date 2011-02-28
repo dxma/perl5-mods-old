@@ -50,6 +50,7 @@ my %OPERATOR_MAP = (
     '<<=' => 'bit_left_assign',
     '>>=' => 'bit_right_assign',
     '[]'  => 'array',
+    '()'  => 'funct',
     # FIXME
     #'*'   => 'deref',
     #'&'   => 'ref',
