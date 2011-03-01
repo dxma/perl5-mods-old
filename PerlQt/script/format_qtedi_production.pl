@@ -681,16 +681,16 @@ sub __format_function {
             # store variable name in TYPE
             # fall decl string    in NAME
             # NOTE: transform char array[] into char *array
-            if ($pname_with_type =~ /^(.+?)\b(\w+)(\s*\[\])/o) {
-                $pname_with_type = $1. '* T_ARRAY_'. uc($2);
+            if ($pname_with_type =~ /^(.*?)\b(\w+)(\s*\[\])/o) {
+                $pname_with_type = $1.$2. '* T_ARRAY_'. uc($2);
                 $ptype = 'T_ARRAY_'. uc($2);
             }
-            elsif ($pname_with_type =~ /^(.+?\*)\s*(\w+)(\s*\[)/o) {
+            elsif ($pname_with_type =~ /^(.*?\*)\s*(\w+)(\s*\[)/o) {
                 $pname_with_type = $1. ' T_ARRAY_'. uc($2). $3;
                 $ptype = 'T_ARRAY_'. uc($2);
             }
             else {
-                $pname_with_type =~ s{^(.+?)\b(\w+)(\s*\[)}
+                $pname_with_type =~ s{^(.*?)\b(\w+)(\s*\[)}
                                      {$1.$2.' T_ARRAY_'.uc($2).$3}eio;
                 $ptype = 'T_ARRAY_'. uc($2);
             }
