@@ -808,8 +808,9 @@ sub AUTOLOAD {
             # such case is _NOT_ typedefed
             # locate its prototype in %TYPE_DICTINOARY
             $entry->{type}   = $type_full;
-            $entry->{c_type} =
-              $TYPE_DICTIONARY{$namespace_key}->{$type};
+            $entry->{c_type} = $type_full;
+            # $entry->{c_type} =
+            #   $TYPE_DICTIONARY{$namespace_key}->{$type};
             $entry->{t_type} = $type_full;
         }
         else {

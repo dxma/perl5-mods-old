@@ -91,13 +91,15 @@ sub main {
     my $template_dir    = '';
     my @typemap_files   = ();
     my $packagemap_file = '';
+    my $def_typedef_file= '';
     my $xs_file         = '';
     my $out             = '';
     GetOptions(
-        'template=s'   => \$template_dir, 
-        'typemap=s'    => \@typemap_files, 
-        'packagemap=s' => \$packagemap_file, 
-        'o|outoput=s'  => \$xs_file, 
+        'template=s'   => \$template_dir,
+        'typemap=s'    => \@typemap_files,
+        'packagemap=s' => \$packagemap_file,
+        'default_typedef=s'=> \$def_typedef_file,
+        'o|outoput=s'  => \$xs_file,
     );
     usage() unless @ARGV >= 1;
     
@@ -110,6 +112,9 @@ sub main {
         $f{$k} = $p;
     }
     
+    croak "no packagemap file found" if !-f $packagemap_file;
+    croak "no default typedef file found" if !-f $def_typedef_file;
+    my $def_typedef = load_yaml($def_typedef_file);
     # open source files
     # class name, mod name, class hierarchy
     croak "no meta file found for $xs_file" unless $f{meta};
@@ -154,8 +159,19 @@ sub main {
     # add hidden typemap (for function pointer and enum)
     # in class typedef file
     foreach my $t (keys %$typedef) {
-        if ($t =~ /^T_FPOINTER/) {
+        if ($t =~ /^T_FPOINTER_/o) {
             $typemap->{$t} = 'T_FPOINTER';
+        }
+        elsif ($typedef->{$t} =~ /^T_FPOINTER_/o) {
+            $typemap->{$typedef->{$t}} = 'T_FPOINTER';
+        }
+    }
+    foreach my $t (keys %$def_typedef) {
+        if ($t =~ /^T_FPOINTER_/o) {
+            $typemap->{$t} = 'T_FPOINTER';
+        }
+        elsif ($def_typedef->{$t} =~ /^T_FPOINTER_/o) {
+            $typemap->{$def_typedef->{$t}} = 'T_FPOINTER';
         }
     }
     # global packagemap
@@ -164,19 +180,14 @@ sub main {
         my ( $type, ) = @_;
         
         # translate local typedef to full class name
-        if (exists $localtype->{$type} and $type !~ /^T_FPOINTER_/o) {
+        if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
             $type = $localtype->{$type};
         }
-        # foreach my $k (keys %$localtype) {
-        #     $type =~ s/(?<!\:)\b\Q$k\E\b/$localtype->{$k}/e;
-        # }
-        # foreach my $t (keys %$typedef) {
-        #     next if $t =~ /^T_/o;
-        #     if ($typedef->{$t} !~ /^T_/o) {
-        #         $type =~ s/(?<!\:)\b\Q$t\E\b/$typedef->{$t}/e;
-        #     }
-        #     $type =~ s/(?<!\:)\b\Q$t\E\b/$meta->{NAME}. '::'. $t/e;
-        # }
+        foreach my $t (keys %$def_typedef) {
+            if ($def_typedef->{$t} =~ /^T_(?:FPOINTER|ARRAY)_/o) {
+                $type =~ s/(?<!\:)\b\Q$t\E\b/$def_typedef->{$t}/ge;
+            }
+        }
         return $type;
     };
     
