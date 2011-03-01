@@ -415,11 +415,11 @@ sub __format_fpointer {
         # keep namespace prefix untouched
         my $fullname = shift;
         my @n = split /\:\:/, $fullname;
-        ( my $patched = $n[-1] ) =~
+        ( my $patched = pop @n ) =~
           s/^(\*+\s*)(.+)/$1.$FP_TYPE_PREFIX.uc($2).'_'.uc($filename)/eio;
         my $origin = $2;
-        return [ join("::", @n[0 .. -1], $patched), 
-             join("::", @n[0 .. -1], $origin)];
+        return [ join("::", @n, $patched), 
+             join("::", @n, $origin)];
     };
     
     if (ref $entry->{name} eq 'HASH') {
@@ -682,11 +682,9 @@ sub __format_function {
             # fall decl string    in NAME
             # NOTE: transform char array[] into char *array
             if ($pname_with_type =~ /^(.*?)\b(\w+)(\s*\[\])/o) {
-                $pname_with_type = $1.$2. '* T_ARRAY_'. uc($2);
-                $ptype = 'T_ARRAY_'. uc($2);
-            }
-            elsif ($pname_with_type =~ /^(.*?\*)\s*(\w+)(\s*\[)/o) {
-                $pname_with_type = $1. ' T_ARRAY_'. uc($2). $3;
+                # int *array[] v.s. char[]
+                $pname_with_type = $1 ? $1. '* T_ARRAY_'. uc($2) : 
+                  $2. '* T_ARRAY_'. uc($2);
                 $ptype = 'T_ARRAY_'. uc($2);
             }
             else {

@@ -86,7 +86,7 @@ sub main {
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
           "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ". 
-            "-packagemap \$(PACKAGEMAP) -o \$@ \$^\n\n";
+            "-packagemap \$(PACKAGEMAP) -default_typedef \$(DEFAULT_TYPEDEF) -o \$@ \$^\n\n";
         
         # deps for module.pm
         $pm_file = File::Spec::->catfile(
