@@ -9,6 +9,7 @@
 ################################################################
 
 [% PROCESS typemap.tt2  %]
+[% PROCESS typemap2.tt2 %]
 [% PROCESS function.tt2 %]
 
 [% my_cclass2 = my_cclass.remove('.+\:\:') %]
