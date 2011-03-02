@@ -13,6 +13,24 @@ A fake bin which contains custom methods for __analysis_type AUTOLOAD.
 
 =cut
 
+sub __parse_sub_entries {
+    my ( @sub_entry, ) = @_;
+    
+    my $sub_entries = [];
+    while (@sub_entry) {
+        my $index;
+        for ($index = 1; $index <= $#sub_entry; $index++) {
+            unless (exists $sub_entry[$index]->{IS_CONST} or 
+                      exists $sub_entry[$index]->{IS_PTR} or 
+                        exists $sub_entry[$index]->{IS_REF}) {
+                last;
+            }
+        }
+        push @$sub_entries, [ splice @sub_entry, 0, $index ];
+    }
+    return $sub_entries;
+}
+
 # QT template types
 # invoke of each will instantiate new xs/pm code source files from
 # specific templates 
@@ -29,7 +47,7 @@ sub Q3PtrList {
     $entry->{c_type} = 'Q3PtrList<'. $sub_c_type. '>';
     # t_type same as type
     # which contains sub-type information
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_Q3PTRLIST';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         # new template type
@@ -57,7 +75,7 @@ sub Q3ValueList {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'Q3ValueList<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_Q3VALUELIST';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -82,7 +100,7 @@ sub QFlags {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QFlags<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_QFLAGS';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -107,7 +125,7 @@ sub QList {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QList<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_QLIST';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -132,7 +150,7 @@ sub QFuture {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QFuture<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_QFUTURE';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -157,7 +175,7 @@ sub QVector {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QVector<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_QVECTOR';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -182,7 +200,7 @@ sub QSet {
                             map { $_->{t_type} } @sub_entry);
     my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
     $entry->{c_type} = 'QSet<'. $sub_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+    $entry->{t_type} = 'T_QSET';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
@@ -201,41 +219,28 @@ sub QMap {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
     # NOTE: QMap< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
     }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'T_QMAP', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMap<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+      join('__', 'T_QMAP', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QMap<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QMAP';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QMap';
         $new_entry->{type}       = $new_entry->{name};
         $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
+        $new_entry->{argc}       = @sub_class;
+        $new_entry->{key_type}   = $sub_class[0];
+        $new_entry->{value_type} = $sub_class[1];
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -246,41 +251,28 @@ sub QMultiMap {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
     # NOTE: QMultiMap< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
     }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'T_QMULTIMAP', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QMultiMap<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+      join('__', 'T_QMULTIMAP', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QMultiMap<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QMULTIMAP';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QMultiMap';
         $new_entry->{type}       = $new_entry->{name};
         $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
+        $new_entry->{argc}       = @sub_class;
+        $new_entry->{key_type}   = $sub_class[0];
+        $new_entry->{value_type} = $sub_class[1];
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -291,41 +283,29 @@ sub QPair {
     my @sub_entry  = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_first  = ();
-    my @sub_second = ();
-    # locate the start index of second part
     # NOTE: QPair< int *, QString *>
-    my $index_second = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_second = $i;
-            last;
-        }
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
     }
-    @sub_first  = splice @sub_entry, 0, $index_second;
-    @sub_second = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'T_QPAIR', 
-           map { $_->{t_type} } @sub_first, @sub_second);
-    my $first_c_type  = join(' ', map { $_->{c_type} } @sub_first);
-    my $second_c_type = join(' ', map { $_->{c_type} } @sub_second);
-    $entry->{c_type} = 'QPair<'. 
-      $first_c_type. ','. $second_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+      join('__', 'T_QPAIR', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QPair<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QPAIR';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}        = 'QPair';
         $new_entry->{type}        = $new_entry->{name};
         $new_entry->{ntype}       = $entry->{type};
-        $new_entry->{argc}        = 2;
-        $new_entry->{first_type}  = $first_c_type;
-        $new_entry->{second_type} = $second_c_type;
+        $new_entry->{argc}        = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -336,41 +316,192 @@ sub QHash {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    my @sub_key   = ();
-    my @sub_value = ();
-    # locate the start index of value part
     # NOTE: QHash< int *, QString >
-    my $index_value = 1;
-    for (my $i = 1; $i <= $#sub_entry; $i++) {
-        unless (exists $sub_entry[$i]->{IS_CONST} or 
-              exists $sub_entry[$i]->{IS_PTR} or 
-                exists $sub_entry[$i]->{IS_REF}) {
-            # not a part of key
-            $index_value = $i;
-            last;
-        }
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
     }
-    @sub_key   = splice @sub_entry, 0, $index_value;
-    @sub_value = @sub_entry;
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 2;
     $entry->{type}   = 
-      join('__', 'T_QHASH', 
-           map { $_->{t_type} } @sub_key, @sub_value);
-    my $key_c_type   = join(' ', map { $_->{c_type} } @sub_key);
-    my $value_c_type = join(' ', map { $_->{c_type} } @sub_value);
-    $entry->{c_type} = 'QHash<'. 
-      $key_c_type. ','. $value_c_type. '>';
-    $entry->{t_type} = $entry->{type};
+      join('__', 'T_QHASH', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QHash<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QHASH';
     # record type info in @TYPE_TEMPLATE
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'QHash';
         $new_entry->{type}       = $new_entry->{name};
         $new_entry->{ntype}      = $entry->{type};
-        $new_entry->{argc}       = 2;
-        $new_entry->{key_type}   = $key_c_type;
-        $new_entry->{value_type} = $value_c_type;
+        $new_entry->{argc}       = @sub_class;
+        $new_entry->{key_type}   = $sub_class[0];
+        $new_entry->{value_type} = $sub_class[1];
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_less {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # NOTE: std::less< class >
+    my @sub_class = @sub_entry;
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = 
+      join('__', 'T_STD_LESS', map { $_->{t_type} } @sub_entry);
+    my $item_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'std::less<'. $item_c_type. '>';
+    $entry->{t_type} = 'T_STD_LESS';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::less';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = 1;
+        $new_entry->{item_type}  = $item_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_map {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # NOTE: std::map< class1, class2 >
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_STD_MAP', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'std::map<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_STD_MAP';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::map';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_pair {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # NOTE: std::pair< class1, class2 >
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_STD_PAIR', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'std::pair<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_STD_PAIR';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::pair';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_vector {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # NOTE: std::vector< class1, class2 >
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_STD_VECTOR', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'std::vector<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_STD_VECTOR';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::vector';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_set {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # NOTE: std::set< class1, class2, class3 >
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_STD_SET', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'std::vector<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_STD_SET';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::set';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }
@@ -382,7 +513,7 @@ sub QHash {
 
 =head1 AUTHOR
 
-Copyright (C) 2007 - 2009 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
