@@ -1,0 +1,38 @@
+[% BLOCK marshal_in2 %]
+  [% SWITCH ptype %]
+  [% CASE 'T_QTEXTSTREAM_QTSMFI' %]
+    switch(SvIV([% arg %])) {
+    case 0: //setFieldWidth
+        [% var %] = &QTextStream::setFieldWidth;
+	break;
+    case 1: //setIntegerBase
+        [% var %] = &QTextStream::setIntegerBase;
+	break;
+    case 2: //setRealNumberPrecision
+        [% var %] = &QTextStream::setRealNumberPrecision;
+	break;
+    default:
+        Perl_croak(aTHX_ "wrong QTextStream member function index passed in");
+	break;
+    }
+  [% CASE DEFAULT %]
+    [% PERL %] warn('marshal_in2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+[% END %]
+[% END %]
+[% BLOCK marshal_out2 %]
+  [% SWITCH ptype %]
+  [% CASE 'T_QTEXTSTREAM_QTSMFI' %]
+    if([% var %] == &QTextStream::setFieldWidth) {
+        sv_setiv([% arg %], 0);
+    }
+    else if([% var %] == &QTextStream::setIntegerBase) {
+        sv_setiv([% arg %], 1);
+    }
+    else {
+        // QTextStream::setRealNumberPrecision
+        sv_setiv([% arg %], 2);
+    }
+  [% CASE DEFAULT %]
+    [% PERL %] warn('marshal_out2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+[% END %]
+[% END %]

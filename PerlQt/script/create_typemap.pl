@@ -11,13 +11,15 @@ use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
-use YAML::Syck qw(Load Dump);
 use File::Spec ();
 use Config qw/%Config/;
-use FindBin ();
-use Parse::RecDescent ();
+use FindBin      ();
+use Data::Dumper ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
+
+use YAML::Syck qw(Load Dump);
+use Parse::RecDescent ();
 
 =head1 DESCRIPTION
 
@@ -417,6 +419,7 @@ sub __analyse_type {
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
+        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?=(?:pair|vector|set|less|map))/std_/go;
         #print STDERR "patch3: ", $TYPE, "\n";
         $result = $call_transform->($TYPE);
     }
@@ -773,6 +776,7 @@ sub AUTOLOAD {
           @TYPE_UNKNOWN, );
     my $package = __PACKAGE__;
     ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
+    
     my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
     # full type name
     my $type_full = join("::", @namespace);

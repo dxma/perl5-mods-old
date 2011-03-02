@@ -129,8 +129,8 @@ FORMAT_YAMLS    := $(addprefix $(OUT_FORMAT_DIR)/,\
 GROUP_YAMLS     := $(empty)$(empty)
 # initially empty, overriden inside xscode.mk
 TYPEMAP_YAMLS   := $(empty)$(empty)
-TYPEMAP_LIST    := $(OUT_TYPEMAP_DIR)/typemap_list
-TYPEMAP_TEMPLATE:= $(OUT_TYPEMAP_DIR)/typemap_template
+TYPEMAP_DRAFT   := $(OUT_TYPEMAP_DIR)/typemap_draft
+TYPEMAP_TEMPLATE_DRAFT := $(OUT_TYPEMAP_DIR)/typemap_template_draft
 TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
 TYPEMAP_XS      := $(MAKE_ROOT)/typemap
@@ -258,15 +258,15 @@ $(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
 	$(_Q)$(CMD_RMDIR) $(OUT_TYPEMAP_DIR)
 	$(_Q)[[ -d $(OUT_TYPEMAP_DIR) ]] || $(CMD_MKDIR)         \
         $(OUT_TYPEMAP_DIR)
-	$(_Q)echo generating $(TYPEMAP_LIST)
+	$(_Q)echo generating $(TYPEMAP_DRAFT)
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_CREAT_TP) $(MODULE_DOT_CONF)                  \
         $(TYPEMAP_DOT_IGNORE) $(TYPEMAP_DOT_SIMPLE)          \
         $(TYPEMAP_DOT_MANUAL) $(TYPEMAP_DOT_DEP)             \
-        $(OUT_TYPEMAP_DIR) $(TYPEMAP_TEMPLATE) $(TYPEMAP_LIST)
+        $(OUT_TYPEMAP_DIR) $(TYPEMAP_TEMPLATE_DRAFT) $(TYPEMAP_DRAFT)
 	$(_Q)echo generating $(TYPEMAP)
 	$(_Q)$(CMD_TYPEMAP) -t $(TYPEMAP_DOT_TT2) -o $(TYPEMAP)  \
-        -d $(IN_TYPEMAP_DIR) $(TYPEMAP_LIST) $(TYPEMAP_TEMPLATE)
+        -d $(IN_TYPEMAP_DIR) $(TYPEMAP_DRAFT) $(TYPEMAP_TEMPLATE_DRAFT)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 
@@ -368,14 +368,14 @@ list_group_yamls :
 list_typemap_yamls : 
 	# $(TYPEMAP_YAMLS)
 
-list_template_types: $(TYPEMAP_TEMPLATE)
+list_template_types: $(TYPEMAP_TEMPLATE_DRAFT)
 	$(_Q)$(CMD_YGREP) -f name $< | sort | uniq | cut -d':' -f2
 
-list_template_def  : $(TYPEMAP_TEMPLATE)
+list_template_def  : $(TYPEMAP_TEMPLATE_DRAFT)
 	$(_Q)$(CMD_YGREP) -c name=$(TEMPLATE_NAME) $<
 
 list_typemap_types :
-	$(_Q)cut -d':' -f2 $(TYPEMAP_LIST) | sort | uniq
+	$(_Q)cut -d':' -f2 $(TYPEMAP_DRAFT) | sort | uniq
 .PHONY: list_group_yamls list_typemap_yamls list_template_types \
         list_template_def list_typemap_types
 
