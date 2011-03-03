@@ -3,58 +3,20 @@
 # 2. template
 # 3. imported by #include directive
 # NOTE: _FULL_ qualified name if possible
-QStringList::ConstIterator		T_CLASS
-QStringList::Iterator			T_CLASS
-
-QGLContext::GLenum			T_ENUM
-QGLContext::GLint			T_IV
-QGLContext::GLuint			T_UV
-
-QGLFramebufferObject::GLenum		T_ENUM
-QGLFramebufferObject::GLint		T_UV
-QGLFramebufferObject::GLuint		T_UV
-
-QGLWidget::GLenum			T_ENUM
-QGLWidget::GLint			T_IV
-QGLWidget::GLuint			T_UV
-
-QODBCDriver::SQLHANDLE			T_PTROBJ
-
 std::string				T_PV
 std::basic_string			T_PV
 std::forward_iterator_tag		T_STRUCT
 
-Q3SqlRecordInfo::size_type		T_UV
-
-# Qt 4.3.0
 # private struct
 QByteArray::Data			T_STRUCT
 QString::Data				T_STRUCT
 
-# Qt 4.3.3
-isc_db_handle				T_PTR
+# special member function pointer
+QTextStream::T_FPOINTER_QTSMFC_QTEXTSTREAM	T_QTEXTSTREAM_QTSMFC
+QTextStream::T_FPOINTER_QTSMFI_QTEXTSTREAM	T_QTEXTSTREAM_QTSMFI
 
-# Qt 4.4.1
+# Qt 4.3
+#isc_db_handle				T_PTR
+# Qt 4.4
 QMap<int,ResultItem>::const_iterator	T_CLASS
-QUintForType<void *>::Type		T_IUV
 
-# Qt 4.5.0
-QOCIResult::ValueCache			T_CLASS
-
-# Qt 4.6.2
-QGLFramebufferObjectFormat::GLenum	T_ENUM
-NativeWindowType			T_PTR
-NativePixmapType			T_PTR
-QGenericMatrix				T_CLASS
-QGraphicsWidget::GraphicsItemChange	T_ENUM
-QBrush::QScopedPointer			T_CLASS
-QIntegerForSizeof<void*>::Unsigned	T_UV
-QGLFramebufferObject::GLbitfield	T_UV
-QPicture::QExplicitlySharedDataPointer	T_CLASS
-QGLShader::GLuint			T_UV
-QGLShaderProgram::GLuint		T_UV
-QGLShaderProgram::GLfloat		T_FLOAT
-QGLShaderProgram::GLint			T_IV
-QDragMoveEvent::Type			T_CLASS
-QDropEvent::Type			T_CLASS
-QWSClient::QWS_SOCK_BASE		T_CLASS

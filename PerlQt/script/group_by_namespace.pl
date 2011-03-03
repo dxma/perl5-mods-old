@@ -197,7 +197,7 @@ sub __process_typedef {
     elsif ($entry->{subtype} eq 'fpointer') {
         # remove namespace
         push @$entries_to_create, 
-          [(split /\:\:/, $entry->{FROM})[-1], (split /\:\:/, $entry->{TO})[-1]];
+          [$entry->{FROM}, (split /\:\:/, $entry->{TO})[-1]];
         # keep prototype info for future use
         push @$entries_to_create, 
           [$entry->{PROTOTYPE}, $entry->{FROM}];
