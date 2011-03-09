@@ -52,6 +52,7 @@
     Perl_croak(aTHX_ "Trying to create abstract class object");
     [% ELSE %]
     ret = new [% my_cclass %]([% params.join(', ') %]);
+    ST(0) = sv_newmortal();
     [%+ INCLUDE marshal_out
       var   = 'ret',
       arg   = 'ST(0)',
@@ -59,7 +60,6 @@
       ptype = 'T_PTROBJ'
       ntype = my_package,
     %]
-    sv_2mortal(ST(0));
     XSRETURN(1);
     [% END %]
   [% ELSE %]
@@ -75,6 +75,7 @@
       [% END %]
     [%+ c_type2 %] ret = [% r_prefix %]THIS->[% method_name %]([% params.join(', ') %]);
       [% PROCESS get_pn_type c_type = method.return %]
+    ST(0) = sv_newmortal();
     [%+ INCLUDE marshal_out
       var   = 'ret',
       arg   = 'ST(0)',
@@ -82,7 +83,6 @@
       ptype = p_type
       ntype = my_packagemap.$n_type
     %]
-    sv_2mortal(ST(0));
     XSRETURN(1);
     [% ELSE %]
     (void)THIS->[% method_name %]([% params.join(', ') %]);
@@ -103,17 +103,19 @@ PREINIT:
   [% FOREACH param = method.parameters %]
     [% c_type = param.type %]
     [% p_type = my_typemap.$c_type %]
-    [% IF p_type.search('OBJ$') %]
+    [% IF p_type.search('REFOBJ$') %]
       [% IF param.exists('default') %]
-        [% IF param.default.search('^\d+$') %]
-	  [% v_default = param.default %]
-	[% ELSE %]
-	  [% v_default = '&' _ param.default %]
-	[% END %]
+[%+ param.type %] arg[% gen_arg_num(mindex, loop.index) _ '_' %] = [% param.default %];
+[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s+\&$', ' *').remove('^const ') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
+      [% ELSE %]
+[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %];
       [% END %]
-[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ v_default : '' %];
     [% ELSE %]
+      [% IF c_type.search('\*$') %]
+[%+ param.type %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% ELSE %]
 [%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% END %]
     [% END %]
   [% END %]
 [% END %]

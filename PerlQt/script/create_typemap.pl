@@ -8,6 +8,7 @@
 ################################################################
 
 use warnings;
+no warnings 'once';
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
@@ -141,18 +142,11 @@ sub REF {
 # NOTE: const struct timeval
 #       self-explaining, mark as T_STRUCT
 sub struct {
-    my $entry = @_ ? shift : {};
-    if (exists $entry->{type}) {
-        $entry->{type}   = 'T_STRUCT';
-        $entry->{c_type} = 'struct '. $entry->{c_type};
-        $entry->{t_type} = 'T_STRUCT';
-    }
-    else {
-        $entry->{type}   = 'T_STRUCT';
-        # FIXME: missing struct name
-        $entry->{c_type} = 'struct';
-        $entry->{t_type} = 'T_STRUCT';
-    }
+    my $name = shift;
+    my $entry = {};
+    $entry->{type}   = 'T_STRUCT';
+    $entry->{c_type} = 'struct '. $name;
+    $entry->{t_type} = 'T_STRUCT';
     return $entry;
 }
 # NOTE: char * const == char const *
@@ -296,10 +290,10 @@ sub __read_typemap {
     open TYPEMAP, "<", $typemap_file or die "cannot open file: $!";
     while (<TYPEMAP>) {
         chomp;
-        last if m/^INPUT\s*$/o;
-        next if m/^\#/io;
-        next if m/^\s*$/io;
-        next if m/^TYPEMAP\s*$/o;
+        last if /^INPUT\s*$/o;
+        next if /^\s*#/io;
+        next if /^\s*$/io;
+        next if /^TYPEMAP\s*$/o;
         my @t = split /\s+/, $_;
         my $v = pop @t;
         my $k = join(" ", @t);
@@ -411,11 +405,13 @@ sub __analyse_type {
         # 'signed long' => 'signed( long )'
         $TYPE =~ s/\b((?:un)?signed)\s+((?>[^ ]+))/$1($2)/go;
         # 'const struct timeval' => 'const struct'
-        $TYPE =~ s/\bstruct [A-Z_a-z_0-9_\_]+/struct/go;
+        $TYPE =~ s/\bstruct ([A-Z_a-z_0-9_\_]+)/struct($1)/go;
         # mask bareword as a function call without any
         # parameter
         #print STDERR "patch2: ", $TYPE, "\n";
         $TYPE =~ s/\b([A-Z_a-z_\_]+\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
+        # patch struct(foo()) back to struct('foo')
+        $TYPE =~ s/\bstruct\(([A-Z_a-z_0-9_\_]+)\(\)\)/struct('$1')/go;
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
@@ -888,7 +884,7 @@ sub AUTOLOAD {
         }
     };
     
-    #print STDERR "$namespace :: $type => $type_full\n";
+    #print STDERR "$CURRENT_NAMESPACE => $namespace :: $type => $type_full\n";
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
@@ -909,6 +905,28 @@ sub AUTOLOAD {
         #print STDERR $type, ' => ', $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
         $store_type_info_from_dictionary->($namespace, 
                                            $type, $type_full, $entry);
+    }
+    elsif ($namespace ne $CURRENT_NAMESPACE and 
+             exists $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$namespace[0]}) {
+        # A::B where A is typedef in current class
+        #print STDERR $namespace, ' => ', $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$namespace[0]}, "\n";
+        $store_type_info_from_dictionary->($CURRENT_NAMESPACE,
+                                           $namespace, 
+                                           $CURRENT_NAMESPACE. '::'. $namespace,
+                                           $entry);
+        $TYPE_KNOWN{$CURRENT_NAMESPACE. '::'. $namespace} = $entry->{t_type};
+        # now lookup the inner type again
+        my @namespace2 = @namespace;
+        shift @namespace2;
+        push @namespace2, $type;
+        my $type_full2 = $entry->{c_type}. '::'. 
+          join('::', @namespace2);
+        #print STDERR $type_full, ' => ', $type_full2, "\n";
+        my $result = __analyse_type($type_full2);
+        #print STDERR $type_full, ' => ', $result->{t_type}, "\n";
+        for my $k (keys %$result) {
+            $entry->{$k} = $result->{$k};
+        }
     }
     elsif (__lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {

@@ -112,6 +112,7 @@ TYPEMAP_DOT_IGNORE := $(MAKE_ROOT)/typemap.ignore
 TYPEMAP_DOT_SIMPLE := $(MAKE_ROOT)/typemap.simple
 TYPEMAP_DOT_MANUAL := $(MAKE_ROOT)/typemap.manual
 TYPEMAP_DOT_TT2    := $(TEMPLATE_DIR)/typemap.tt2
+TYPEMAP2_DOT_TT2   := $(TEMPLATE_DIR)/typemap2.tt2
 
 #################### TARGETS ###################################
 
@@ -265,8 +266,9 @@ $(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
         $(TYPEMAP_DOT_MANUAL) $(TYPEMAP_DOT_DEP)             \
         $(OUT_TYPEMAP_DIR) $(TYPEMAP_TEMPLATE_DRAFT) $(TYPEMAP_DRAFT)
 	$(_Q)echo generating $(TYPEMAP)
-	$(_Q)$(CMD_TYPEMAP) -t $(TYPEMAP_DOT_TT2) -o $(TYPEMAP)  \
-        -d $(IN_TYPEMAP_DIR) $(TYPEMAP_DRAFT) $(TYPEMAP_TEMPLATE_DRAFT)
+	$(_Q)$(CMD_TYPEMAP) -t $(TYPEMAP_DOT_TT2) -t $(TYPEMAP2_DOT_TT2) \
+        -o $(TYPEMAP)  -d $(IN_TYPEMAP_DIR)                  \
+        $(TYPEMAP_DRAFT) $(TYPEMAP_TEMPLATE_DRAFT)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 
