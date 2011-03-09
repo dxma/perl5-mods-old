@@ -93,6 +93,7 @@ CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
 CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
 CMD_GET_CONF       := $(SCRIPT_DIR)/get_module_conf_value.pl
 CMD_ROOT_XS        := $(SCRIPT_DIR)/create_top_dot_xs.pl
+CMD_ENUMMAP        := $(SCRIPT_DIR)/create_enummap.pl
 
 MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
 HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
@@ -134,6 +135,7 @@ TYPEMAP_DRAFT   := $(OUT_TYPEMAP_DIR)/typemap_draft
 TYPEMAP_TEMPLATE_DRAFT := $(OUT_TYPEMAP_DIR)/typemap_template_draft
 TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
+ENUMMAP         := $(OUT_TYPEMAP_DIR)/enummap
 TYPEMAP_XS      := $(MAKE_ROOT)/typemap
 ROOT_XS         := $(MAKE_ROOT)/$(shell $(CMD_GET_CONF) \
                        -conf $(MODULE_DOT_CONF) -f 'root_filename').xs
@@ -277,6 +279,11 @@ $(PACKAGEMAP): $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_PKGMAP) $(OUT_GROUP_DIR) $@
 
+$(ENUMMAP): $(filter %.enum,$(GROUP_YAMLS))
+	$(_Q)echo generating $@
+	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
+	$(_Q)$(CMD_ENUMMAP) -dir $(OUT_GROUP_DIR) -conf $(MODULE_DOT_CONF) -o $@
+
 $(TYPEMAP_XS): $(TYPEMAPLIST_DOT_MK) $(PACKAGEMAP) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAP_XS) -manifest $(TYPEMAP_DOT_DEP) -packagemap  \
@@ -348,9 +355,16 @@ clean_packagemap:
 	$(_Q)$(call _remove_file,$(PACKAGEMAP))
 .PHONY: gen_packagemap clean_packagemap
 
+gen_enummap     : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) \
+                  $(ENUMMAP)
+clean_enummap   :
+	$(_Q)$(call _remove_file,$(ENUMMAP))
+.PHONY: gen_enummap clean_enummap
+
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode_dot_mk   : gen_typemap gen_packagemap $(XSCODE_DOT_MK)
+gen_xscode_dot_mk   : gen_typemap gen_packagemap gen_enummap   \
+                      $(XSCODE_DOT_MK)
 clean_xscode_dot_mk : 
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 .PHONY: gen_xscode_dot_mk clean_xscode_dot_mk

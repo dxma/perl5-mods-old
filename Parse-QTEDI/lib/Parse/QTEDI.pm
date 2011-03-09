@@ -609,6 +609,9 @@ function_parameter_default_value_loop_token_dispatch :
     '(' ')' 
     { $return = '()'; } 
   | '" "' { $return = $item[1]; }
+  | "' '" { $return = $item[1]; }
+  | "(' ')" { $return = $item[1]; }
+  | '(" ")' { $return = $item[1]; }
   | '(' function_parameter_default_value_loop2 ')' 
     { $return = join("", @item[1 .. 3]); } 
   | "'" /(?>[^\']*)/iso "'" { $return = join("", @item[1 .. 3]); } 

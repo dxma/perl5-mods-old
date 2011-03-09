@@ -97,6 +97,7 @@ sub main {
     my $template_dir    = '';
     my @typemap_files   = ();
     my $packagemap_file = '';
+    my $enummap_file    = '';
     my $def_typedef_file= '';
     my $xs_file         = '';
     my $out             = '';
@@ -104,6 +105,7 @@ sub main {
         'template=s'   => \$template_dir,
         'typemap=s'    => \@typemap_files,
         'packagemap=s' => \$packagemap_file,
+        'enummap=s'    => \$enummap_file,
         'default_typedef=s'=> \$def_typedef_file,
         'o|outoput=s'  => \$xs_file,
     );
@@ -120,6 +122,7 @@ sub main {
     
     croak "no packagemap file found" if !-f $packagemap_file;
     croak "no default typedef file found" if !-f $def_typedef_file;
+    croak "no enummap file found" if !-f $enummap_file;
     my $def_typedef = load_yaml($def_typedef_file);
     # open source files
     # class name, mod name, class hierarchy
@@ -182,6 +185,8 @@ sub main {
     }
     # global packagemap
     my $packagemap = load_yaml($packagemap_file);
+    # enum map
+    my $enummap    = load_yaml($enummap_file);
     my $subst_with_fullname = sub {
         my ( $type, ) = @_;
         
@@ -281,6 +286,15 @@ sub main {
                     next METHOD_LOOP;
                 }
             }
+            else {
+                # workaround the init problem
+                # patch QBool to QBool &
+                if (grep { $p->{type} eq $_ } 
+                      qw/QBool QLatin1String QLatin1Char 
+                         QTextStreamManipulator/) {
+                    $p->{type} = $p->{type}. ' &';
+                }
+            }
         }
         push @{$pub_methods_by_name->{$name}}, $i;
     }
@@ -371,15 +385,16 @@ sub main {
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
-        my_cclass          => $meta->{NAME}, 
-        my_type            => $meta->{type}, 
-        my_module          => $meta->{MODULE}, 
-        my_package         => $packagemap->{$meta->{NAME}}, 
+        my_cclass          => $meta->{NAME},
+        my_type            => $meta->{type},
+        my_module          => $meta->{MODULE},
+        my_package         => $packagemap->{$meta->{NAME}},
         my_file            => $meta->{FILE},
         my_methods         => $mem_methods,
-        my_methods_by_name => $pub_methods_by_name, 
-        my_typemap         => $typemap, 
-        my_packagemap      => $packagemap, 
+        my_methods_by_name => $pub_methods_by_name,
+        my_typemap         => $typemap,
+        my_packagemap      => $packagemap,
+        my_enummap         => $enummap,
         my_abstract        => $abstract_class,
     };
     $template->process('body.tt2', $var, \$out) or 

@@ -46,11 +46,30 @@
         [%+ var %] = &tmp;
     }
   [% CASE 'T_ENUM' %]
-    [%+ var %] = (int)SvIV([% arg %]);
+    [% enums = [ type.split('\:\:') ] %]
+    [% enum  = enums.join('.') %]
+    [% CALL enums.pop %]
+    switch(SvIV([% arg %])) {
+    [% FOREACH k = my_enummap.$enum %]
+    case [% enums.join('::') %]::[% k %]:
+      [%+ var %] = [% enums.join('::') %]::[% k %];
+      break;
+    [% END %]
+    default:
+      Perl_croak(aTHX_ "wrong enum value passed in");
+    }
   [% CASE 'T_ENUM_PTR' %]
-    {
-        [%+ type %] tmp = (int)SvIV([% arg %]);
-        [%+ var %] = &tmp;
+    [% enums = [ type.split('\:\:') ] %]
+    [% enum  = enums.join('.') %]
+    [% CALL enums.pop %]
+    switch(SvIV([% arg %])) {
+    [% FOREACH k = my_enummap.$enum %]
+    case [% enums.join('::') %]::[% k %]:
+      [%+ var %] = &[% enums.join('::') %]::[% k %];
+      break;
+    [% END %]
+    default:
+      Perl_croak(aTHX_ "wrong enum value passed in");
     }
   [% CASE 'T_BOOL' %]
     [%+ var %] = (bool)SvTRUE([% arg %]);
