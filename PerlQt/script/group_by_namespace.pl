@@ -542,7 +542,10 @@ sub __process_class_or_struct {
               __get_qt_module_name($namespace->[-1]);
             $entry_to_create->{NAME} = $namespace->[-1];
             # store
-            my $TYPE = 'meta';    
+            my $TYPE = 'meta';
+            if (@$visibility and $visibility->[-1] ne 'public') {
+                $TYPE .= '.'. $visibility->[-1];
+            }
             $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
             # process body
             # push 'private' as initial visibility
@@ -555,6 +558,8 @@ sub __process_class_or_struct {
             # leave class declaration
             # pop current namespace
             pop @$namespace;
+            # pop current visibility
+            pop @$visibility;
         }   
     }
 }

@@ -35,7 +35,10 @@ sub study_type {
     
     my $type_primitive;
     # patch known pattern
-    $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/;
+    $type =~ s/^CONST_//o;
+    $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/o;
+    # rogue wave
+    $type =~ s/\bT_RW_[^_]+_CLASS/T_CLASS/o;
     
     if (exists $known_primitive_type->{$type}) {
         $type_primitive = $type;
@@ -167,8 +170,23 @@ sub get_known_primitive_types {
       croak("cannot open file to read: $!");
     my $primitive_type_map = {};
     while (<TEMPLATE>) {
-        if (m/^\s*\[\%-?\s+CASE\s+'([^']+)'\s+-?\%\]\s*$/o) {
-            $primitive_type_map->{$1}++;
+        if (m/^\s*\[\%-?\s+CASE\s+(.+)\s+-?\%\]\s*$/o) {
+            next if $1 eq 'DEFAULT';
+            my $str = $1;
+            if ($str =~ /^'([^']+)'$/o) {
+                $primitive_type_map->{$1}++;
+            }
+            elsif ($str =~ /^\[\s*(.+)\s*\]$/o) {
+                my $str2 = $1;
+                foreach my $t (split /\s*,\s*/, $str2) {
+                    if ($t =~ /^'([^']+)'$/o) {
+                        $primitive_type_map->{$1}++;
+                    }
+                }
+            }
+            else {
+                carp("unknown CASE line in typemap: ". $_);
+            }
         }
     }
     close TEMPLATE;
@@ -216,12 +234,12 @@ sub load_yaml {
 }
 
 sub main {
-    my $ftemplate   = '';
+    my @ftemplate   = ();
     my $fout        = '';
     my $group_dir   = '';
     my $h           = '';
     GetOptions(
-        't=s'    => \$ftemplate,
+        't=s'    => \@ftemplate,
         'o=s'    => \$fout, 
         'd=s'    => \$group_dir,
         'h|help' => \$h, 
@@ -229,13 +247,21 @@ sub main {
     usage() if $h;
     usage() unless @ARGV;
     my ( $ftypemap, $ftypemap_template, ) = @ARGV;
-    croak("template not found: $ftemplate") unless -f $ftemplate;
+    foreach my $ftemplate (@ftemplate) {
+        croak("template not found: $ftemplate") unless -f $ftemplate;
+    }
     croak("typemap not found: $ftypemap") unless -f $ftypemap;
     croak("typemap_template not found: $ftypemap_template") unless 
       -f $ftypemap_template;
     croak("group dir not found: $group_dir") unless -d $group_dir;
     
-    my $known_primitive_type = get_known_primitive_types($ftemplate);
+    my $known_primitive_type = {};
+    foreach my $ftemplate (@ftemplate) {
+        my $primitive_type = get_known_primitive_types($ftemplate);
+        foreach my $k (keys %$primitive_type) {
+            $known_primitive_type->{$k} = $primitive_type->{$k};
+        }
+    }
     my $typemap = load_typemap($ftypemap);
     my $typemap_template = load_typemap($ftypemap_template);
     # merge inner types in template

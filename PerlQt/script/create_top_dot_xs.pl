@@ -75,6 +75,7 @@ sub main {
         }
         elsif (/\.typedef$/o) {
             ( my $m = $_ ) =~ s/\.typedef$/.meta/o;
+            next if !-f $m;
             my $meta    = load_yaml($m);
             my $class = $meta->{NAME};
             my @class = split /\:\:/, $class;

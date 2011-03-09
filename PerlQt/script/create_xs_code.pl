@@ -15,6 +15,12 @@ use Getopt::Long qw(GetOptions);
 use YAML::Syck qw/Load Dump/;
 use Template;
 
+INIT {
+    require Template::Stash;
+    no warnings 'once';
+    $Template::Stash::PRIVATE = undef;
+}
+
 my %OPERATOR_MAP = (
     '='   => 'assign',
     '+'   => 'add',
@@ -223,6 +229,7 @@ sub main {
         $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
         # substitude with full typename for entries in typemap
         if (exists $i->{return}) {
+            #print STDERR "return type in $name: ", $i->{return}, "\n";
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
             # FIXME: skip template class for now
@@ -232,12 +239,14 @@ sub main {
         # handle foo(void)
         if ($param_num == 1 and $i->{parameters}->[0]->{TYPE} eq 'void') {
             splice @{$i->{parameters}}, 0, 1;
+            $param_num = 0;
         }
         PARAM_LOOP:
         for (my $j = 0; $j < $param_num; $j++) {
             my $p = $i->{parameters}->[$j];
             $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
             $p->{type} = delete $p->{TYPE};
+            #print STDERR "param type in $name: ", $p->{type}, "\n";
             $p->{type} = $subst_with_fullname->($p->{type});
             if (exists $p->{DEFAULT_VALUE}) {
                 $p->{default} = delete $p->{DEFAULT_VALUE};
@@ -252,9 +261,6 @@ sub main {
                         }
                     }
                 }
-                # a bug in the parser, default value ' ' becomes ''
-                $p->{default} =~ s/\(''\)/(' ')/o;
-                $p->{default} = q(' ') if $p->{default} eq q('');
             }
             # FIXME: skip template class for now
             next METHOD_LOOP if $p->{type} =~ /</io;
@@ -347,6 +353,7 @@ sub main {
         POST_CHOMP   => 0,
         TRIM         => 1,
         EVAL_PERL    => 1,
+        # STRICT      => 1,
     });
     # workaround a bug in ttk when a key of hash is 'keys'
     # it gets wrong
