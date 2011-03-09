@@ -113,6 +113,8 @@ PREINIT:
     [% ELSE %]
       [% IF c_type.search('\*$') %]
 [%+ param.type %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% ELSIF c_type.search('\:\:T_FPOINTER_') %]
+[%+ param.type.remove('^.+\:\:') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% ELSE %]
 [%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% END %]
