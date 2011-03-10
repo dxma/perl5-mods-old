@@ -94,6 +94,7 @@ sub load_yaml {
 }
 
 sub main {
+    my $mod_conf_file   = '';
     my $template_dir    = '';
     my @typemap_files   = ();
     my $packagemap_file = '';
@@ -102,6 +103,7 @@ sub main {
     my $xs_file         = '';
     my $out             = '';
     GetOptions(
+        'conf=s'       => \$mod_conf_file,
         'template=s'   => \$template_dir,
         'typemap=s'    => \@typemap_files,
         'packagemap=s' => \$packagemap_file,
@@ -120,9 +122,11 @@ sub main {
         $f{$k} = $p;
     }
     
+    croak "no module.conf found" if !-f $mod_conf_file;
     croak "no packagemap file found" if !-f $packagemap_file;
     croak "no default typedef file found" if !-f $def_typedef_file;
     croak "no enummap file found" if !-f $enummap_file;
+    my $mod_conf    = load_yaml($mod_conf_file);
     my $def_typedef = load_yaml($def_typedef_file);
     # open source files
     # class name, mod name, class hierarchy
@@ -287,11 +291,9 @@ sub main {
                 }
             }
             else {
-                # workaround the init problem
+                # workaround class without default constructor
                 # patch QBool to QBool &
-                if (grep { $p->{type} eq $_ } 
-                      qw/QBool QLatin1String QLatin1Char 
-                         QTextStreamManipulator/) {
+                if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {
                     $p->{type} = $p->{type}. ' &';
                 }
             }

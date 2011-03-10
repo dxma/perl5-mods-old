@@ -46,30 +46,36 @@
         [%+ var %] = &tmp;
     }
   [% CASE 'T_ENUM' %]
-    [% enums = [ type.split('\:\:') ] %]
-    [% enum  = enums.join('.') %]
+    [% enums = type.split('\:\:') %]
+    [% enum  = my_enummap %]
+    [% FOREACH i = enums %]
+      [% enum = enum.$i %]
+    [% END %]
     [% CALL enums.pop %]
     switch(SvIV([% arg %])) {
-    [% FOREACH k = my_enummap.$enum %]
+    [% FOREACH k = enum %]
     case [% enums.join('::') %]::[% k %]:
       [%+ var %] = [% enums.join('::') %]::[% k %];
       break;
     [% END %]
     default:
-      Perl_croak(aTHX_ "wrong enum value passed in");
+      Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");
     }
   [% CASE 'T_ENUM_PTR' %]
     [% enums = [ type.split('\:\:') ] %]
-    [% enum  = enums.join('.') %]
+    [% enum  = my_enummap %]
+    [% FOREACH i = enums %]
+      [% enum = enum.$i %]
+    [% END %]
     [% CALL enums.pop %]
     switch(SvIV([% arg %])) {
-    [% FOREACH k = my_enummap.$enum %]
+    [% FOREACH k = enum %]
     case [% enums.join('::') %]::[% k %]:
       [%+ var %] = &[% enums.join('::') %]::[% k %];
       break;
     [% END %]
     default:
-      Perl_croak(aTHX_ "wrong enum value passed in");
+      Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");
     }
   [% CASE 'T_BOOL' %]
     [%+ var %] = (bool)SvTRUE([% arg %]);
