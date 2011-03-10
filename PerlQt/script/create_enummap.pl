@@ -62,14 +62,18 @@ sub main {
         $class =~ s/\.enum$//o;
         my $enums = load_yaml($f);
         foreach my $e (@$enums) {
+            my %vmap = ();
             my $n = exists $e->{NAME} ? $e->{NAME} : 'anonymous'. $c++;
             foreach my $v (@{$e->{VALUE}}) {
+                # skip enum key alias
+                next if @$v > 1 and exists $vmap{$v->[1]};
                 if ($name eq $default_namespace. '.enum') {
                     push @{$enum_map{$n}}, $v->[0];
                 }
                 else {
                     push @{$enum_map{$class}->{$n}}, $v->[0];
                 }
+                $vmap{$v->[0]}++;
             }
         }
     }
