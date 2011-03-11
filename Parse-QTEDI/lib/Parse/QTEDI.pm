@@ -416,6 +416,24 @@ function_header_block :
         $return = { _subtype => 4, _value => 'const' };
       }
     | function_header_next_token 
+      { $item[1] =~ m/\boperator\b/o ? 1 : undef } 
+      ( '(' ')' { $return = '()' } | next_begin_bracket { $return = $item[1] } )
+      '(' 
+      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
+      ')' 
+      { 
+        #print STDERR "operator\n";
+        $return = { _subtype => 2, _name => $item[1].$item[3], }; 
+        $return->{_value} = $item[5];
+      } 
+    | function_header_next_token 
+      { $item[1] =~ m/^\s*throw\s*$/o ? 1 : undef } 
+      '(' next_bracket_or_brace_or_semicolon ')'
+      { 
+        #print STDERR "throw\n";
+        $return = { _subtype => 3, _value => 'throw('. $item[4]. ')' }
+      }
+    | function_header_next_token 
       { $item[1] =~ m/\_\_attribute\_\_\s*$/o ? 1 : undef } 
       '(' function_header_loop(s?) ')' 
       { 
@@ -428,24 +446,6 @@ function_header_block :
       { $item[1] =~ m/^\:/o ? 1 : undef } 
       function_header_loop(s) 
       { $return = { _subtype => 0 } } 
-    | function_header_next_token 
-      { $item[1] =~ m/\boperator\b/o ? 1 : undef } 
-      ( '(' ')' { $return = '()' } | next_begin_bracket { $return = $item[1] } )
-      '(' 
-      ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
-      ')' 
-      { 
-        #print STDERR "operator\n";
-        $return = { _subtype => 2, _name => $item[1].$item[3], }; 
-        $return->{_value} = $item[5];
-      } 
-    | function_header_next_token 
-      { $item[1] =~ m/^\s*throw\s+$/o ? 1 : undef } 
-      '(' next_bracket_or_brace_or_semicolon ')'
-      { 
-        #print STDERR "throw\n";
-        $return = { _subtype => 3, _value => 'throw('. $item[4]. ')' }
-      }
     | function_header_next_token 
       '(' 
       ( function_parameters { $return = $item[1]; } | { $return = []; } ) 
