@@ -51,7 +51,7 @@
     [% IF my_abstract %]
     Perl_croak(aTHX_ "Trying to create abstract class object");
     [% ELSE %]
-    ret = new [% my_cclass %]([% params.join(', ') %]);
+    ret = [% my_has_operator_new ? '::' : '' %]new [% my_cclass %]([% params.join(', ') %]);
     ST(0) = sv_newmortal();
     [%+ INCLUDE marshal_out
       var   = 'ret',

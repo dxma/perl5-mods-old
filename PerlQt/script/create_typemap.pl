@@ -366,14 +366,13 @@ sub __analyse_type {
             return $ret;
         };
         # transforms
-        # FIXME:
-        # 'Template<A>::Type' => 'Template::Type'
-        $TYPE =~ s/<[^>]+>(?=::)//io;
         # template to a function call
         # '<' => '('
         $TYPE =~ s/\</(/gio;
         # '>' => ')'
         $TYPE =~ s/\>/)/gio;
+        # 'Template<A>::Type' => 'Template<A>->Type'
+        $TYPE =~ s/\)::/)->/io;
         # FIXME:
         # '* const *' => '* *'
         $TYPE =~ s{(.*)\*\s+const\s+\*}{$1 * *}gio;

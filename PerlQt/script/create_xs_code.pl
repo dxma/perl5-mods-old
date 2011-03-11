@@ -63,13 +63,15 @@ my %OPERATOR_MAP = (
     '->'  => 'mem_of_ptr',
     '.'   => 'mem_of_obj',
     ','   => 'comma',
+    'new'      => 'alloc',
+    'delete'   => 'del',
     'new[]'    => 'alloc_array',
     'delete[]' => 'del_array',
 );
 
 =head1 DESCRIPTION
 
-Create <module>.xs accordingly to 
+Create <module>.xs according to 
 04group/<module>.{meta, function.public, enum} and 
 05typemap/<module>.typemap
 
@@ -206,13 +208,18 @@ sub main {
         return $type;
     };
     
+    my $has_operator_new = 0;
     # loop into each public method, group by name
     my $pub_methods_by_name = {};
+    my $skip_methods = exists $mod_conf->{skip_methods} ? 
+      $mod_conf->{skip_methods} : [];
     METHOD_LOOP:
     foreach my $i (@$publics) {
         # convert relevant field key to lowcase
         # no conflict with template commands
         my $name         = delete $i->{NAME};
+        $has_operator_new = 1 if $name eq 'operator new';
+        next METHOD_LOOP if grep { $name eq $_ } @$skip_methods;
         if ($i->{operator}) {
             my $name2 = $name;
             if ($name2 =~ /^operator\s(.+)$/) {
@@ -269,6 +276,13 @@ sub main {
                             $p->{default} = join('::', @type, $p->{default});
                         }
                     }
+                }
+                elsif ($p->{default} =~ /^(\w+)\(\)$/o) {
+                    # maybe subclass
+                    # substitude with full class name
+                    my $cname = $1;
+                    $cname = $subst_with_fullname->($cname);
+                    $p->{default} = $cname. '()';
                 }
             }
             # FIXME: skip template class for now
@@ -381,23 +395,25 @@ sub main {
         push @$mem_methods, $m;
     }
     my $abstract_class = 0;
+    # FIXME: check parent class too
     if (exists $meta->{PROPERTY}) {
         $abstract_class = 1 if grep { $_ eq 'abstract' } @{$meta->{PROPERTY}};
     }
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
-        my_cclass          => $meta->{NAME},
-        my_type            => $meta->{type},
-        my_module          => $meta->{MODULE},
-        my_package         => $packagemap->{$meta->{NAME}},
-        my_file            => $meta->{FILE},
-        my_methods         => $mem_methods,
-        my_methods_by_name => $pub_methods_by_name,
-        my_typemap         => $typemap,
-        my_packagemap      => $packagemap,
-        my_enummap         => $enummap,
-        my_abstract        => $abstract_class,
+        my_cclass           => $meta->{NAME},
+        my_type             => $meta->{type},
+        my_module           => $meta->{MODULE},
+        my_package          => $packagemap->{$meta->{NAME}},
+        my_file             => $meta->{FILE},
+        my_methods          => $mem_methods,
+        my_methods_by_name  => $pub_methods_by_name,
+        my_typemap          => $typemap,
+        my_packagemap       => $packagemap,
+        my_enummap          => $enummap,
+        my_abstract         => $abstract_class,
+        my_has_operator_new => $has_operator_new, 
     };
     $template->process('body.tt2', $var, \$out) or 
       croak $template->error. "\n";
