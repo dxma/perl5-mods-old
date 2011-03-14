@@ -1,6 +1,6 @@
 [% BLOCK get_pn_type %]
   [% p_type = my_typemap.$c_type %]
-  [% c_type2 = c_type.remove('\s+(?:\*|\&)$').remove('^const\s+') %]
+  [% c_type2 = c_type.remove('\s*(?:\*|\&)$').remove('^const\s+') %]
   [% n_type = p_type.search('^T_(?:PTR|REF)OBJ$') ? c_type2 : c_type %]
 [% END %]
 
@@ -9,11 +9,11 @@
     [% display_params = [] %]
     [% FOREACH p = method.parameters %]
       [% name  = p.exists('name') ? p.name : '' %]
-      [% param = p.type _ ' ' _ name %]
+      [% param = p.type == '...' ? p.type : p.type _ ' ' _ name %]
       [% value = p.exists('default') ? ' = ' _ p.default : '' %]
       [% display_params.push(param _ value ) %]
     [% END %]
-# [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(', ') %])
+## [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(', ') %])
   [% END %]
 [% END %]
 
@@ -40,12 +40,12 @@
   [% FOREACH param = method.parameters %]
     [% c_type = param.type %]
     [% p_type = my_typemap.$c_type %]
-    [% IF p_type.search('OBJ$') and c_type.search('\s+&$') %]
+    [% IF p_type.search('OBJ$') and c_type.search('\s*&$') %]
       [% arg = '*arg' %]
     [% ELSE %]
       [% arg = 'arg' %]
     [% END %]
-    [% params.push(arg _ gen_arg_num(mindex, loop.index)) %]
+    [% params.push(arg _ gen_arg_num(mindex, loop.index)) UNLESS c_type == '...' %]
   [% END %]
   [% IF method_name == 'new' %]
     [% IF my_abstract %]
@@ -67,7 +67,7 @@
       [% c_type = method.return %]
       [% p_type = my_typemap.$c_type %]
       [% IF p_type.search('OBJ$') and c_type.search('\s+&$') %]
-        [% c_type2 = c_type.replace('\s+&$', ' *') %]
+        [% c_type2 = c_type.replace('\s*&$', ' *') %]
 	[% r_prefix = '&' %]
       [% ELSE %]
         [% c_type2 = c_type %]
@@ -103,12 +103,13 @@ PREINIT:
   [% FOREACH param = method.parameters %]
     [% c_type = param.type %]
     [% p_type = my_typemap.$c_type %]
+    [% NEXT IF c_type == '...' %]
     [% IF p_type.search('REFOBJ$') %]
       [% IF param.exists('default') %]
 [%+ param.type %] arg[% gen_arg_num(mindex, loop.index) _ '_' %] = [% param.default %];
-[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s+\&$', ' *').remove('^const ') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s+\&$', ' *').remove('^const ') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
       [% ELSE %]
-[%+ param.type.replace('\s+\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %];
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %];
       [% END %]
     [% ELSE %]
       [% IF c_type.search('\*$') %]
@@ -116,7 +117,7 @@ PREINIT:
       [% ELSIF c_type.search('\:\:T_FPOINTER_') %]
 [%+ param.type.remove('^.+\:\:') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% ELSE %]
-[%+ param.type.remove('\s+\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+[%+ param.type.remove('\s*\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% END %]
     [% END %]
   [% END %]

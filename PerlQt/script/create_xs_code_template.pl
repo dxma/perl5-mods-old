@@ -1,21 +1,16 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
 use Carp;
-use YAML       ();
-use File::Spec ();
-use Config;
-use Template   ();
 #use English qw( -no_match_vars );
 use Getopt::Long qw/GetOptions/;
+use File::Spec;
+use Config;
+
+use YAML::Syck qw/Load Dump/;
+use Template;
 
 my $MODULE_NAME  = 'Template';
 my @SIMPLE_TYPES = (qw(T_BOOL T_CHAR T_ENUM T_ARRAY T_CALLBACK 
@@ -153,7 +148,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2008 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

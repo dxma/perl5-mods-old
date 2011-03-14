@@ -1,0 +1,23 @@
+use 5.008003;
+use ExtUtils::MakeMaker;
+
+# See lib/ExtUtils/MakeMaker.pm for details of how to influence
+# the contents of the Makefile that is written.
+WriteMakefile(
+    NAME         => '[% my_name %]',
+    VERSION      => '[% my_version %]',
+    LICENSE      => 'perl',
+    PREREQ_PM    => {},
+    ABSTRACT     => '[% my_name.replace('\:\:', ' ') %] binding',
+    AUTHOR       => '[% my_author %] <[% my_mail %]>',
+    CC           => 'g++',
+    LD           => 'g++',
+    LDDLFLAGS    => '-shared',
+    XSOPT        => '-C++ -hiertype',
+    LIBS         => '[% my_ldflags %]', 
+    DEFINE       => '[% my_defines %]',
+    INC          => '-I/usr/include -I[% my_include %]',
+    # Un-comment this if you add C files to link with later:
+    # OBJECT       => '$(O_FILES)', # link all the C files too
+);
+

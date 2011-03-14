@@ -1,4 +1,8 @@
-1. re-creation of deleted file(s) under 04grouped
-2. support of custom-inserted file(s) in each phase
-3. use GetOpt::Long to get cmdline params
-99.performance enhancement (cache parse module, etc.) 
+0. fix bug on skipping overload method with the same number of
+argument;
+1. template class support;
+2. Qt signal/slot support;
+3. other Qt modules;
+4. unit test;
+5. perl-ish enhancements;
+

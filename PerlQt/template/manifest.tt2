@@ -1,0 +1,18 @@
+INSTALL
+LICENSE
+Makefile.PL
+README
+TODO
+VERSION
+ppport.h
+[%+ my_top_xs %]
+typemap
+[% FOREACH f = my_pm_files %]
+[%+ f %]
+[% END %]
+[% FOREACH f = my_xs_files %]
+[%+ f %]
+[% END %]
+[% FOREACH f = my_t_files %]
+[%+ f %]
+[% END %]

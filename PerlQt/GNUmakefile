@@ -6,7 +6,8 @@
 ################################################################
 
 #################### META CONFIG ###############################
-include config.mk
+CONFIG_DOT_MK   := config.mk
+include $(CONFIG_DOT_MK)
 
 #################### SHELL    ##################################
 SHELL=/bin/bash
@@ -42,6 +43,9 @@ OUT_TYPEMAP_DIR := $(MAKE_ROOT)/05typemap
 
 IN_XSCODE_DIR   := $(OUT_GROUP_DIR)
 OUT_XSCODE_DIR  := $(MAKE_ROOT)/99xscode
+OUT_PMCODE_DIR  := $(MAKE_ROOT)/99pmcode
+
+TEST_DIR        := $(MAKE_ROOT)/t
 
 #################### MAKE TOOLS ################################
 
@@ -64,6 +68,9 @@ CMD_MV             := mv -f
 CMD_CAT            := cat
 CMD_RM             := rm -f
 CMD_RMDIR          := rm -rf
+CMD_SYMLINK        := ln -sf
+CMD_PERL           := perl
+CMD_CPDIR          := cp -apr
 
 OPT_CC_INPUT       := $(empty)$(empty)
 OPT_CC_OUTPUT      := -o
@@ -94,6 +101,9 @@ CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl
 CMD_GET_CONF       := $(SCRIPT_DIR)/get_module_conf_value.pl
 CMD_ROOT_XS        := $(SCRIPT_DIR)/create_top_dot_xs.pl
 CMD_ENUMMAP        := $(SCRIPT_DIR)/create_enummap.pl
+CMD_MAKEFILE_PL    := $(SCRIPT_DIR)/gen_makefile_pl.pl
+CMD_00USE_T        := $(SCRIPT_DIR)/gen_00use_t.pl
+CMD_MANIFEST       := $(SCRIPT_DIR)/gen_manifest.pl
 
 MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
 HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
@@ -141,6 +151,9 @@ ROOT_XS         := $(MAKE_ROOT)/$(shell $(CMD_GET_CONF) \
                        -conf $(MODULE_DOT_CONF) -f 'root_filename').xs
 DEFAULT_TYPEDEF := $(OUT_GROUP_DIR)/$(subst ::,__,$(shell $(CMD_GET_CONF) \
                        -conf $(MODULE_DOT_CONF) -f 'default_namespace')).typedef
+MAKEFILE_PL     := $(MAKE_ROOT)/Makefile.PL
+00USE_T         := $(TEST_DIR)/00use.t
+MANIFEST        := $(MAKE_ROOT)/MANIFEST
 
 #################### SUBROUTINES ###############################
 
@@ -221,8 +234,9 @@ $(GROUPLIST_DOT_MK): $(GROUP_DOT_MK)
 $(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
                      $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
-	$(_Q)$(CMD_XSCODE_MK) $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR) \
-        $(OUT_TYPEMAP_DIR) $@
+	$(_Q)$(CMD_XSCODE_MK) -conf $(MODULE_DOT_CONF)           \
+        $(IN_XSCODE_DIR) $(OUT_XSCODE_DIR)                   \
+        $(OUT_PMCODE_DIR) $(OUT_TYPEMAP_DIR) $@
 
 # generate xs && pm code
 # GROUP_YAMLS from grouplist.mk
@@ -274,25 +288,41 @@ $(TYPEMAPLIST_DOT_MK): $(GROUPLIST_DOT_MK) $(MODULE_DOT_CONF)     \
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAPLIST_MK) $(OUT_TYPEMAP_DIR) $@
 
-$(PACKAGEMAP): $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
+$(PACKAGEMAP)  : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_PKGMAP) $(OUT_GROUP_DIR) $@
 
-$(ENUMMAP): $(filter %.enum,$(GROUP_YAMLS))
+$(ENUMMAP)     : $(filter %.enum,$(GROUP_YAMLS))
 	$(_Q)echo generating $@
 	$(_Q)[[ -d $(dir $@) ]] || $(CMD_MKDIR) $(dir $@)
 	$(_Q)$(CMD_ENUMMAP) -dir $(OUT_GROUP_DIR) -conf $(MODULE_DOT_CONF) -o $@
 
-$(TYPEMAP_XS): $(TYPEMAPLIST_DOT_MK) $(PACKAGEMAP) $(GROUP_YAMLS)
+$(TYPEMAP_XS)  : $(TYPEMAPLIST_DOT_MK) $(PACKAGEMAP) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_TYPEMAP_XS) -manifest $(TYPEMAP_DOT_DEP) -packagemap  \
         $(PACKAGEMAP) -o $@
 
-$(ROOT_XS): $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
+$(ROOT_XS)     : $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_ROOT_XS) -manifest $(TYPEMAP_DOT_DEP) \
         -conf $(MODULE_DOT_CONF) -mk $(XSCODE_DOT_MK) -o $@
+
+$(MAKEFILE_PL) : $(MODULE_DOT_CONF) $(CONFIG_DOT_MK)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_MAKEFILE_PL) -conf $(MODULE_DOT_CONF)         \
+        -mk $(CONFIG_DOT_MK) -template $(TEMPLATE_DIR) -o $@
+
+$(00USE_T)     : $(MODULE_DOT_CONF) $(PM_FILES)
+	$(_Q)echo generating $@
+	$(_Q)if [[ ! -d $(dir $@) ]]; then $(CMD_MKDIR) $(dir $@); fi
+	$(_Q)$(CMD_00USE_T) -conf $(MODULE_DOT_CONF)             \
+        -template $(TEMPLATE_DIR) -o $@
+
+$(MANIFEST)    : $(XS_FILES) $(PM_FILES) $(00USE_T)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_MANIFEST) -conf $(MODULE_DOT_CONF)            \
+        -template $(TEMPLATE_DIR) -o $@
 
 #################### GENERIC RULES #############################
 
@@ -339,50 +369,59 @@ clean_group  :
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 .PHONY: gen_group clean_group
 
-class_sanity_check:
-	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
-.PHONY: class_sanity_check
-
-gen_typemap     : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)
-clean_typemap   : 
+gen_mapfile  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)    \
+               $(PACKAGEMAP) $(ENUMMAP)
+clean_mapfile: 
 	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
-.PHONY: gen_typemap clean_typemap
-
-gen_packagemap  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) \
-                  $(PACKAGEMAP)
-clean_packagemap: 
-	$(_Q)$(call _remove_file,$(PACKAGEMAP))
-.PHONY: gen_packagemap clean_packagemap
-
-gen_enummap     : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS) \
-                  $(ENUMMAP)
-clean_enummap   :
-	$(_Q)$(call _remove_file,$(ENUMMAP))
-.PHONY: gen_enummap clean_enummap
+.PHONY: gen_mapfile clean_mapfile
 
 # TODO: support of custom-inserted class meta files detection
 #       keep a custom list in seperate file
-gen_xscode_dot_mk   : gen_typemap gen_packagemap gen_enummap   \
-                      $(XSCODE_DOT_MK)
-clean_xscode_dot_mk : 
-	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
-.PHONY: gen_xscode_dot_mk clean_xscode_dot_mk
-
-gen_xscode   : gen_xscode_dot_mk $(XS_FILES) $(TYPEMAP_XS) $(ROOT_XS)
-clean_xscode : clean_xscode_dot_mk
+gen_xscode   : gen_mapfile $(XSCODE_DOT_MK)                    \
+               $(XS_FILES) $(TYPEMAP_XS) $(ROOT_XS)
+	$(_Q)if [[ ! -e xs ]]; then $(CMD_SYMLINK) $(OUT_XSCODE_DIR) xs; fi
+clean_xscode : 
 	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
+	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 	$(_Q)$(call _remove_file,$(TYPEMAP_XS))
 	$(_Q)$(call _remove_file,$(ROOT_XS))
 .PHONY: gen_xscode clean_xscode
 
-# internal use
+gen_pmcode   : gen_xscode $(XS_FILES) $(PM_FILES)
+	$(_Q)echo copying $(OUT_PMCODE_DIR) to lib
+	$(_Q)$(CMD_RMDIR) lib
+	$(_Q)$(CMD_CPDIR) $(OUT_PMCODE_DIR) lib
+clean_pmcode : 
+	$(_Q)$(call _remove_dir,$(OUT_PMCODE_DIR))
+.PHONY: gen_pmcode clean_pmcode
+
+build        : gen_pmcode $(MAKEFILE_PL) $(MANIFEST)
+	$(_Q)$(CMD_PERL) $(MAKEFILE_PL)
+	$(_Q)$(MAKE) -f Makefile
+clean_build  : 
+	$(_Q)$(call _remove_file,$(MAKEFILE_PL))
+	$(_Q)$(call _remove_file,Makefile)
+	$(_Q)$(call _remove_file,$(MANIFEST))
+.PHONY: build clean_build
+
+test         : $(00USE_T)
+	$(_Q)$(MAKE) -f Makefile test
+clean_test   : 
+	$(_Q)$(call _remove_file,$(00USE_T))
+.PHONY: test clean_test
+
+# utility
+class_sanity_check:
+	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
+.PHONY: class_sanity_check
+
 list_group_yamls : 
-	# $(_GOALS)
-	# $(GROUP_YAMLS)
+	$(_Q)echo # $(_GOALS)
+	$(_Q)echo # $(GROUP_YAMLS)
 
 list_typemap_yamls : 
-	# $(TYPEMAP_YAMLS)
+	$(_Q)echo # $(TYPEMAP_YAMLS)
 
 list_template_types: $(TYPEMAP_TEMPLATE_DRAFT)
 	$(_Q)$(CMD_YGREP) -f name $< | sort | uniq | cut -d':' -f2
@@ -395,10 +434,18 @@ list_typemap_types :
 .PHONY: list_group_yamls list_typemap_yamls list_template_types \
         list_template_def list_typemap_types
 
+list_xs_files      :
+	$(_Q)echo # $(XS_FILES)
+list_pm_files      :
+	$(_Q)echo # $(PM_FILES)
+.PHONY: list_xs_files list_pm_files
+
 # final assignment
 clean: clean_dot_mk clean_strip clean_prepro clean_parse \
-       clean_format clean_group clean_typemap            \
-       clean_xscode_dot_mk clean_xscode
+       clean_format clean_group clean_mapfile            \
+       clean_xscode clean_pmcode clean_build clean_test
+	$(_Q)if [[ -L xs ]]; then $(CMD_RM) xs; fi
+	$(_Q)if [[ -L lib ]]; then $(CMD_RM) lib; fi
 .PHONY: clean
 
-all: gen_xscode_dot_mk
+all: gen_pmcode
