@@ -115,6 +115,7 @@ GROUP_DOT_MK       := $(MAKE_ROOT)/group.mk
 GROUPLIST_DOT_MK   := $(MAKE_ROOT)/grouplist.mk
 TYPEMAPLIST_DOT_MK := $(MAKE_ROOT)/typemaplist.mk
 XSCODE_DOT_MK      := $(MAKE_ROOT)/xscode.mk
+BUILD_DOT_MK       := $(MAKE_ROOT)/build.mk
 
 # temple use
 TYPEMAP_DOT_DEP    := $(MAKE_ROOT)/.typemap.dep
@@ -147,13 +148,16 @@ TYPEMAP         := $(OUT_TYPEMAP_DIR)/typemap
 PACKAGEMAP      := $(OUT_TYPEMAP_DIR)/packagemap
 ENUMMAP         := $(OUT_TYPEMAP_DIR)/enummap
 TYPEMAP_XS      := $(MAKE_ROOT)/typemap
-ROOT_XS         := $(MAKE_ROOT)/$(shell $(CMD_GET_CONF) \
-                       -conf $(MODULE_DOT_CONF) -f 'root_filename').xs
+_ROOT_FILENAME  := $(shell $(CMD_GET_CONF) -conf $(MODULE_DOT_CONF) \
+                       -f 'root_filename')
+ROOT_XS         := $(MAKE_ROOT)/$(_ROOT_FILENAME).xs
+ROOT_C          := $(MAKE_ROOT)/$(_ROOT_FILENAME).c
 DEFAULT_TYPEDEF := $(OUT_GROUP_DIR)/$(subst ::,__,$(shell $(CMD_GET_CONF) \
                        -conf $(MODULE_DOT_CONF) -f 'default_namespace')).typedef
 MAKEFILE_PL     := $(MAKE_ROOT)/Makefile.PL
 00USE_T         := $(TEST_DIR)/00use.t
 MANIFEST        := $(MAKE_ROOT)/MANIFEST
+MAKEFILE_PERL   := $(MAKE_ROOT)/Makefile
 
 #################### SUBROUTINES ###############################
 
@@ -324,6 +328,10 @@ $(MANIFEST)    : $(XS_FILES) $(PM_FILES) $(00USE_T)
 	$(_Q)$(CMD_MANIFEST) -conf $(MODULE_DOT_CONF)            \
         -template $(TEMPLATE_DIR) -o $@
 
+$(MAKEFILE_PERL) : $(MAKEFILE_PL)
+	$(_Q)echo generating $@
+	$(_Q)$(CMD_PERL) $^
+
 #################### GENERIC RULES #############################
 
 clean_dot_mk :
@@ -369,8 +377,8 @@ clean_group  :
 	$(_Q)$(call _remove_file,$(GROUPLIST_DOT_MK))
 .PHONY: gen_group clean_group
 
-gen_mapfile  : gen_group $(GROUPLIST_DOT_MK) $(GROUP_YAMLS)    \
-               $(PACKAGEMAP) $(ENUMMAP)
+gen_mapfile  : gen_group $(GROUPLIST_DOT_MK) $(TYPEMAPLIST_DOT_MK) \
+               $(GROUP_YAMLS) $(PACKAGEMAP) $(ENUMMAP)
 clean_mapfile: 
 	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
@@ -396,14 +404,7 @@ clean_pmcode :
 	$(_Q)$(call _remove_dir,$(OUT_PMCODE_DIR))
 .PHONY: gen_pmcode clean_pmcode
 
-build        : gen_pmcode $(MAKEFILE_PL) $(MANIFEST)
-	$(_Q)$(CMD_PERL) $(MAKEFILE_PL)
-	$(_Q)$(MAKE) -f Makefile
-clean_build  : 
-	$(_Q)$(call _remove_file,$(MAKEFILE_PL))
-	$(_Q)$(call _remove_file,Makefile)
-	$(_Q)$(call _remove_file,$(MANIFEST))
-.PHONY: build clean_build
+include $(BUILD_DOT_MK)
 
 test         : $(00USE_T)
 	$(_Q)$(MAKE) -f Makefile test

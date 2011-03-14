@@ -408,7 +408,7 @@ sub __analyse_type {
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
-        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?!string)/std_/go;
+        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?!(?:string|istream|ostream))/std_/go;
         #print STDERR "patch3: ", $TYPE, "\n";
         $result = $call_transform->($TYPE);
     }

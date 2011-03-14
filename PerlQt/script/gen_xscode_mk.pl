@@ -94,10 +94,12 @@ sub main {
         }
         my $module = exists $meta->{MODULE} ? $meta->{MODULE} : '';
         my @module = split /\:\:/, $module;
+        my @name   = split /\:\:/, $meta->{TYPE} eq 'namespace' ? 
+          $meta->{NAME} : $meta->{PERL_NAME};
+        $name[-1] .= '.pm';
         
         # deps for module.xs
-        $xs_file = File::Spec::->catfile(
-            $out_xscode_dir, @module, "$classname.xs");
+        $xs_file = File::Spec::->catfile($out_xscode_dir, "$classname.xs");
         if ($meta->{TYPE} eq 'namespace') {
             $xs_file = '';
             goto MODULE_PM;
@@ -118,8 +120,7 @@ sub main {
 
 MODULE_PM:        
         # deps for module.pm
-        $pm_file = File::Spec::->catfile(
-            $out_pmcode_dir, @module, split /\_\_/, "$classname.pm");
+        $pm_file = File::Spec::->catfile($out_pmcode_dir, @module, @name);
         push @pm_files, $pm_file;
         # .function.public for operator (function) overload
         $xscode_dot_mk .= $pm_file. ": ". 
