@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use strict;
 #use English qw( -no_match_vars );
@@ -113,7 +107,7 @@ sub main {
         'default_typedef=s'=> \$def_typedef_file,
         'o|outoput=s'  => \$xs_file,
     );
-    usage() unless @ARGV >= 1;
+    usage() unless @ARGV;
     
     my %f = ();
     foreach my $p (@ARGV) {
@@ -287,29 +281,10 @@ sub main {
             }
             # FIXME: skip template class for now
             next METHOD_LOOP if $p->{type} =~ /</io;
-            # transform sprintf(format,...) to sprintf(char *)
-            # the implementation will be:
-            # 1) in perl code, call perl's sprintf
-            # 2) return SvPV to XS code
-            if ($p->{type} eq '...') {
-                if ($param_num == 2) {
-                    # sprint(format, ...)
-                    splice @{$i->{parameters}}, 0, $param_num, {
-                        name => 'string',
-                        type => 'char *',
-                    };
-                }
-                elsif ($param_num == 1) {
-                    # foo(...)
-                    next METHOD_LOOP;
-                }
-            }
-            else {
-                # workaround class without default constructor
-                # patch QBool to QBool &
-                if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {
-                    $p->{type} = $p->{type}. ' &';
-                }
+            # workaround class without default constructor
+            # patch QBool to QBool &
+            if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {
+                $p->{type} = $p->{type}. ' &';
             }
         }
         push @{$pub_methods_by_name->{$name}}, $i;
@@ -395,9 +370,25 @@ sub main {
         push @$mem_methods, $m;
     }
     my $abstract_class = 0;
-    # FIXME: check parent class too
-    if (exists $meta->{PROPERTY}) {
-        $abstract_class = 1 if grep { $_ eq 'abstract' } @{$meta->{PROPERTY}};
+    # walk thru class inheritence tree for abstract property
+    my @dir = File::Spec::->splitpath($f{meta});
+    pop @dir;
+    my @parent = ( $meta, );
+    while (@parent) {
+        my $m = pop @parent;
+        if (exists $m->{PROPERTY} and grep { $_ eq 'abstract' }
+              @{$m->{PROPERTY}}) {
+            $abstract_class = 1;
+            last;
+        }
+        if (exists $m->{ISA}) {
+            foreach my $c (@{$m->{ISA}}) {
+                next if $c->{RELATIONSHIP} ne 'public';
+                ( my $n = $c->{NAME} ) =~ s/\:\:/__/go;
+                my $mf = File::Spec::->catpath(@dir, $n. '.meta');
+                push @parent, load_yaml($mf) if -f $mf;
+            }
+        }
     }
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
@@ -415,8 +406,9 @@ sub main {
         my_abstract         => $abstract_class,
         my_has_operator_new => $has_operator_new, 
     };
-    $template->process('body.tt2', $var, \$out) or 
+    $template->process('xscode.tt2', $var, \$out) or 
       croak $template->error. "\n";
+    $out .= "\n";
 WRITE_FILE:
     if ($xs_file) {
         open my $F, '>', $xs_file or 

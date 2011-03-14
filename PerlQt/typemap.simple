@@ -115,25 +115,6 @@ uchar			T_U_CHAR
 const uchar *		T_IV_PTR
 const uint *		T_IV_PTR
 const ushort *		T_UV_PTR
-# va_list could be either char* or void*
-#va_list			T_PV
+
 va_list			T_PTR
-
-# FIXME
-# const char		T_C_CHAR
-# const uchar		T_C_U_CHAR
-# const int		T_C_INT
-# const uint
-# const short
-# const ushort
-# const long
-# const ulong
-# std::string
-# const std::sting
-# const wchar_t
-
-#INPUT
-#T_C_CHAR
-#        $var = const_cast<const char>((char)*SvPV_nolen($arg))
-#T_C_U_CHAR
-#        $var = const_cast<const unsigned char>((unsigned char)SvUV($arg))
+...                     T_VA_LIST

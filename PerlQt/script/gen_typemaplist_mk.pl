@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -46,8 +40,8 @@ sub main {
     # TODO: missing of any in TYPEMAP_FILES 
     # triggers rebuild of TYPEMAPLIST_DOT_MK
     # depends on definition of TYPEMAP_YAMLS
-    $typemaplist_dot_mk .= "ifneq (\$(filter gen_xscode all, ". 
-      "\$(_GOALS)),)\n";
+    $typemaplist_dot_mk .= "ifneq (\$(filter gen_xscode gen_pmcode ". 
+      " build test all,\$(_GOALS)),)\n";
     $typemaplist_dot_mk .= "\$(info including \$(XSCODE_DOT_MK))\n";
     $typemaplist_dot_mk .= "include \$(XSCODE_DOT_MK)\n";
     $typemaplist_dot_mk .= "endif\n";

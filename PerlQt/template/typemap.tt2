@@ -25,7 +25,7 @@
   [% CASE 'T_SYSRET' %]
     [%+ var %] NOT IMPLEMENTED
   [% CASE 'T_UV' %]
-    [%+ var %] = ([% type %])SvUV([% arg %]);
+    [%+ var %] = ([% type.remove('\s*\&$') %])SvUV([% arg %]);
   [% CASE 'T_UV_PTR' %]
     {
         [%+ type.remove('\s*\*$').remove('^const ') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ') %]>(SvUV([% arg %]));
@@ -54,7 +54,7 @@
     [% CALL enums.pop %]
     switch(SvIV([% arg %])) {
     [% FOREACH k = enum %]
-    case [% enums.join('::') %]::[% k %]:
+    case [% loop.index %]:
       [%+ var %] = [% enums.join('::') %]::[% k %];
       break;
     [% END %]
@@ -70,7 +70,7 @@
     [% CALL enums.pop %]
     switch(SvIV([% arg %])) {
     [% FOREACH k = enum %]
-    case [% enums.join('::') %]::[% k %]:
+    case [% loop.index %]:
       [%+ var %] = &[% enums.join('::') %]::[% k %];
       break;
     [% END %]
@@ -145,7 +145,13 @@
         [%+ var %] = &tmp;
     }
   [% CASE 'T_PV' %]
-    [%+ var %] = ([% type %])SvPV_nolen([% arg %]);
+    [%+ var %] = ([% type.remove('\s*\&$') %])SvPV_nolen([% arg %]);
+  [% CASE [ 'T_STD_STRING_PV', 'T_STD_STRING_PV_REF', 'T_STD_STRING_PV_PTR' ] %]
+    [% IF ptype.search('_PTR$') %]
+    [%+ var %] = &std::string((const char *)SvPV_nolen([% arg %]));
+    [% ELSE %]
+    [%+ var %] = std::string((const char *)SvPV_nolen([% arg %]));
+    [% END %]
   [% CASE 'T_PTR' %]
     [%+ var %] = reinterpret_cast<[% type.remove('^const ') %]>(SvIV([% arg %]));
   [% CASE 'T_PTRREF' %]
@@ -313,6 +319,8 @@
     sv_setnv([% arg %], (double)*[% var %]);
   [% CASE 'T_PV' %]
     sv_setpv((SV*)[% arg %], [% type.search('^const ') ? var : 'const_cast<const ' _ type _ '>(' _ var _ ')' %]);
+  [% CASE [ 'T_STD_STRING_PV', 'T_STD_STRING_PV_REF', 'T_STD_STRING_PV_PTR' ] %]
+    sv_setpv((SV*)[% arg %], [% var %][% ptype.search('_PTR$') ? '->' : '.' %]data());
   [% CASE 'T_PTR' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE 'T_PTRREF' %]
@@ -336,7 +344,7 @@
   [% CASE 'T_PACKED' %]
     XS_pack_[% ntype %]([% arg %], [% var %]);
   [% CASE 'T_PACKEDARRAY' %]
-    XS_pack_[% ntype %]([% arg %], [% var %], count_[% ntype %]);
+    sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE 'T_DATAUNIT' %]
     sv_setpvn([% arg %], [% var %].chp(), [% var %].size());
   [% CASE 'T_CALLBACK' %]

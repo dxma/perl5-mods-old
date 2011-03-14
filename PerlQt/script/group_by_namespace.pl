@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -16,7 +10,7 @@ use File::Spec ();
 use FindBin    ();
 use Getopt::Long qw(GetOptions);
 
-use YAML::Syck;
+use YAML::Syck qw/Load Dump/;
 
 my %opt;
 
@@ -64,6 +58,15 @@ sub VISIBILITY_PUBLIC {
 
 sub VISIBILITY_PRIVATE {
     +{ type => 'accessibility', VALUE => [ 'private' ], }
+}
+
+sub load_yaml {
+    my $path = shift;
+    local ( *YAML, );
+    open YAML, "<", $path or croak "cannot open file to read: $!";
+    my $cont = do { local $/; <YAML> };
+    close YAML;
+    return Load($cont);
 }
 
 =over
@@ -633,7 +636,6 @@ sub __process_namespace {
     my $entry_to_create = {};
     $entry_to_create->{NAME}   = $entry->{NAME};
     $entry_to_create->{TYPE}   = $entry->{type};
-    # FIXME
     $entry_to_create->{MODULE} = 
       @$namespace ? join('::', @$namespace) : '';
     # push new namespace
@@ -753,7 +755,7 @@ sub _process {
     $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
         NAME   => NAMESPACE_DEFAULT, 
         TYPE   => 'namespace', 
-        MODULE => NAMESPACE_DEFAULT, 
+        MODULE => '', 
     };
     # special patch to <NAMESPACE_DEFAULT>.function
     # rename to <NAMESPACE_DEFAULT>.function.public
@@ -782,13 +784,7 @@ sub main {
     croak "default namespace not found" if !$opt{nsdefault};
     croak "root namespace not found" if !$opt{nsroot};
     
-    local ( *HEADER );
-    open HEADER, '<', $opt{file} or die "cannot open file: $!";
-    my $cont = do { local $/; <HEADER>; };
-    close HEADER;
-    my ( $entries ) = Load($cont);
-    _process($entries, $opt{dir});
-    
+    _process(load_yaml($opt{file}), $opt{dir});
     exit 0;
 }
 

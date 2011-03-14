@@ -1,3 +1,7 @@
-All Perl/Non-Perl code in this package released under Perl Artistic
-License. 
-See < http://www.perl.com/pub/a/language/misc/Artistic.html >
+################################################################
+# Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu _at_ cpan _dot_ org>
+#
+# This library is free software; you can redistribute it and/or 
+# modify it under the same terms as Perl itself.
+# See http://dev.perl.org/licenses/artistic.html
+################################################################

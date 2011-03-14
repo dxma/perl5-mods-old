@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -62,7 +56,7 @@ sub main {
     close GROUP_DOT_MK;
     # depends on definition of GROUP_YAMLS
     $grouplist_dot_mk .= "\nifneq (\$(filter gen_typemap ". 
-      "gen_xscode all,\$(_GOALS)),)\n";
+      "gen_xscode gen_pmcode build test all list_\%,\$(_GOALS)),)\n";
     $grouplist_dot_mk .= "\$(info including \$(TYPEMAPLIST_DOT_MK))\n";
     $grouplist_dot_mk .= "include \$(TYPEMAPLIST_DOT_MK)\n";
     $grouplist_dot_mk .= "endif\n";

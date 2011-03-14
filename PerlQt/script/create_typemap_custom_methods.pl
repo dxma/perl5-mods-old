@@ -1,11 +1,5 @@
 #!/usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 =head1 DESCRIPTION
 
@@ -39,6 +33,7 @@ sub Q3PtrList {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # Q3PtrList<type>
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'T_Q3PTRLIST', 
@@ -69,6 +64,7 @@ sub Q3ValueList {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # Q3ValueList<type>
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'T_Q3VALUELIST', 
@@ -94,6 +90,7 @@ sub QFlags {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QFlags<type>
     my $entry     = {};
     $entry->{IS_TEPLATE} = 1;
     $entry->{type}   = join('__', 'T_QFLAGS', 
@@ -119,6 +116,7 @@ sub QList {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QList<type>
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'T_QLIST', 
@@ -144,6 +142,7 @@ sub QFuture {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QFuture<type>
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'T_QFUTURE', 
@@ -169,6 +168,7 @@ sub QVector {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QVector<type>
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'T_QVECTOR', 
@@ -194,6 +194,7 @@ sub QSet {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QSet<type>
     my $entry     = {};
     $entry->{IS_TEMPLATE} = 1;
     $entry->{type}   = join('__', 'T_QSET', 
@@ -219,7 +220,7 @@ sub QMap {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: QMap< int *, QString >
+    # QMap<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -251,7 +252,7 @@ sub QMultiMap {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: QMultiMap< int *, QString >
+    # QMultiMap<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -283,7 +284,7 @@ sub QPair {
     my @sub_entry  = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: QPair< int *, QString *>
+    # QPair<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -316,7 +317,7 @@ sub QHash {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: QHash< int *, QString >
+    # QHash<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -349,7 +350,7 @@ sub std_less {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: std::less< class >
+    # std::less<type>
     my @sub_class = @sub_entry;
     my $entry  = {};
     $entry->{IS_TEMPLATE} = 1;
@@ -377,7 +378,7 @@ sub std_map {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: std::map< class1, class2 >
+    # std::map<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -411,7 +412,7 @@ sub std_pair {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: std::pair< class1, class2 >
+    # std::pair<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -445,7 +446,7 @@ sub std_vector {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: std::vector< class1, class2 >
+    # std::vector<type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -479,7 +480,7 @@ sub std_set {
     my @sub_entry = @_;
     
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
-    # NOTE: std::set< class1, class2, class3 >
+    # std::set<type, type, type>
     my $sub_entries = __parse_sub_entries(@sub_entry);
     my @sub_class = ();
     for (my $i = 0; $i < @$sub_entries; $i++) {
@@ -496,6 +497,40 @@ sub std_set {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}       = 'std::set';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub std_basic_string {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # std::set<type, traits, alloc>
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry  = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_STD_BASIC_STRING', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'std::basic_string<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_STD_BASIC_STRING';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'std::basic_string';
         $new_entry->{type}       = $new_entry->{name};
         $new_entry->{ntype}      = $entry->{type};
         $new_entry->{argc}       = @sub_class;

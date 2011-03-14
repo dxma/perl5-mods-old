@@ -1,16 +1,12 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
+use Carp;
+
 use YAML::Syck qw(Load);
 
 =head1 DESCIPTION
@@ -24,6 +20,15 @@ sub usage {
 usage: $0 <header.mk> <in_noinc_dir> <in_group_dir> <out_group_dir> <module.conf> [<output_file>]
 EOU
     exit 1;
+}
+
+sub load_yaml {
+    my $path = shift;
+    local ( *YAML, );
+    open YAML, "<", $path or croak "cannot open file to read: $!";
+    my $cont = do { local $/; <YAML> };
+    close YAML;
+    return Load($cont);
 }
 
 sub main {
@@ -47,15 +52,10 @@ sub main {
     $group_dot_mk .= "\t\$(_Q)". 
       "\$(CMD_MKDIR) \$(OUT_GROUP_DIR)\n";
     
-    # get default_namespace, template_filename from module.conf
-    local ( *CONF );
-    open CONF, "<", $module_dot_conf or 
-      die "cannot open module.conf: $!";
-    my $conf = do { local $/; <CONF> };
-    close CONF;
-    ( my $hconf ) = Load($conf);
-    my $default_namespace = $hconf->{default_namespace};
-    my $root_namespace    = $hconf->{root_namespace};
+    # get namespace, export mark from module.conf
+    my $mod_conf = load_yaml($module_dot_conf);
+    my $default_namespace = '-nsdefault "'. $mod_conf->{default_namespace}. '"';
+    my $root_namespace = '-nsroot "'. $mod_conf->{root_namespace}. '"';
     
     foreach (@cont) {
         chomp;
@@ -63,7 +63,8 @@ sub main {
             s/\.h\s*\:\s*$/.yml/gio;
             $group_dot_mk .= "\t\$(_Q)echo processing $_\n";
             $group_dot_mk .= "\t\$(_Q)\$(CMD_GROUP_YML) ". 
-              "-nsdefault \"$default_namespace\" -nsroot \"$root_namespace\" -file $_ -dir \$(OUT_GROUP_DIR) -name \$(patsubst %.yml,%.\$(HEADER_PREFIX),\$(patsubst \$(IN_GROUP_DIR)/%,%,$_))\n";
+              $default_namespace. " ". $root_namespace. " ". 
+                " -file $_ -dir \$(OUT_GROUP_DIR) -name \$(patsubst %.yml,%.\$(HEADER_PREFIX),\$(patsubst \$(IN_GROUP_DIR)/%,%,$_))\n";
         }
     }
     # command to create grouplist.mk
@@ -74,7 +75,7 @@ sub main {
       "do touch \$(OUT_GROUP_DIR)/\$\$i; done\n";
     $group_dot_mk .= "\n";
     $group_dot_mk .= "ifneq (\$(filter gen_typemap ". 
-      "gen_xscode all list_\%,\$(_GOALS)),)\n";
+      "gen_xscode gen_pmcode build test all list_\%,\$(_GOALS)),)\n";
     $group_dot_mk .= "\$(info including \$(GROUPLIST_DOT_MK))\n";
     $group_dot_mk .= "include \$(GROUPLIST_DOT_MK)\n";
     $group_dot_mk .= "endif\n";
@@ -96,7 +97,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

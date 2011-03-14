@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 no warnings 'once';
@@ -414,7 +408,7 @@ sub __analyse_type {
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
-        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?=(?:pair|vector|set|less|map))/std_/go;
+        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?!string)/std_/go;
         #print STDERR "patch3: ", $TYPE, "\n";
         $result = $call_transform->($TYPE);
     }
