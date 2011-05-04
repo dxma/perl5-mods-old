@@ -62,7 +62,7 @@
       Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");
     }
   [% CASE 'T_ENUM_PTR' %]
-    [% enums = [ type.split('\:\:') ] %]
+    [% enums = type.remove('\s*\*$').split('\:\:') %]
     [% enum  = my_enummap %]
     [% FOREACH i = enums %]
       [% enum = enum.$i %]
@@ -71,8 +71,11 @@
     switch(SvIV([% arg %])) {
     [% FOREACH k = enum %]
     case [% loop.index %]:
-      [%+ var %] = &[% enums.join('::') %]::[% k %];
+    {
+      [%+ type.remove('\s*\*$') %] [%+ var %]_ = [% enums.join('::') %]::[% k %];
+      [%+ var %] = &[% var %]_;
       break;
+    }
     [% END %]
     default:
       Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");

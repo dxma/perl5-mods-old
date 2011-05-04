@@ -61,7 +61,7 @@ CMD_CC             := $(_CMD_CC)
 CMD_CC             ?= g++
 # intepretable echo
 CMD_ECHO           := echo -e
-CMD_PREPRO         := $(CMD_CC) -E
+CMD_PREPRO         := $(CMD_CC) -E -P
 CMD_PARSE          := $(SCRIPT_DIR)/parse_header.pl
 CMD_MKDIR          := mkdir -p
 CMD_MV             := mv -f
@@ -398,7 +398,7 @@ clean_xscode :
 
 gen_pmcode   : gen_xscode $(XS_FILES) $(PM_FILES)
 	$(_Q)echo copying $(OUT_PMCODE_DIR) to lib
-	$(_Q)$(CMD_RMDIR) lib
+	$(_Q)$(CMD_RMDIR) lib blib
 	$(_Q)$(CMD_CPDIR) $(OUT_PMCODE_DIR) lib
 clean_pmcode : 
 	$(_Q)$(call _remove_dir,$(OUT_PMCODE_DIR))

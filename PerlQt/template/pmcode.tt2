@@ -1,4 +1,5 @@
 package [% my_package %];
+# THE FOLLOWING CODE IS AUTOMATED, ANY MODIFICATION WILL BE LOST!
 # classname: [% my_cclass %]
 # file     : [% my_file %]
 
