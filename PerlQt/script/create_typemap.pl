@@ -70,7 +70,7 @@ our %TYPE_LOCALMAP   = ();
 # a tiny Parse::RecDescent grammar to work on
 # grabbing const parameter
 my $const_grammar = q{
-    start : next_const const_body const_remainder 
+    start : next_const const_body const_other 
             { $main::TYPE = $item[1]->[1]. "( ". $item[2]. " ) ". $item[3]; }
             { if ($item[2] eq '') { 
                   # something like 'QMenuBar * const'
@@ -79,7 +79,7 @@ my $const_grammar = q{
                   $main::TYPE = $item[1]->[0]. $main::TYPE;
               }
             }
-    const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
+    const_other            : m/^(.*)\Z/o      { $return = $1; } 
                            | { $return = ''; }
     next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o 
                              { $return = [$1, $2]; } 
@@ -89,8 +89,8 @@ my $const_grammar = q{
                    | const_body_loop           { $return = $item[1]; } 
                    |                           { $return = '';       }
     const_body_loop: next_const_body_token 
-                     ( '(' <commit> const_body_loop ')' 
-                       { $return = $item[1]. $item[3]. $item[4]; } 
+                     ( '(' <commit> const_body_loop ')' ( const_body_simple { $return = $item[1]; } | { $return = '' } ) 
+                       { $return = $item[1]. $item[3]. $item[4]. $item[5]; } 
                      | { $return = '' } ) 
                      { $return = $item[1]. $item[2]; }
 };
@@ -557,13 +557,23 @@ sub main {
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
-    __read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
+    #__read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
     # locate those types which should be ignored
     __read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
     # locate simple types
     __read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
     # locate manual types
     __read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
+    # if typemap.manual.something exists, load them into
+    # MANUAL_TYPEMAP
+    if (my @typemap_dot_manual = glob($typemap_dot_manual. ".*")) {
+        foreach my $f (@typemap_dot_manual) {
+            my $manual_typemap = __load_yaml($f, \%MANUAL_TYPEMAP);
+            foreach my $k (keys %$manual_typemap) {
+                $MANUAL_TYPEMAP{$k} = $manual_typemap->{$k};
+            }
+        }
+    }
     
     my $post_patch_type = sub {
         my ( $result, ) = @_;

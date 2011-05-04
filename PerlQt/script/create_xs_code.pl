@@ -242,8 +242,11 @@ sub main {
             #print STDERR "return type in $name: ", $i->{return}, "\n";
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
-            # FIXME: skip template class for now
-            next METHOD_LOOP if $i->{return} =~ /</io;
+            if ($i->{return} =~ /</io) {
+                # FIXME: skip template class for now
+                print STDERR "skip template class method: $name\n";
+                next METHOD_LOOP;
+            }
         }
         my $param_num = @{$i->{parameters}};
         # handle foo(void)
@@ -260,7 +263,13 @@ sub main {
             $p->{type} = $subst_with_fullname->($p->{type});
             if (exists $p->{DEFAULT_VALUE}) {
                 $p->{default} = delete $p->{DEFAULT_VALUE};
-                if (exists $typemap->{$p->{type}} and
+                if ($p->{type} eq 'int' and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    # non-num enum item
+                    if ($p->{default} !~ /\:\:/o) {
+                        $p->{default} = $meta->{PERL_NAME}. '::'. $p->{default};
+                    }
+                }
+                elsif (exists $typemap->{$p->{type}} and
                       $typemap->{$p->{type}} eq 'T_ENUM') {
                     if ($p->{default} !~ /\:\:/o) {
                         # stamp with class name
@@ -279,8 +288,11 @@ sub main {
                     $p->{default} = $cname. '()';
                 }
             }
-            # FIXME: skip template class for now
-            next METHOD_LOOP if $p->{type} =~ /</io;
+            if ($p->{type} =~ /</io) {
+                # FIXME: skip template class for now
+                print STDERR "skip template class method: $name\n";
+                next METHOD_LOOP;
+            }
             # workaround class without default constructor
             # patch QBool to QBool &
             if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {

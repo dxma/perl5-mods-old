@@ -138,6 +138,7 @@ sub QList {
     $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
+
 sub QFuture {
     my @sub_entry = @_;
     
@@ -164,6 +165,68 @@ sub QFuture {
     $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
+
+sub QExplicitlySharedDataPointer {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QExplicitlySharedDataPointer<type>
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'T_QEXPLICITLYSHAREDDATAPOINTER', 
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QExplicitlySharedDataPointer<'. $sub_c_type. '>';
+    $entry->{t_type} = 'T_QEXPLICITLYSHAREDDATAPOINTER';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QExplicitlySharedDataPointer';
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub QScopedPointer {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QScopedPointer<type, type>
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 2;
+    $entry->{type}   = 
+      join('__', 'T_QSCOPEDPOINTER', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QScopedPointer<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QSCOPEDPOINTER';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QScopedPointer';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
 sub QVector {
     my @sub_entry = @_;
     
@@ -339,6 +402,40 @@ sub QHash {
         $new_entry->{argc}       = @sub_class;
         $new_entry->{key_type}   = $sub_class[0];
         $new_entry->{value_type} = $sub_class[1];
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub QGenericMatrix {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QGenericMatrix<m, n, t>
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 3;
+    $entry->{type}   = 
+      join('__', 'T_QGENERICMATRIX', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QGenericMatrix<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QGENERICMATRIX';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QGenericMatrix';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{argc}       = @sub_class;
+        for (my $i = 0; $i < @sub_class; $i++) {
+            $new_entry->{'class'. $i. '_type'} = $sub_class[$i];
+        }
         push @TYPE_TEMPLATE, $new_entry;
         $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
     }

@@ -44,7 +44,7 @@ STRLEN                  T_UV
 U32                     T_U_LONG
 U16                     T_U_SHORT
 U8                      T_UV
-Result                  T_U_CHAR
+#Result                  T_U_CHAR
 Boolean                 T_BOOL
 float                   T_FLOAT
 double                  T_DOUBLE

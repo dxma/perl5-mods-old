@@ -79,6 +79,8 @@ sub main {
         
         # get module name from .meta
         my $meta = load_yaml($m);
+	# skip masked
+	next if grep { $_ eq $meta->{MODULE} } @{$mod_conf->{mask_modules}};
         # skip not exported
         if (defined $export_mark) {
             my $skip = 0;
