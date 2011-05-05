@@ -13,6 +13,7 @@ sub __get_custom_module_name {
     require File::Spec;
     my $name = (File::Spec::->splitdir($path))[-2];
     $name =~ s/^Qt//o;
+    $module =~ s/^QDBus//o;
     return($name, $module);
 }
 

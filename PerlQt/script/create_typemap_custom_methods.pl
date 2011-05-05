@@ -139,6 +139,33 @@ sub QList {
     return $entry;
 }
 
+sub QDBusReply {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QDBusReply<type>
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'T_QDBUSREPLY', 
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QDBusReply<'. $sub_c_type. '>';
+    $entry->{t_type} = 'T_QDBUSREPLY';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QDBusReply';
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
 sub QFuture {
     my @sub_entry = @_;
     
