@@ -1,0 +1,30 @@
+# Manually maintained types, which might come from: 
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+# NOTE: _FULL_ qualified name if possible
+
+# QList<QVariant>
+QVariantList			T_CLASS
+QWS_SOCK_BASE			T_PTR
+QGraphicsSceneMouseEvent::Type	T_ENUM
+QTabletEvent::Type		T_ENUM
+QMouseEvent::Type		T_ENUM
+QGraphicsSceneHelpEvent::Type	T_ENUM
+QInputEvent::Type		T_ENUM
+QGraphicsSceneWheelEvent::Type	T_ENUM
+QHoverEvent::Type		T_ENUM
+QGraphicsSceneContextMenuEvent::Type	T_ENUM
+QAccessibleEvent::Type		T_ENUM
+QFocusEvent::Type		T_ENUM
+QDragMoveEvent::Type		T_ENUM
+QDropEvent::Type		T_ENUM
+QGraphicsSceneEvent::Type	T_ENUM
+QKeyEvent::Type			T_ENUM
+QGraphicsSceneHoverEvent::Type	T_ENUM
+QGraphicsSceneDragDropEvent::Type	T_ENUM
+QHelpEvent::Type		T_ENUM
+# Q_DECLARE_FLAGS(Filters, Filter)
+QDir::Filters			T_ENUM
+QDir::SortFlags			T_ENUM
+QFile::Permissions		T_ENUM

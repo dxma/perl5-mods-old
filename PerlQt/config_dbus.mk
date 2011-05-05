@@ -15,28 +15,31 @@ _HEADER_DIR := /usr/include/qt4
 #      Qt3Support
 #_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
 #               Qt3Support 
-_QT := QtCore
+_QT := QtDBus
 
 # QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
 _QT_EXTRA := QtAssistant QtDBus QtUiTools QtDesigner QtTest
 
-_HEADERS  := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,     \
+_HEADERS  := $(filter-out %/qdbusmacros.h,                       \
                    $(wildcard                                    \
                        $(addprefix $(_HEADER_DIR)/,              \
                            $(addsuffix /*.h, $(_QT)))))
+# common enums declared in qnamespace.h
+_HEADERS  += $(_HEADER_DIR)/QtCore/qnamespace.h $(_HEADER_DIR)/QtCore/qvariant.h
 
 HEADER_PREFIX := h
 
 # imacros list
 # which will be passed to preprocessor
-# keep the order
-_IMACROS := QtCore/qglobal.h QtCore/qconfig.h QtCore/qfeatures.h
+_IMACROS := QtCore/qglobal.h QtCore/qmetatype.h QtCore/qvariant.h
 
 # core define modules
 # this line will be scaned by script/gen_makefile_pl.pl
 # no make variables inside, keep value in one line
 CORE_DEFINES     := -DQT_CORE_LIB -DQT_SHARED -DQT_NO_DEBUG
-GUI_DEFINES      := -DQT_GUI_LIB
+# disable S60, Windows, WindowMobile style
+GUI_DEFINES      := -DQT_GUI_LIB -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_S60 -DQT_NO_STYLE_S60 -DQT_NO_STYLE_WINDOWS
+DBUS_DEFINES     := -DQDBUS_MAKEDLL -DQT_SHARED -DQT_NO_DEBUG
 NETWORK_DEFINES  := -DQT_NETWORK_LIB
 SQL_DEFINES      := -DQT_SQL_LIB
 XML_DEFINES      := -DQT_XML_LIB
@@ -50,7 +53,7 @@ QT3_DEFINES      := $(empty)$(empty)
 #       '__declspec(dllexport)'                  on Windows
 #       parser will benefit on such uniform look
 # -DQT_VISIBILITY_AVAILABLE
-EXTRA_DEFINES := -DQT_NO_KEYWORDS -DQ_DECL_EXPORT="Q_DECL_EXPORT"
+EXTRA_DEFINES := -DQT_NO_KEYWORDS -DQ_DECL_EXPORT="Q_DECL_EXPORT" -DQDBUS_EXPORT="Q_DECL_EXPORT"
 
 ALL_DEFINES   := $(CORE_DEFINES) $(GUI_DEFINES) $(NETWORK_DEFINES) \
                  $(SQL_DEFINES) $(XML_DEFINES) $(OPENGL_DEFINES)   \
@@ -66,4 +69,4 @@ override MAKE_ROOT = .
 # following is not used by GNUmakefile
 # each line will be scaned by script/gen_makefile_pl.pl
 # no make variables inside, keep value in one line
-LDFLAGS := -L/usr/lib/qt4 -lQtCore
+LDFLAGS := -L/usr/lib/qt4 -lQtDBus -lQtXml -lQtCore

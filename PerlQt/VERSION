@@ -1,1 +1,8 @@
-0.01_01 March 2011 built on qt-core 4.6.2
+qt-core
+   * Mar 2011: 0.01_01 on version 4.6.2
+
+qt-gui
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-dbus
+   * May 2011: 0.01_01 on version 4.6.2

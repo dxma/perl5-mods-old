@@ -1,0 +1,9 @@
+# Manually maintained types, which might come from: 
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+# NOTE: _FULL_ qualified name if possible
+
+# QList<QVariant>
+#QVariantList			T_CLASS
+#QVariantMap			T_CLASS
