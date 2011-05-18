@@ -93,7 +93,7 @@ sub main {
     my $mod_conf_file   = '';
     my $template_dir    = '';
     my @typemap_files   = ();
-    my $packagemap_file = '';
+    my @packagemap_files= ();
     my $enummap_file    = '';
     my $def_typedef_file= '';
     my $xs_file         = '';
@@ -102,7 +102,7 @@ sub main {
         'conf=s'       => \$mod_conf_file,
         'template=s'   => \$template_dir,
         'typemap=s'    => \@typemap_files,
-        'packagemap=s' => \$packagemap_file,
+        'packagemap=s' => \@packagemap_files,
         'enummap=s'    => \$enummap_file,
         'default_typedef=s'=> \$def_typedef_file,
         'o|outoput=s'  => \$xs_file,
@@ -119,7 +119,7 @@ sub main {
     }
     
     croak "no module.conf found" if !-f $mod_conf_file;
-    croak "no packagemap file found" if !-f $packagemap_file;
+    #croak "no packagemap file found" if !-f $packagemap_file;
     croak "no default typedef file found" if !-f $def_typedef_file;
     croak "no enummap file found" if !-f $enummap_file;
     my $mod_conf    = load_yaml($mod_conf_file);
@@ -184,7 +184,13 @@ sub main {
         }
     }
     # global packagemap
-    my $packagemap = load_yaml($packagemap_file);
+    my $packagemap = {};
+    foreach my $f (@packagemap_files) {
+        my $map = load_yaml($f);
+        foreach my $k (keys %$map) {
+            $packagemap->{$k} = $map->{$k};
+        }
+    }
     # enum map
     my $enummap    = load_yaml($enummap_file);
     my $subst_with_fullname = sub {
@@ -214,6 +220,7 @@ sub main {
         my $name         = delete $i->{NAME};
         $has_operator_new = 1 if $name eq 'operator new';
         next METHOD_LOOP if grep { $name eq $_ } @$skip_methods;
+        next METHOD_LOOP if grep { $meta->{NAME}. '::'. $name eq $_ } @$skip_methods;
         if ($i->{operator}) {
             my $name2 = $name;
             if ($name2 =~ /^operator\s(.+)$/) {
@@ -286,6 +293,16 @@ sub main {
                     my $cname = $1;
                     $cname = $subst_with_fullname->($cname);
                     $p->{default} = $cname. '()';
+                }
+                elsif ($p->{default} =~ /^(\w+)\((\w+)\)$/o) {
+                    my $cname = $1;
+                    my $cvalue= $2;
+                    $cname = $subst_with_fullname->($cname);
+                    # ugly patch to workaround local variable
+                    $cvalue= $subst_with_fullname->($cvalue);
+                    $cvalue= $meta->{PERL_NAME}. '::'. $cvalue if
+                      $cvalue !~ /\:\:/o;
+                    $p->{default} = $cname. '('. $cvalue .')';
                 }
             }
             if ($p->{type} =~ /</io) {

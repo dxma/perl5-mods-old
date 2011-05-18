@@ -118,7 +118,7 @@ sub main {
           "-conf \$(MODULE_DOT_CONF) ".
             "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ". 
               "-packagemap \$(PACKAGEMAP) -enummap \$(ENUMMAP) ". 
-                "-default_typedef \$(DEFAULT_TYPEDEF) -o \$@ \$^\n\n";
+                "-default_typedef \$(DEFAULT_TYPEDEF) \$(addprefix -packagemap ,\$(wildcard \$(MAKE_ROOT)/packagemap.*)) -o \$@ \$^\n\n";
 
 MODULE_PM:        
         # deps for module.pm

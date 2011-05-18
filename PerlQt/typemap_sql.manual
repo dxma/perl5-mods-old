@@ -4,3 +4,7 @@
 # 3. imported by #include directive
 # NOTE: _FULL_ qualified name if possible
 
+LOGINREC			T_STRUCT
+isc_db_handle			T_PTR
+SQLHANDLE			T_PTR
+MYSQL				T_PTR

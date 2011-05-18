@@ -4,3 +4,4 @@
 # 3. imported by #include directive
 # NOTE: _FULL_ qualified name if possible
 
+#quintptr			T_UV

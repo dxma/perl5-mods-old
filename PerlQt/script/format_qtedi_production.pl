@@ -180,15 +180,15 @@ sub __format_class_or_struct {
     delete $entry->{property};
     # format inheritance line
     if (exists $entry->{inheritance} and $entry->{inheritance}) {
-        my @isa = split /(public|private|protected)/,
-          $entry->{inheritance};
-        shift @isa;
-        my %isa = @isa;
-        while (my ( $r, $n ) = each %isa) {
-            $n =~ s/^\s+//io;
-            $n =~ s/(?:,|\s)+$//io;
-            push @{$entry->{ISA}}, { 
-                NAME => $n, RELATIONSHIP => $r, };
+        foreach my $s (split /\s*,\s*/, $entry->{inheritance}) {
+            next if !$s;
+            if ($s =~ /^(public|private|protected) (.+)\s*$/o) {
+                my $name = $2;
+                my $rel  = $1;
+                $name =~ s/\s+$//o;
+                push @{$entry->{ISA}}, { 
+                    NAME => $name, RELATIONSHIP => $rel, };
+            }
         }
         delete $entry->{inheritance};
     }
@@ -683,7 +683,7 @@ sub __format_function {
             }
             else {
                 $pname_with_type =~ s{^(.*?)\b(\w+)(\s*\[)}
-                                     {$1.$2.' T_ARRAY_'.uc($2).$3}eio;
+                                     {$1.' T_ARRAY_'.uc($2).$3}eio;
                 $ptype = 'T_ARRAY_'. uc($2);
             }
             $pname = $pname_with_type;

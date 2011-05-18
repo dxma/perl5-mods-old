@@ -28,14 +28,14 @@
     [%+ var %] = ([% type.remove('\s*\&$') %])SvUV([% arg %]);
   [% CASE 'T_UV_PTR' %]
     {
-        [%+ type.remove('\s*\*$').remove('^const ') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ') %]>(SvUV([% arg %]));
+        [%+ type.remove('\s*\*$').remove('^const ').remove('\s+const$') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ').remove('\s+const$') %]>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_IV' %]
     [%+ var %] = ([% type.remove('\s*\&$') %])SvIV([% arg %]);
   [% CASE 'T_IV_PTR' %]
     {
-        [%+ type.remove('\s*\*$').remove('^const ') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ') %]>(SvIV([% arg %]));
+        [%+ type.remove('\s*\*$').remove('^const ').remove('\s+const$') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ').remove('\s+const$') %]>(SvIV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_INT' %]
@@ -156,7 +156,7 @@
     [%+ var %] = std::string((const char *)SvPV_nolen([% arg %]));
     [% END %]
   [% CASE 'T_PTR' %]
-    [%+ var %] = reinterpret_cast<[% type.remove('^const ') %]>(SvIV([% arg %]));
+    [%+ var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV([% arg %]));
   [% CASE 'T_PTRREF' %]
     if (SvROK([% arg %])) {
        [%+ var %] = reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
@@ -177,7 +177,7 @@
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
   [% CASE 'T_PTROBJ' %]
     if (sv_derived_from([% arg %], "[% ntype %]")) {
-        [%+ var %] = reinterpret_cast<[% type.remove('^const ') %]>(SvIV((SV*)SvRV([% arg %])));
+        [%+ var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
@@ -196,7 +196,7 @@
         Perl_croak(aTHX_ "[% var %] is not a reference");
   [% CASE 'T_REFOBJ' %]
     if (sv_isa([% arg %], "[% ntype %]")) {
-        [%+ var %] = reinterpret_cast<[% type.replace('\s+&$',' *').remove('^const ') %]>(SvIV((SV*)SvRV([% arg %])));
+        [%+ var %] = reinterpret_cast<[% type.replace('\s*&$',' *').remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
@@ -229,7 +229,7 @@
     [%+ var %] = IoOFP(sv_2io([% arg %]));
   [% CASE 'T_OBJECT' %]
     if (sv_isobject([% arg %])) {
-        [%+ var %] = *reinterpret_cast<[% type.remove('^const ') %] *>(SvIV((SV*)SvRV([% arg %])));
+        [%+ var %] = *reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %] *>(SvIV((SV*)SvRV([% arg %])));
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");

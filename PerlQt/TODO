@@ -1,8 +1,9 @@
 0. fix bug on skipping overload method with the same number of
 argument;
 1. template class support;
-2. Qt signal/slot support;
-3. other Qt modules;
-4. unit test;
-5. perl-ish enhancements;
+2. static function support (in namespace);
+3. Qt signal/slot support;
+4. other Qt modules;
+5. unit test;
+6. perl-ish enhancements;
 
