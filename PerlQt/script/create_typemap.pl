@@ -106,8 +106,8 @@ sub PTR {
         # '(&|*)*' => 'PTR'
         # '&&'     => 'REF'
         # CAUTION:
-        # '*&'     => 'PTR'
-        $entry->{type} = 'PTR' if $entry->{type} eq 'REF';
+        # '*&'     => 'REF'
+        $entry->{type} = 'REF' if $entry->{type} eq 'REF';
         $entry->{c_type} = '*'. $entry->{c_type};
     }
     else {

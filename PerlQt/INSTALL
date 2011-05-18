@@ -36,6 +36,10 @@ Don't blame me :-P
      $ ln -s config_core.mk config.mk
      $ ln -s module_core.conf module.conf
      $ ln -s typemap_core.manual typemap.manual
+     # [optional] typemap from qt-core required by other module
+     $ ln -s ../Qt-Core/05typemap/typemap_draft typemap.manual.core
+     # [optional] packapgemap from qt-core required by other module
+     $ ln -s ../Qt-Core/05typemap/packagemap packagemap.manual.core
    now run 'gmake ' to start the build, be patient, it takes time.
    if everything goes fine, you would get the xs code under 99xscode
    and pm code under 99pmcode.

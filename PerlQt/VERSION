@@ -6,3 +6,30 @@ qt-gui
 
 qt-dbus
    * May 2011: 0.01_01 on version 4.6.2
+
+qt-network
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-opengl
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-script
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-sql
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-svg
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-test
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-webkit
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-xml
+   * May 2011: 0.01_01 on version 4.6.2
+
+qt-xmlpatterns
+   * May 2011: 0.01_01 on version 4.6.2

@@ -7,6 +7,19 @@ A fake bin which contains custom methods for __analysis_type AUTOLOAD.
 
 =cut
 
+package QIntegerForSizeof;
+
+sub Unsigned {
+    my ( $self, ) = @_;
+    my $entry = {};
+    $entry->{type}   = 'T_UV';
+    $entry->{c_type} = $self->{c_type}. '::Unsigned';
+    $entry->{t_type} = 'T_UV';
+    return $entry;
+}
+
+package main;
+
 sub __parse_sub_entries {
     my ( @sub_entry, ) = @_;
     
@@ -112,6 +125,36 @@ sub QFlags {
     $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
     return $entry;
 }
+sub QIntegerForSizeof {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QIntegerForSizeof<type>
+    my $sub_entries = __parse_sub_entries(@sub_entry);
+    my @sub_class = ();
+    for (my $i = 0; $i < @$sub_entries; $i++) {
+        push @sub_class, 
+          join(' ', map { $_->{c_type} } @{ $sub_entries->[$i] });
+    }
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = 
+      join('__', 'T_QINTEGERFORSIZEOF', map { $_->{t_type} } @sub_entry);
+    $entry->{c_type} = 'QIntegerForSizeof<'. join(',', @sub_class). '>';
+    $entry->{t_type} = 'T_QINTEGERFORSIZEOF';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}       = 'QIntegerForSizeof';
+        $new_entry->{type}       = $new_entry->{name};
+        $new_entry->{ntype}      = $entry->{type};
+        $new_entry->{item_type}  = $sub_class[0];
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return bless $entry, 'QIntegerForSizeof';
+}
 sub QList {
     my @sub_entry = @_;
     
@@ -209,6 +252,33 @@ sub QExplicitlySharedDataPointer {
     unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
         my $new_entry = {};
         $new_entry->{name}      = 'QExplicitlySharedDataPointer';
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
+        $new_entry->{item_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{t_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub QAbstractXmlForwardIterator {
+    my @sub_entry = @_;
+    
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QAbstractXmlForwardIterator<type>
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'T_QABSTRACTXMLFORWARDITERATOR', 
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QAbstractXmlForwardIterator<'. $sub_c_type. '>';
+    $entry->{t_type} = 'T_QABSTRACTXMLFORWARDITERATOR';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{t_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QAbstractXmlForwardIterator';
         $new_entry->{type}      = $new_entry->{name};
         $new_entry->{ntype}     = $entry->{type};
         $new_entry->{argc}      = 1;

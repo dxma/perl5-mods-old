@@ -76,6 +76,7 @@ OPT_CC_INPUT       := $(empty)$(empty)
 OPT_CC_OUTPUT      := -o
 IMACROS            := $(_IMACROS)
 
+CMD_HEADER_LIST    := $(SCRIPT_DIR)/grep_headers.sh
 CMD_STRIP_INC      := $(SCRIPT_DIR)/strip_include.pl
 CMD_STRIP_MK       := $(SCRIPT_DIR)/gen_strip_mk.pl
 CMD_PREPRO_HD      := $(CMD_PREPRO) $(ALL_DEFINES) $(CXXFLAGS)\

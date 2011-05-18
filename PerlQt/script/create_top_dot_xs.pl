@@ -92,6 +92,7 @@ sub main {
                             }
                         }
                     }
+		    $v =~ s/^const //o if $k =~ /^T_ARRAY_/o;
                     push @typedef, $v;
                 }
             }

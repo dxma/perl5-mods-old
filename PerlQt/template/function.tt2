@@ -1,6 +1,6 @@
 [% BLOCK get_pn_type %]
   [% p_type = my_typemap.$c_type %]
-  [% c_type2 = c_type.remove('\s*(?:\*|\&)$').remove('^const\s+') %]
+  [% c_type2 = c_type.remove('\s*(?:\*|\&)+$').remove('^const\s+').remove('\s+const$') %]
   [% n_type = p_type.search('^T_(?:PTR|REF)OBJ$') ? c_type2 : c_type %]
 [% END %]
 
@@ -66,7 +66,7 @@
     [% IF method.exists('return') and method.return != 'void' %]
       [% c_type = method.return %]
       [% p_type = my_typemap.$c_type %]
-      [% IF p_type.search('OBJ$') and c_type.search('\s+&$') %]
+      [% IF p_type.search('OBJ$') and c_type.search('\s*&$') %]
         [% c_type2 = c_type.replace('\s*&$', ' *') %]
 	[% r_prefix = '&' %]
       [% ELSE %]
@@ -107,9 +107,9 @@ PREINIT:
     [% IF p_type.search('REFOBJ$') %]
       [% IF param.exists('default') %]
 [%+ param.type %] arg[% gen_arg_num(mindex, loop.index) _ '_' %] = [% param.default %];
-[%+ param.type.replace('\s*\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s+\&$', ' *').remove('^const ') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
       [% ELSE %]
-[%+ param.type.replace('\s*\&$', ' *').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %];
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %];
       [% END %]
     [% ELSE %]
       [% IF c_type.search('\*$') %]
@@ -117,7 +117,7 @@ PREINIT:
       [% ELSIF c_type.search('\:\:T_FPOINTER_') %]
 [%+ param.type.remove('^.+\:\:') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% ELSE %]
-[%+ param.type.remove('\s*\&$').remove('^const ') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+[%+ param.type.remove('\s*\&$').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
       [% END %]
     [% END %]
   [% END %]
