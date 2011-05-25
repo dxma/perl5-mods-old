@@ -50,7 +50,7 @@ sub main {
         \%opt,
         'conf=s',
         'template=s',
-        'packagemap=s',
+        'packagemap=s@',
         'o|outoput=s',
         'h|help',
     ) or usage();
@@ -58,7 +58,7 @@ sub main {
     usage() unless @ARGV;
     croak "module.conf not found" if !-f $opt{conf};
     croak "template dir not found" if !-d $opt{template};
-    croak "packagemap not found" if !-f $opt{packagemap};
+    #croak "packagemap not found" if !-f $opt{packagemap};
     
     my %f = ();
     foreach my $p (@ARGV) {
@@ -74,8 +74,15 @@ sub main {
     #  !-f $f{'function.public'};
     #croak "<class>.xs not found: $f{xs}" if !-f $f{xs};
     my $mod_conf   = load_yaml($opt{conf});
-    my $packagemap = load_yaml($opt{packagemap});
+    my $packagemap = {};
+    foreach my $f (@{$opt{packagemap}}) {
+        my $map = load_yaml($f);
+        foreach my $k (keys %$map) {
+            $packagemap->{$k} = $map->{$k};
+        }
+    }
     my $meta  = load_yaml($f{meta});
+    my $typemap = exists $f{typemap} ? load_yaml($f{typemap}) : {};
     my $ns    = $meta->{TYPE} eq 'namespace' ? 1 : 0;
     my $defns = 
       $meta->{NAME} eq $mod_conf->{default_namespace} ? 1 : 0;
@@ -90,8 +97,8 @@ sub main {
         foreach my $e (@{$meta->{ISA}}) {
             # FIXME: template class parent
             # FIXME: typedef template class parent
-            ( my $name = $e->{NAME} ) =~ s/\:\:/__/go;
-            next if !-f File::Spec::->catpath(@dir, $name. '.meta');
+            next if $e->{NAME} =~ /^std/io;
+            next if $e->{NAME} =~ /\</io;
             if ($e->{RELATIONSHIP} eq 'public') {
                 push @parent, $e->{NAME};
             }
@@ -138,6 +145,8 @@ sub main {
         my_methods   => \@proto,
         my_printfs   => \@printf,
         my_bootstrap => $defns,
+        my_packagemap=> $packagemap,
+        my_typemap   => $typemap,
     };
     $template->process('pmcode.tt2', $var, \$out) or 
       croak $template->error. "\n";

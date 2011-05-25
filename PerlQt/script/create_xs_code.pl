@@ -249,9 +249,9 @@ sub main {
             #print STDERR "return type in $name: ", $i->{return}, "\n";
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
-            if ($i->{return} =~ /</io) {
+            if ($i->{return} =~ /(?<!QFlags)</io) {
                 # FIXME: skip template class for now
-                print STDERR "skip template class method: $name\n";
+                print STDERR "skip template class method: $name, $i->{return}\n";
                 next METHOD_LOOP;
             }
         }
@@ -277,13 +277,30 @@ sub main {
                     }
                 }
                 elsif (exists $typemap->{$p->{type}} and
-                      $typemap->{$p->{type}} eq 'T_ENUM') {
-                    if ($p->{default} !~ /\:\:/o) {
-                        # stamp with class name
-                        my @type = split /\:\:/, $p->{type};
-                        if (@type > 1) {
-                            pop @type;
-                            $p->{default} = join('::', @type, $p->{default});
+                      $typemap->{$p->{type}} =~ /^T_(?:ENUM|QFLAGS)$/o) {
+                    if ($typemap->{$p->{type}} eq 'T_ENUM') {
+                        if ($p->{default} !~ /\:\:/o) {
+                            # stamp with class name
+                            my @type = split /\:\:/, $p->{type};
+                            if (@type > 1) {
+                                pop @type;
+                                $p->{default} = join('::', @type, $p->{default});
+                            }
+                        }
+                    }
+                    elsif ($typemap->{$p->{type}} eq 'T_QFLAGS') {
+                        ( my $class ) = $p->{type} =~ /QFlags<([^>]+)>/o;
+                        $class =~ s/^(.+)\:\:.+$/$1/io;
+                        if ($p->{default} =~ /^([^(]+)\((.+)\)$/) {
+                            my ( $func, $enums ) = ( $1, $2 );
+                            $func = $meta->{PERL_NAME}. '::'. $func if $func !~ /\:\:/io;
+                            my @enum = split /\s*\|\s*/, $enums;
+                            $enums = join(' | ', map { $class. '::'. $_ } @enum);
+                            $p->{default} = $func. '('. $enums. ')';
+                        }
+                        elsif ($p->{default} !~ /\:\:/o) {
+                            # stamp with class name
+                            $p->{default} = join('::', $class, $p->{default});
                         }
                     }
                 }
@@ -301,13 +318,13 @@ sub main {
                     # ugly patch to workaround local variable
                     $cvalue= $subst_with_fullname->($cvalue);
                     $cvalue= $meta->{PERL_NAME}. '::'. $cvalue if
-                      $cvalue !~ /\:\:/o;
+                      $cvalue !~ /\:\:/o and $cvalue !~ /^(?:-|0x)?\d+$/o;
                     $p->{default} = $cname. '('. $cvalue .')';
                 }
             }
-            if ($p->{type} =~ /</io) {
+            if ($p->{type} =~ /(?<!QFlags)</io) {
                 # FIXME: skip template class for now
-                print STDERR "skip template class method: $name\n";
+                print STDERR "skip template class method: $name, $p->{type}\n";
                 next METHOD_LOOP;
             }
             # workaround class without default constructor
@@ -349,34 +366,22 @@ sub main {
         my $new_methods = [];
         
         foreach my $method (@{$pub_methods_by_name->{$name}}) {
-            my $cloned = 0;
             for (my $i = $#{$method->{parameters}}; $i >= 0; $i--) {
                 my $p = $method->{parameters}->[$i];
                 if (exists $p->{default}) {
                     my $clone = $cb_clone_method->($method);
-                    for (my $j = $i - 1; $j >= 0; $j--) {
-                        delete $clone->{parameters}->[$j]->{default} if 
-                          exists $clone->{parameters}->[$j]->{default};
-                    }
-                    push @$new_methods, $clone;
-                    $clone = $cb_clone_method->($method);
                     for (my $j = $i; $j >= 0; $j--) {
                         delete $clone->{parameters}->[$j]->{default} if
                           exists $clone->{parameters}->[$j]->{default};
                     }
                     push @$new_methods, $clone;
-                    $cloned = 1;
                 }
             }
-            if (!$cloned) {
-                push @$new_methods, $method;
-            }
+            push @$new_methods, $method;
         }
-        $pub_methods_by_name->{$name} = [
-            sort { scalar(@{$a->{parameters}}) <=>
-                     scalar(@{$b->{parameters}}) } 
-              @$new_methods
-        ];
+        $pub_methods_by_name->{$name} = [ sort { 
+            scalar(@{$a->{parameters}}) <=> scalar(@{$b->{parameters}}) 
+        } @$new_methods ];
     }
     
     # generate xs file from template

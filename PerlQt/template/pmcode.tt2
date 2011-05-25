@@ -9,7 +9,14 @@ use warnings;
 
 our $VERSION = '[% my_version %]';
 [% IF my_parents.size > 0 %]
-our $ISA     = qw/[% my_parents.join(' ') %]/;
+  [% isa = [] %]
+  [% FOREACH c = my_parents %]
+    [% IF my_typemap.exists(c) %]
+      [% c = my_typemap.$c %]
+    [% END %]
+    [% CALL isa.push(my_packagemap.$c) %]
+  [% END %]
+our $ISA     = qw/[% isa.join(' ') %]/;
 [% END %]
 
 [% IF my_bootstrap %]

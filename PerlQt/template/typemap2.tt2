@@ -1,4 +1,4 @@
-[% BLOCK marshal_in2 %]
+[% BLOCK typemap_in2 %]
   [% SWITCH ptype %]
   [% CASE 'T_QTEXTSTREAM_QTSMFI' %]
     switch(SvIV([% arg %])) {
@@ -15,11 +15,14 @@
         Perl_croak(aTHX_ "wrong QTextStream member function index passed in");
 	break;
     }
+  [% CASE 'T_QFLAGS' %]
+    [% type2 = type.match('^(?:const )?QFlags<([^>]+)>').first %]
+    [% INCLUDE typemap_in ptype = 'T_ENUM', type = type2 %]
   [% CASE DEFAULT %]
-    [% PERL %] warn('marshal_in2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+    [% PERL %] warn('typemap_in2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+  [% END %]
 [% END %]
-[% END %]
-[% BLOCK marshal_out2 %]
+[% BLOCK typemap_out2 %]
   [% SWITCH ptype %]
   [% CASE 'T_QTEXTSTREAM_QTSMFI' %]
     if([% var %] == &QTextStream::setFieldWidth) {
@@ -32,7 +35,9 @@
         // QTextStream::setRealNumberPrecision
         sv_setiv([% arg %], 2);
     }
+  [% CASE 'T_QFLAGS' %]
+    sv_setiv([% arg %], (IV)[% var %]);
   [% CASE DEFAULT %]
-    [% PERL %] warn('marshal_out2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
-[% END %]
+    [% PERL %] warn('typemap_out2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+  [% END %]
 [% END %]

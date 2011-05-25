@@ -1,4 +1,4 @@
-[% BLOCK marshal_in %]
+[% BLOCK typemap_in %]
   [% SWITCH ptype %]
   [% CASE 'T_SV' %]
     [% var %] = [% arg %];
@@ -179,6 +179,9 @@
     if (sv_derived_from([% arg %], "[% ntype %]")) {
         [%+ var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
     }
+    else if (SvIOK([% arg %])) {
+        [%+ var %] = 0;
+    }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
   [% CASE 'T_PTRDESC' %]
@@ -242,10 +245,10 @@
   [% CASE 'T_FPOINTER' %]
     [%+ var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
   [% CASE DEFAULT %]
-    [% PROCESS marshal_in2 %]
+    [% PROCESS typemap_in2 %]
+  [% END %]
 [% END %]
-[% END %]
-[% BLOCK marshal_out %]
+[% BLOCK typemap_out %]
   [% SWITCH ptype %]
   [% CASE 'T_SV' %]
     [%+ arg %] = [% var %];
@@ -406,6 +409,6 @@
   [% CASE 'T_FPOINTER' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE DEFAULT %]
-    [% PROCESS marshal_out2 %]
-[% END %]
+    [% PROCESS typemap_out2 %]
+  [% END %]
 [% END %]

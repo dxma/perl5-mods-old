@@ -16,10 +16,7 @@ _QT := QtCore
 
 # QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
 
-_HEADERS  := $(filter-out $(_HEADER_DIR)/QtCore/qatomic_%,       \
-                   $(wildcard                                    \
-                       $(addprefix $(_HEADER_DIR)/,              \
-                           $(addsuffix /*.h, $(_QT)))))
+_HEADERS  := $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT)))
 
 HEADER_PREFIX := h
 

@@ -126,7 +126,7 @@ MODULE_PM:
         push @pm_files, $pm_file;
         # .function.public for operator (function) overload
         $xscode_dot_mk .= $pm_file. ": ". 
-          join(" ", grep { m/\.(?:meta|public|enum)$/o } @deps). 
+          join(" ", grep { m/\.(?:meta|public|enum|typemap)$/o } @deps). 
             " ". $xs_file. "\n";
         # rule for module.pm
         $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
@@ -135,7 +135,8 @@ MODULE_PM:
         $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ". 
           "-conf \$(MODULE_DOT_CONF) ". 
             "-template \$(TEMPLATE_DIR) -packagemap \$(PACKAGEMAP) ". 
-              "-o \$@ \$^\n\n";
+                "\$(addprefix -packagemap ,\$(wildcard \$(MAKE_ROOT)/packagemap.*)) ".
+                  "-o \$@ \$^\n\n";
     }
     
     # write XS_FILES and PM_FILES
