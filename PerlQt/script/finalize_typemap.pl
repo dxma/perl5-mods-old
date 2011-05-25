@@ -85,7 +85,12 @@ sub study_type {
           exists $typemap->{$noref_ntype};
     }
     elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+$/o) {
-        $type_primitive = 'T_OBJECT';
+        if ($type =~ /^(?:CONST_)?T_QFLAGS__/o) {
+            $type_primitive = 'T_QFLAGS';
+        }
+        else {
+            $type_primitive = 'T_OBJECT';
+        }
     }
     # char
     elsif ($type =~ m/^(?:CONST_)?T_(?:U_)?CHAR_PTR$/o) {

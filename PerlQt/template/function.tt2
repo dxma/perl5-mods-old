@@ -22,7 +22,7 @@
     [% NEXT IF p.exists('default') %]
     [% s_item = 'ST(' _ loop.count _ ')' %]
     [% PROCESS get_pn_type c_type = p.type %]
-    [%+ INCLUDE marshal_in 
+    [%+ INCLUDE typemap_in 
       var   = 'arg' _ gen_arg_num(mindex, loop.index), 
       arg   = s_item, 
       type  = p.type, 
@@ -53,7 +53,7 @@
     [% ELSE %]
     ret = [% my_has_operator_new ? '::' : '' %]new [% my_cclass %]([% params.join(', ') %]);
     ST(0) = sv_newmortal();
-    [%+ INCLUDE marshal_out
+    [%+ INCLUDE typemap_out
       var   = 'ret',
       arg   = 'ST(0)',
       type  = method.return,
@@ -76,7 +76,7 @@
     [%+ c_type2 %] ret = [% r_prefix %]THIS->[% method_name %]([% params.join(', ') %]);
       [% PROCESS get_pn_type c_type = method.return %]
     ST(0) = sv_newmortal();
-    [%+ INCLUDE marshal_out
+    [%+ INCLUDE typemap_out
       var   = 'ret',
       arg   = 'ST(0)',
       type  = method.return,
@@ -134,6 +134,7 @@ PPCODE:
 	  [% END %]
 	[% END %]
 	[% IF param_number.exists(param_number_without_default) %]
+    // FIXME: overload func with same number of args
 	  [% NEXT %]
 	[% ELSE %]
 	  [% param_number.$param_number_without_default = 1 %]
