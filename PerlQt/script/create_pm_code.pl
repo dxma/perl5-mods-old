@@ -129,7 +129,7 @@ sub main {
         POST_CHOMP   => 0,
         TRIM         => 1,
         EVAL_PERL    => 1,
-        STRICT       => 1,
+        #STRICT       => 1,
     });
     my $var = {
         my_cclass    => $meta->{NAME},

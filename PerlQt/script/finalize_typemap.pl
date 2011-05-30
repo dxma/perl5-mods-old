@@ -113,7 +113,7 @@ sub study_type {
     }
     # array
     elsif ($type =~ m/^T_ARRAY_/o) {
-        $type_primitive = 'T_PTR';
+        $type_primitive = 'T_ARRAY';
     }
     # built-in type
     elsif ($type =~ m/^(?:CONST_)?((T_(?:I|U|N|P)V)_PTR)$/o) {

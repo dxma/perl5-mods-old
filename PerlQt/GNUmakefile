@@ -305,13 +305,13 @@ $(ENUMMAP)     : $(filter %.enum,$(GROUP_YAMLS))
 
 $(TYPEMAP_XS)  : $(TYPEMAPLIST_DOT_MK) $(PACKAGEMAP) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
-	$(_Q)$(CMD_TYPEMAP_XS) -manifest $(TYPEMAP_DOT_DEP) -packagemap  \
-        $(PACKAGEMAP) -o $@
+	$(_Q)$(CMD_TYPEMAP_XS) -manifest $(TYPEMAP_DOT_DEP) \
+	  -conf $(MODULE_DOT_CONF) -packagemap $(PACKAGEMAP) -o $@
 
 $(ROOT_XS)     : $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_ROOT_XS) -manifest $(TYPEMAP_DOT_DEP) \
-        -conf $(MODULE_DOT_CONF) -mk $(XSCODE_DOT_MK) -o $@
+          -conf $(MODULE_DOT_CONF) -mk $(XSCODE_DOT_MK) -o $@
 
 $(MAKEFILE_PL) : $(MODULE_DOT_CONF) $(CONFIG_DOT_MK)
 	$(_Q)echo generating $@

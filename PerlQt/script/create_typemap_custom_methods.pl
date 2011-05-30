@@ -509,6 +509,13 @@ sub QHash {
 sub QGenericMatrix {
     my @sub_entry = @_;
     
+    # for (my $i = 0; $i < 2; $i++) {
+    #     $sub_entry[$i] = {
+    #         type   => $sub_entry[$i],
+    #         t_type => $sub_entry[$i],
+    #         c_type => $sub_entry[$i],
+    #     };
+    # }
     our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
     # QGenericMatrix<m, n, t>
     my $sub_entries = __parse_sub_entries(@sub_entry);

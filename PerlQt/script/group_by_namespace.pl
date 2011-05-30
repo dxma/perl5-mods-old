@@ -138,20 +138,18 @@ sub __process_accessibility {
     # empty first
     splice @$type, 0, scalar(@$type) if @$type;
     splice @$visibility, 0, scalar(@$visibility) if @$visibility;
-    foreach my $t (@{$entry->{VALUE}}) {
-        if ($t eq 'Q_SIGNALS' or $t eq 'signals') {
-            # Q_SIGNALS/signals
-            # SIGNAL HAS NO VISIBILITY IN QT
-            push @$type, 'signal';
-        }
-        elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
-            # Q_SLOTS/slots
-            push @$type, 'slot';
-        }
-        else {
-            # public/private/protected
-            push @$visibility, $t;
-        }
+    if ($entry->{VALUE} =~ /(?:Q_SIGNALS|signals)/o) {
+        # Q_SIGNALS/signals
+        # SIGNAL HAS NO VISIBILITY IN QT
+        push @$type, 'signal';
+    }
+    elsif ($entry->{VALUE} =~ /(?:Q_SLOTS|slots)/o) {
+        # Q_SLOTS/slots
+        push @$type, 'slot';
+    }
+    if ($entry->{VALUE} =~ /(public|private|protected)/o) {
+        # public/private/protected
+        push @$visibility, $1;
     }
 }
 
@@ -317,6 +315,8 @@ sub __process_enum {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
     
     #print "enum found: ", $entry->{NAME}, "\n";
+    return if @$visibility and $visibility->[-1] ne 'public';
+    
     my $entry_to_create = {};
     $entry_to_create->{NAME}  = $entry->{NAME} if 
       exists $entry->{NAME};
@@ -755,8 +755,12 @@ sub _process {
     $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
         NAME   => NAMESPACE_DEFAULT, 
         TYPE   => 'namespace', 
-        MODULE => '', 
+        MODULE => NAMESPACE_DEFAULT, 
     };
+    # patch MODULE attribute in <NAMESPACE_ROOT>.meta
+    if (exists $entries->{NAMESPACE_ROOT. '.meta'}) {
+        $entries->{NAMESPACE_ROOT. '.meta'}->{MODULE} = NAMESPACE_ROOT;
+    }
     # special patch to <NAMESPACE_DEFAULT>.function
     # rename to <NAMESPACE_DEFAULT>.function.public
     if (exists $entries->{NAMESPACE_DEFAULT. '.function'}) {

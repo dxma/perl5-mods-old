@@ -16,12 +16,8 @@ _QT := QtGui
 
 # QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
 
-# filter out mac, qt/embedded
-# don't know how to do this from qconfig
-_HEADERS  := $(filter-out %_mac.h %_qws.h %/qwsembedwidget.h,    \
-                   $(wildcard                                    \
-                       $(addprefix $(_HEADER_DIR)/,              \
-                           $(addsuffix /*.h, $(_QT)))))
+# filter out s60 due to bug in source
+_HEADERS  := $(filter-out %/qs60style.h, $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT))))
 # common enums declared in qnamespace.h
 _HEADERS  += $(_HEADER_DIR)/QtCore/qnamespace.h $(_HEADER_DIR)/QtCore/qabstractitemmodel.h
 
