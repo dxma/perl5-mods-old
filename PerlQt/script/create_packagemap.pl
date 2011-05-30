@@ -40,7 +40,7 @@ sub main {
         my $meta = load_yaml($m);
         if ($meta->{TYPE} eq 'namespace') {
             # FIXME
-            $packagemap->{$meta->{MODULE}} = $meta->{MODULE};
+            $packagemap->{$meta->{NAME}} = $meta->{MODULE};
         }
         else {
             $packagemap->{$meta->{NAME}} = exists $meta->{PERL_NAME} ? 

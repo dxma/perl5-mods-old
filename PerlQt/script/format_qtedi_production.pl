@@ -918,14 +918,8 @@ B<NOTE>: private type should not appear here since being stripped.
 sub __format_accessibility {
     my $entry = shift;
     
-#    # normalize value entries
-#    foreach my $v (@{$entry->{value}}) {
-#        $v =~ s/\s+$//o;
-#    }
-    if (@{$entry->{value}}) {
-        $entry->{VALUE} = $entry->{value};
-        delete $entry->{value};
-    }
+    $entry->{VALUE} = $entry->{value};
+    delete $entry->{value};
     return 1;
 }
 
@@ -1228,15 +1222,7 @@ sub _format_with_accessibility {
         #print STDERR $entry->{type}, "\n";
         if (not $private) {
             if ($entry->{type} eq 'accessibility') {
-                my $is_private = 0;
-                VALUE_LOOP:
-                foreach my $v (@{$entry->{value}}) {
-                    if ($v eq 'private') {
-                        # private function/slot(s) begin
-                        $is_private = 1;
-                        last VALUE_LOOP;
-                    }
-                }
+                my $is_private = $entry->{value} =~ /^private/o ? 1 : 0;
                 if ($is_private) {
                     $private = 1;
                 }
@@ -1264,15 +1250,7 @@ sub _format_with_accessibility {
             # mask until get another non-private function/singal/slot
             # begin declaration
             if ($entry->{type} eq 'accessibility') {
-                my $is_private = 0;
-                VALUE_LOOP:
-                foreach my $v (@{$entry->{value}}) {
-                    if ($v eq 'private') { 
-                        # another private function/slot(s) begin
-                        $is_private = 1;
-                        last VALUE_LOOP;
-                    }
-                }
+                my $is_private = $entry->{value} =~ /^private/o ? 1 : 0;
                 unless ($is_private) {
                     # non-private function/signal/slot begin
                     $private = 0;

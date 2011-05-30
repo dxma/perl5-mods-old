@@ -16,10 +16,7 @@ _QT := QtDBus
 
 # QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
 
-_HEADERS  := $(filter-out %/qdbusmacros.h,                       \
-                   $(wildcard                                    \
-                       $(addprefix $(_HEADER_DIR)/,              \
-                           $(addsuffix /*.h, $(_QT)))))
+_HEADERS  := $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT)))
 # common enums declared in qnamespace.h
 _HEADERS  += $(_HEADER_DIR)/QtCore/qnamespace.h $(_HEADER_DIR)/QtCore/qvariant.h
 

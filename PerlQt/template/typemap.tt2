@@ -3,217 +3,154 @@
   [% CASE 'T_SV' %]
     [% var %] = [% arg %];
   [% CASE 'T_SVREF' %]
-    if (SvROK([% arg %]))
-        [%+ var %] = (SV*)SvRV([% arg %]);
-    else
-        Perl_croak(aTHX_ "[% var %] is not a reference");
+    [% var %] = (SV*)SvRV([% arg %]);
   [% CASE 'T_AVREF' %]
-    if (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVAV)
-        [%+ var %] = (AV*)SvRV([% arg %];
-    else
-        Perl_croak(aTHX_ "[% var %] is not an array reference");
+    [% var %] = (AV*)SvRV([% arg %];
   [% CASE 'T_HVREF' %]
-    if (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVHV)
-        [%+ var %] = (HV*)SvRV([% arg %]);
-    else
-        Perl_croak(aTHX_ "[% var %] is not a hash reference");
+    [% var %] = (HV*)SvRV([% arg %]);
   [% CASE 'T_CVREF' %]
-    if (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVCV)
-        [%+ var %] = (CV*)SvRV([% arg %]);
-    else
-        Perl_croak(aTHX_ "[% var %] is not a code reference");
+    [% var %] = (CV*)SvRV([% arg %]);
   [% CASE 'T_SYSRET' %]
-    [%+ var %] NOT IMPLEMENTED
+    [% var %] NOT IMPLEMENTED
   [% CASE 'T_UV' %]
-    [%+ var %] = ([% type.remove('\s*\&$') %])SvUV([% arg %]);
+    [% var %] = ([% type.remove('\s*\&$') %])SvUV([% arg %]);
   [% CASE 'T_UV_PTR' %]
     {
         [%+ type.remove('\s*\*$').remove('^const ').remove('\s+const$') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ').remove('\s+const$') %]>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_IV' %]
-    [%+ var %] = ([% type.remove('\s*\&$') %])SvIV([% arg %]);
+    [% var %] = ([% type.remove('\s*\&$') %])SvIV([% arg %]);
   [% CASE 'T_IV_PTR' %]
     {
         [%+ type.remove('\s*\*$').remove('^const ').remove('\s+const$') %] tmp = static_cast<[% type.remove('\s*\*$').remove('^const ').remove('\s+const$') %]>(SvIV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_INT' %]
-    [%+ var %] = (int)SvIV([% arg %]);
+    [% var %] = (int)SvIV([% arg %]);
   [% CASE 'T_INT_PTR' %]
     {
         int tmp = static_cast<int>(SvIV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_ENUM' %]
-    [% enums = type.split('\:\:') %]
-    [% enum  = my_enummap %]
-    [% FOREACH i = enums %]
-      [% enum = enum.$i %]
-    [% END %]
-    [% CALL enums.pop %]
-    switch(SvIV([% arg %])) {
-    [% FOREACH k = enum %]
-    case [% loop.index %]:
-      [%+ var %] = [% enums.join('::') %]::[% k %];
-      break;
-    [% END %]
-    default:
-      Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");
-    }
+    [% var %] = ([% type %])SvIV([% arg %]);
   [% CASE 'T_ENUM_PTR' %]
-    [% enums = type.remove('\s*\*$').split('\:\:') %]
-    [% enum  = my_enummap %]
-    [% FOREACH i = enums %]
-      [% enum = enum.$i %]
-    [% END %]
-    [% CALL enums.pop %]
-    switch(SvIV([% arg %])) {
-    [% FOREACH k = enum %]
-    case [% loop.index %]:
     {
-      [%+ type.remove('\s*\*$') %] [%+ var %]_ = [% enums.join('::') %]::[% k %];
-      [%+ var %] = &[% var %]_;
-      break;
-    }
-    [% END %]
-    default:
-      Perl_croak(aTHX_ "wrong enum value for type [% type %] passed in");
+        [%+ type.remove('^const ').remove('\s*\*$') %] tmp = ([% type.remove('^const ').remove('\s*\*$') %])SvIV([% arg %]);
+        [%+ var %] = &tmp;
     }
   [% CASE 'T_BOOL' %]
-    [%+ var %] = (bool)SvTRUE([% arg %]);
+    [% var %] = (bool)SvTRUE([% arg %]);
   [% CASE 'T_BOOL_PTR' %]
     {
         bool tmp = SvTRUE([% arg %]);
         [%+ var %] = &tmp;
     }
   [% CASE 'T_U_INT' %]
-    [%+ var %] = (unsigned int)SvUV([% arg %]);
+    [% var %] = (unsigned int)SvUV([% arg %]);
   [% CASE 'T_U_INT_PTR' %]
     {
         unsigned int tmp = static_cast<unsigned int>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_SHORT' %]
-    [%+ var %] = (short)SvIV([% arg %]);
+    [% var %] = (short)SvIV([% arg %]);
   [% CASE 'T_SHORT_PTR' %]
     {
         short tmp = static_cast<short>(SvIV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_U_SHORT' %]
-    [%+ var %] = (unsigned short)SvUV([% arg %]);
+    [% var %] = (unsigned short)SvUV([% arg %]);
   [% CASE 'T_U_SHORT_PTR' %]
     {
         unsigned short tmp = static_cast<unsigned short>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_LONG' %]
-    [%+ var %] = (long)SvIV([% arg %]);
+    [% var %] = (long)SvIV([% arg %]);
   [% CASE 'T_LONG_PTR' %]
     {
         long tmp = static_cast<long>(SvIV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_U_LONG' %]
-    [%+ var %] = (unsigned long)SvUV([% arg %]);
+    [% var %] = (unsigned long)SvUV([% arg %]);
   [% CASE 'T_U_LONG_PTR' %]
     {
         unsigned long tmp = static_cast<unsigned long>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_CHAR' %]
-    [%+ var %] = (char)*SvPV_nolen([% arg %]);
+    [% var %] = (char)*SvPV_nolen([% arg %]);
   [% CASE 'T_U_CHAR' %]
-    [%+ var %] = (unsigned char)SvUV([% arg %]);
+    [% var %] = (unsigned char)SvUV([% arg %]);
   [% CASE 'T_FLOAT' %]
-    [%+ var %] = (float)SvNV([% arg %]);
+    [% var %] = (float)SvNV([% arg %]);
   [% CASE 'T_FLOAT_PTR' %]
     {
         float tmp = static_cast<float>(SvNV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_NV' %]
-    [%+ var %] = ([% type %])SvNV([% arg %]);
+    [% var %] = ([% type %])SvNV([% arg %]);
   [% CASE 'T_NV_PTR' %]
     {
         [%+ type.remove('\s*\*\s*$') %] tmp = static_cast<[% type.remove('\s*\*\s*$') %]>(SvNV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_DOUBLE' %]
-    [%+ var %] = (double)SvNV([% arg %]);
+    [% var %] = (double)SvNV([% arg %]);
   [% CASE 'T_DOUBLE_PTR' %]
     {
         double tmp = static_cast<double>(SvUV([% arg %]));
         [%+ var %] = &tmp;
     }
   [% CASE 'T_PV' %]
-    [%+ var %] = ([% type.remove('\s*\&$') %])SvPV_nolen([% arg %]);
+    [% var %] = ([% type.remove('\s*\&$') %])SvPV_nolen([% arg %]);
+  [% CASE 'T_ARRAY' %]
+    memcpy([% var %], SvPVX([% arg %]), sizeof([% var %]));
   [% CASE [ 'T_STD_STRING_PV', 'T_STD_STRING_PV_REF', 'T_STD_STRING_PV_PTR' ] %]
-    [% IF ptype.search('_PTR$') %]
-    [%+ var %] = &std::string((const char *)SvPV_nolen([% arg %]));
+    [% IF ptype.match('_PTR$') %]
+    [% var %] = &std::string((const char *)SvPV_nolen([% arg %]));
     [% ELSE %]
-    [%+ var %] = std::string((const char *)SvPV_nolen([% arg %]));
+    [% var %] = std::string((const char *)SvPV_nolen([% arg %]));
     [% END %]
   [% CASE 'T_PTR' %]
-    [%+ var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV([% arg %]));
+    [% var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV([% arg %]));
   [% CASE 'T_PTRREF' %]
-    if (SvROK([% arg %])) {
-       [%+ var %] = reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not a reference");
+    [% var %] = reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_REF_IV_REF' %]
-    if (sv_isa([% arg %], "[% ntype %]")) {
-        [%+ var %] = *reinterpret_cast<[% type %]*>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% var %] = *reinterpret_cast<[% type %]*>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_REF_IV_PTR' %]
-    if (sv_isa([% arg %], "[% ntype %]")) {
-        [%+ var %] = reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% var %] = reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_PTROBJ' %]
     if (sv_derived_from([% arg %], "[% ntype %]")) {
         [%+ var %] = reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
     }
-    else if (SvIOK([% arg %])) {
+    else if ([% arg %] == &PL_sv_undef) {
         [%+ var %] = 0;
     }
     else
         Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
   [% CASE 'T_PTRDESC' %]
-    if (sv_isa([% arg %], "[% ntype %]")) {
-        [%+ type %]_desc = ([% type FILTER upper %]_DESC*) SvIV((SV*)SvRV([% arg %]));
-        [%+ var %] = [% type %]_desc->ptr;
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% type %]_desc = ([% type FILTER upper %]_DESC*) SvIV((SV*)SvRV([% arg %]));
   [% CASE 'T_REFREF' %]
-    if (SvROK([% arg %])) {
-        [%+ var %] = *reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not a reference");
+    [% var %] = *reinterpret_cast<[% type %]>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_REFOBJ' %]
-    if (sv_isa([% arg %], "[% ntype %]")) {
-        [%+ var %] = reinterpret_cast<[% type.replace('\s*&$',' *').remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% var %] = reinterpret_cast<[% type.replace('\s*&$',' *').remove('^const ').remove('\s+const$') %]>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_OPAQUE' %]
-    [%+ var %] = *([% type %] *)SvPV_nolen([% arg %]);
+    [% var %] = *([% type %] *)SvPV_nolen([% arg %]);
   [% CASE 'T_OPAQUEPTR' %]
-    [%+ var %] = ([% type %])SvPV_nolen([% arg %]);
+    [% var %] = ([% type %])SvPV_nolen([% arg %]);
   [% CASE 'T_PACKED' %]
-    [%+ var %] = XS_unpack_[% ntype %]([% arg %]);
+    [% var %] = XS_unpack_[% ntype %]([% arg %]);
   [% CASE 'T_PACKEDARRAY' %]
-    [%+ var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
+    [% var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
   [% CASE 'T_CALLBACK' %]
-    [%+ var %] = make_perl_cb_[% type %]([% arg %]);
-  [% CASE 'T_ARRAY' %]
+    [% var %] = make_perl_cb_[% type %]([% arg %]);
+  [% CASE 'T_ARRAY_UNUSED' %]
     U32 ix_[% var %] = [% argoff %];
     [%+ var %] = [% ntype %](items -= [% argoff %]);
     while (items--) {
@@ -223,27 +160,23 @@
     /* this is the number of elements in the array */
     ix_[% var %] -= [% argoff %];
   [% CASE 'T_STDIO' %]
-    [%+ var %] = PerlIO_findFILE(IoIFP(sv_2io([% arg %])));
+    [% var %] = PerlIO_findFILE(IoIFP(sv_2io([% arg %])));
   [% CASE 'T_IN' %]
-    [%+ var %] = IoIFP(sv_2io([% arg %]));
+    [% var %] = IoIFP(sv_2io([% arg %]));
   [% CASE 'T_INOUT' %]
-    [%+ var %] = IoIFP(sv_2io([% arg %]));
+    [% var %] = IoIFP(sv_2io([% arg %]));
   [% CASE 'T_OUT' %]
-    [%+ var %] = IoOFP(sv_2io([% arg %]));
+    [% var %] = IoOFP(sv_2io([% arg %]));
   [% CASE 'T_OBJECT' %]
-    if (sv_isobject([% arg %])) {
-        [%+ var %] = *reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %] *>(SvIV((SV*)SvRV([% arg %])));
-    }
-    else
-        Perl_croak(aTHX_ "[% var %] is not of type [% ntype %]");
+    [% var %] = *reinterpret_cast<[% type.remove('^const ').remove('\s+const$') %] *>(SvIV((SV*)SvRV([% arg %])));
   [% CASE 'T_IUV' %]
     [% IF Config.ptrsize == 8 %]
-      [%+ var %] = (unsigned long long)SvUV([% arg %]);
+      [% var %] = (unsigned long long)SvUV([% arg %]);
     [% ELSE %]
-      [%+ var %] = (unsigned int)SvIV([% arg %]);
+      [% var %] = (unsigned int)SvIV([% arg %]);
     [% END %]
   [% CASE 'T_FPOINTER' %]
-    [%+ var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
+    [% var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
   [% CASE DEFAULT %]
     [% PROCESS typemap_in2 %]
   [% END %]
@@ -251,15 +184,15 @@
 [% BLOCK typemap_out %]
   [% SWITCH ptype %]
   [% CASE 'T_SV' %]
-    [%+ arg %] = [% var %];
+    [% arg %] = [% var %];
   [% CASE 'T_SVREF' %]
-    [%+ arg %] = newRV((SV*)[% var %]);
+    [% arg %] = newRV((SV*)[% var %]);
   [% CASE 'T_AVREF' %]
-    [%+ arg %] = newRV((SV*)[% var %]);
+    [% arg %] = newRV((SV*)[% var %]);
   [% CASE 'T_HVREF' %]
-    [%+ arg %] = newRv((SV*)[% var %]);
+    [% arg %] = newRv((SV*)[% var %]);
   [% CASE 'T_CVREF' %]
-    [%+ arg %] = newRV((SV*)[% var %]);
+    [% arg %] = newRV((SV*)[% var %]);
   [% CASE 'T_IV' %]
     sv_setiv([% arg %], (IV)[% var %]);
   [% CASE 'T_IV_PTR' %]
@@ -284,9 +217,9 @@
   [% CASE 'T_ENUM_PTR' %]
     sv_setiv([% arg %], (IV)*[% var %]);
   [% CASE 'T_BOOL' %]
-    [%+ arg %] = boolSV([% var %]);
+    [% arg %] = boolSV([% var %]);
   [% CASE 'T_BOOL_PTR' %]
-    [%+ arg %] = boolSV(*[% var %]);
+    [% arg %] = boolSV(*[% var %]);
   [% CASE 'T_U_INT' %]
     sv_setuv([% arg %], (UV)[% var %]);
   [% CASE 'T_U_INT_PTR' %]
@@ -324,9 +257,11 @@
   [% CASE 'T_DOUBLE_PTR' %]
     sv_setnv([% arg %], (double)*[% var %]);
   [% CASE 'T_PV' %]
-    sv_setpv((SV*)[% arg %], [% type.search('^const ') ? var : 'const_cast<const ' _ type _ '>(' _ var _ ')' %]);
+    sv_setpv((SV*)[% arg %], (const char *)[% var %]);
+  [% CASE 'T_ARRAY' %]
+    sv_setpvn((SV*)[% arg %], (const char *)[% var %], sizeof([% var %]));
   [% CASE [ 'T_STD_STRING_PV', 'T_STD_STRING_PV_REF', 'T_STD_STRING_PV_PTR' ] %]
-    sv_setpv((SV*)[% arg %], [% var %][% ptype.search('_PTR$') ? '->' : '.' %]data());
+    sv_setpv((SV*)[% arg %], [% var %][% ptype.match('_PTR$') ? '->' : '.' %]data());
   [% CASE 'T_PTR' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
   [% CASE 'T_PTRREF' %]
@@ -356,7 +291,7 @@
   [% CASE 'T_CALLBACK' %]
     sv_setpvn([% arg %], [% var %].context.value().chp(), 
       [% var %].context.vlaue().size());
-  [% CASE 'T_ARRAY' %]
+  [% CASE 'T_ARRAY_UNUSED' %]
     {
         U32 ix_[% var %];
         EXTEND(SP, size_[% var %]);

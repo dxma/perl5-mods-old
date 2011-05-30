@@ -128,10 +128,10 @@ sub main {
     # class name, mod name, class hierarchy
     croak "no meta file found for $xs_file" unless $f{meta};
     my $meta    = load_yaml($f{meta});
-    if ($meta->{TYPE} !~ /^(?:class|struct)$/o) {
-        print STDERR "skip $f{meta}, not a class or struct\n";
-        goto WRITE_FILE;
-    }
+    # if ($meta->{TYPE} !~ /^(?:class|struct)$/o) {
+    #     print STDERR "skip $f{meta}, not a class or struct\n";
+    #     goto WRITE_FILE;
+    # }
     
     # public methods
     #carp "no public file found for $xs_file" unless grep { /public$/ } keys %f;
@@ -140,8 +140,9 @@ sub main {
         my $methods = load_yaml($f{$k});
         push @$publics, @$methods;
     }
-    if (@$publics == 0) {
-        print STDERR "skip $f{meta}, no public method\n";
+    my $enums   = exists $f{enum} ? load_yaml($f{enum}) : [];
+    if (@$publics == 0 and @$enums == 0) {
+        print STDERR "skip $f{meta}, no public method or enum\n";
         goto WRITE_FILE;
     }
     # class localtype
@@ -270,6 +271,17 @@ sub main {
             $p->{type} = $subst_with_fullname->($p->{type});
             if (exists $p->{DEFAULT_VALUE}) {
                 $p->{default} = delete $p->{DEFAULT_VALUE};
+                my $is_qflags = 0;
+                $is_qflags = 1 if exists $typemap->{$p->{type}} and
+                  $typemap->{$p->{type}} eq 'T_QFLAGS';
+                if ($typemap->{$p->{type}} =~ /OBJ$/o) {
+                    my $type2 = $p->{type};
+                    $type2 =~ s/^const\s+//o;
+                    $type2 =~ s/\s+const$//o;
+                    $type2 =~ s/\s*(?:\*|\&)+\s*$//o;
+                    $is_qflags = 1 if exists $typemap->{$type2} and
+                      $typemap->{$type2} eq 'T_QFLAGS';
+                }
                 if ($p->{type} eq 'int' and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
                     # non-num enum item
                     if ($p->{default} !~ /\:\:/o) {
@@ -277,31 +289,30 @@ sub main {
                     }
                 }
                 elsif (exists $typemap->{$p->{type}} and
-                      $typemap->{$p->{type}} =~ /^T_(?:ENUM|QFLAGS)$/o) {
-                    if ($typemap->{$p->{type}} eq 'T_ENUM') {
-                        if ($p->{default} !~ /\:\:/o) {
-                            # stamp with class name
-                            my @type = split /\:\:/, $p->{type};
-                            if (@type > 1) {
-                                pop @type;
-                                $p->{default} = join('::', @type, $p->{default});
-                            }
+                      $typemap->{$p->{type}} eq 'T_ENUM' and
+                        $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    if ($p->{default} !~ /\:\:/o) {
+                        # stamp with class name
+                        my @type = split /\:\:/, $p->{type};
+                        if (@type > 1) {
+                            pop @type;
+                            $p->{default} = join('::', @type, $p->{default});
                         }
                     }
-                    elsif ($typemap->{$p->{type}} eq 'T_QFLAGS') {
-                        ( my $class ) = $p->{type} =~ /QFlags<([^>]+)>/o;
-                        $class =~ s/^(.+)\:\:.+$/$1/io;
-                        if ($p->{default} =~ /^([^(]+)\((.+)\)$/) {
-                            my ( $func, $enums ) = ( $1, $2 );
-                            $func = $meta->{PERL_NAME}. '::'. $func if $func !~ /\:\:/io;
-                            my @enum = split /\s*\|\s*/, $enums;
-                            $enums = join(' | ', map { $class. '::'. $_ } @enum);
-                            $p->{default} = $func. '('. $enums. ')';
-                        }
-                        elsif ($p->{default} !~ /\:\:/o) {
-                            # stamp with class name
-                            $p->{default} = join('::', $class, $p->{default});
-                        }
+                }
+                elsif ($is_qflags and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    ( my $class ) = $p->{type} =~ /QFlags<([^>]+)>/o;
+                    $class =~ s/^(.+)\:\:.+$/$1/io;
+                    if ($p->{default} =~ /^([^(]+)\((.+)\)$/) {
+                        my ( $func, $enums ) = ( $1, $2 );
+                        $func = $meta->{PERL_NAME}. '::'. $func if $func !~ /\:\:/io;
+                        my @enum = split /\s*\|\s*/, $enums;
+                        $enums = join(' | ', map { $class. '::'. $_ } @enum) if @enum and $enum[0] !~ /\:\:/io;
+                        $p->{default} = $func. '('. $enums. ')';
+                    }
+                    elsif ($p->{default} !~ /\:\:/o) {
+                        # stamp with class name
+                        $p->{default} = join('::', $class, $p->{default});
                     }
                 }
                 elsif ($p->{default} =~ /^(\w+)\(\)$/o) {
@@ -325,6 +336,11 @@ sub main {
             if ($p->{type} =~ /(?<!QFlags)</io) {
                 # FIXME: skip template class for now
                 print STDERR "skip template class method: $name, $p->{type}\n";
+                next METHOD_LOOP;
+            }
+            elsif ($p->{type} eq '...') {
+                # FIXME: skip va_list
+                print STDERR "skip va_list method: $name, $p->{type}\n";
                 next METHOD_LOOP;
             }
             # workaround class without default constructor
@@ -392,7 +408,7 @@ sub main {
         POST_CHOMP   => 0,
         TRIM         => 1,
         EVAL_PERL    => 1,
-        # STRICT      => 1,
+        #STRICT       => 1,
     });
     # workaround a bug in ttk when a key of hash is 'keys'
     # it gets wrong
@@ -434,6 +450,7 @@ sub main {
         my_file             => $meta->{FILE},
         my_methods          => $mem_methods,
         my_methods_by_name  => $pub_methods_by_name,
+        my_enums            => $enums,
         my_typemap          => $typemap,
         my_packagemap       => $packagemap,
         my_enummap          => $enummap,

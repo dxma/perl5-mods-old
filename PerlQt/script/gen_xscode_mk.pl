@@ -79,10 +79,20 @@ sub main {
         
         # get module name from .meta
         my $meta = load_yaml($m);
-	# skip masked
-	next if grep { $_ eq $meta->{MODULE} } @{$mod_conf->{mask_modules}};
+        # skip masked
+        next if grep { $_ eq $meta->{MODULE} } @{$mod_conf->{mask_modules}};
         # skip not exported
-        if (defined $export_mark) {
+        if ($meta->{TYPE} eq 'namespace') {
+            # TODO: skip all custom namespace for now
+            next if $meta->{NAME} ne $mod_conf->{default_namespace};
+            # # only generate enums in root namespace
+            # if ($meta->{NAME} ne $mod_conf->{root_namespace}) {
+            #     print STDERR "skip namespace: ", $meta->{NAME}, "\n";
+            #     next;
+            # }
+        }
+        # class/struct
+        elsif (defined $export_mark) {
             my $skip = 0;
             $skip = 1 if !exists $meta->{PROPERTY};
             $skip = 1 if !grep { $_ eq $export_mark }
@@ -99,17 +109,20 @@ sub main {
         my @name   = split /\:\:/, $meta->{TYPE} eq 'namespace' ? 
           $meta->{NAME} : $meta->{PERL_NAME};
         $name[-1] .= '.pm';
+        # FIXME
+        if ($meta->{TYPE} eq 'namespace' and $meta->{NAME} eq $mod_conf->{default_namespace}) {
+            @module = ();
+            goto MODULE_PM;
+        }
         
         # deps for module.xs
         $xs_file = File::Spec::->catfile($out_xscode_dir, "$classname.xs");
-        if ($meta->{TYPE} eq 'namespace') {
-            $xs_file = '';
-            goto MODULE_PM;
-        }
+        # if ($meta->{TYPE} eq 'namespace') {
+        #     $xs_file = '';
+        #     goto MODULE_PM;
+        # }
         push @xs_files, $xs_file;
-        # enum implemented by enum.pm in dot pm
-        $xscode_dot_mk .= $xs_file. ": ". 
-          join(" ", grep { not m/\.enum$/o } @deps). "\n";
+        $xscode_dot_mk .= $xs_file. ": ". join(" ", @deps). "\n";
         # rule for module.xs
         $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
         $xscode_dot_mk .= 

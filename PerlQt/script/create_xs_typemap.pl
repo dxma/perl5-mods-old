@@ -42,6 +42,7 @@ sub main {
         \%opt,
         'manifest=s',
         'packagemap=s',
+        'conf=s',
         'o|output:s',
         'h|help',
     );
@@ -49,7 +50,9 @@ sub main {
     #usage() if !@ARGV;
     croak ".typemap.dep not found: $opt{manifest}" if !-f $opt{manifest};
     croak "package map not found: $opt{packagemap}" if !-f $opt{packagemap};
-    
+    croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
+
+    my $mod_conf   = load_yaml($opt{conf});
     my $packagemap = load_yaml($opt{packagemap});
     my @class = ();
     open my $F, $opt{manifest} or croak "cannot open file to read: $!";
@@ -57,8 +60,17 @@ sub main {
         chomp;
         next if !/\.meta$/o;
         my $meta = load_yaml($_);
-        push @class, $meta->{NAME} if 
-          $meta->{TYPE} =~ /^(?:class|struct)$/o;
+        if ($meta->{TYPE} =~ /^(?:class|struct)/o) {
+            push @class, $meta->{NAME};
+        }
+        else {
+            # namespace
+            if ($meta->{NAME} eq $mod_conf->{root_namespace}) {
+                push @class, $meta->{NAME};
+                # make package for root namespace
+                $packagemap->{$meta->{NAME}} = $meta->{MODULE};
+            }
+        }
     }
     
     my $OUT;

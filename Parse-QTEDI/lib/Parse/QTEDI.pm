@@ -228,7 +228,7 @@ qt_macro_2 :
   'Q_DECLARE_MUTABLE_SEQUENTIAL_ITERATOR' | 
   'Q_DUMMY_COMPARISON_OPERATOR' 
 qt_macro_3 : 
-  'Q_PRIVATE_SLOT' | 'Q_PROPERTY' 
+  'Q_PRIVATE_SLOT' | 'Q_PROPERTY' | 'Q_PRIVATE_PROPERTY' | 'Q_CLASSINFO' | 'Q_INTERFACES'
 qt_macro_10: 
  'Q_INVOKABLE' 
 qt_macro_99: 
@@ -704,23 +704,21 @@ class_body          :
     { $return = $item[2] } 
   | { $return = ''       } 
 class_body_content  : 
-    class_accessibility 
-    { $return = $item[1] } 
-  | noop(s) 
-    { $return = { type => 'noop' } } 
-  | primitive_loop_inside_class
-    { $return = $item[1] } 
+    class_accessibility { $return = $item[1] } 
+  | noop(s) { $return = { type => 'noop' } } 
+  | primitive_loop_inside_class { $return = $item[1] } 
     #{ print STDERR "class_body_content: ", $return, "\n" if $::RD_DEBUG }
 #  | { $return = ''       } 
 #    #{ print STDERR "class_body_content: NULL\n" if $::RD_DEBUG } 
 class_accessibility_loop : 
-  class_accessibility_content | qt_accessibility_content | 
-  kde_accessibility_content 
+    ( class_accessibility_content { $return = $item[1] } | { $return = '' } ) qt_accessibility_content { $return = $item[1] ? join(' ', $item[1], $item[2]) : $item[2] }
+  | class_accessibility_content
+  | kde_accessibility_content 
 class_accessibility : 
-  class_accessibility_loop(s) ':' 
+  class_accessibility_loop ':' 
   { $return = { type => 'accessibility', value => $item[1] } } 
 qt_accessibility_content : 
-  'Q_SIGNALS' | 'Q_SLOTS' | 'signals' | 'slots' 
+  'Q_SIGNALS' | 'Q_SLOTS' | 'signals' | 'slots'
 kde_accessibility_content: 
   'k_dcop' 
 class_accessibility_content : 

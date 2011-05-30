@@ -10,6 +10,8 @@
 
 [% PROCESS typemap.tt2  %]
 [% PROCESS typemap2.tt2 %]
+[% PROCESS funcmap.tt2  %]
+[% PROCESS funcmap2.tt2 %]
 [% PROCESS function.tt2 %]
 
 [% my_cclass2 = my_cclass.remove('.+\:\:') %]
@@ -57,3 +59,24 @@ CODE:
 
 [% END %]
 
+
+[% IF my_enums.size > 0 %]
+################################################################
+#### 
+#### ENUMS
+#### 
+################################################################
+  [% FOREACH enum = my_enums %]
+    [% FOREACH val = enum.VALUE %]
+# [% enum.NAME %]::[% val.0 %]
+void
+[%+ val.first %]()
+PPCODE:
+    ST(0) = sv_newmortal();
+    sv_setiv(ST(0), (IV)[% my_cclass %]::[% val.first %]);
+    XSRETURN(1);
+
+
+    [% END %]
+  [% END %]
+[% END %]

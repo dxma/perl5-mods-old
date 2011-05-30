@@ -1,0 +1,12 @@
+[% BLOCK funcmap_in2 %]
+  [% SWITCH ptype %]
+  [% CASE 'T_QTEXTSTREAM_QTSMFI' %]
+    SvIOK([% arg %])
+  [% CASE 'T_QTEXTSTREAM_QTSMFC' %]
+    SvIOK([% arg %])
+  [% CASE 'T_QFLAGS' %]
+    SvIOK([% arg %])
+  [% CASE DEFAULT %]
+    [% PERL %] warn('funcmap_in2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
+  [% END %]
+[% END %]
