@@ -13,9 +13,9 @@
   [% CASE 'T_SYSRET' %]
     SvIOK([% arg %])
   [% CASE 'T_UV' %]
-    SvUOK([% arg %])
+    (SvIOK([% arg %]) || SvUOK([% arg %]))
   [% CASE 'T_UV_PTR' %]
-    SvUOK([% arg %])
+    (SvIOK([% arg %]) || SvUOK([% arg %]))
   [% CASE 'T_IV' %]
     SvIOK([% arg %])
   [% CASE 'T_IV_PTR' %]
