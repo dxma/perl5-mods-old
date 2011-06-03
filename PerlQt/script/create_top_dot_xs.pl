@@ -135,6 +135,7 @@ EOL
 #include "ppport.h"
 #undef do_open
 #undef do_close
+#undef RETURN
 
 EOL
     for (my $i = 0; $i < @typedef; $i++) {

@@ -34,7 +34,7 @@
         [%+ var %] = &tmp;
     }
   [% CASE 'T_ENUM' %]
-    [% var %] = ([% type %])SvIV([% arg %]);
+    [% var %] = ([% type.remove('^const ').remove('\s*\&$') %])SvIV([% arg %]);
   [% CASE 'T_ENUM_PTR' %]
     {
         [%+ type.remove('^const ').remove('\s*\*$') %] tmp = ([% type.remove('^const ').remove('\s*\*$') %])SvIV([% arg %]);
