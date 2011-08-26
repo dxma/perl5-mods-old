@@ -119,6 +119,12 @@ sub main {
 // MADE BY: $0
 
 EOL
+    # include local headers
+    if (exists $mod_conf->{add_includes}) {
+        foreach my $f (@{$mod_conf->{add_includes}}) {
+            print $OUT "#include \"", $f, "\"\n";
+        }
+    }
     my %skip_include = map { $_ => 1 } 
       exists $mod_conf->{skip_includes} ?
         @{$mod_conf->{skip_includes}} : ();
