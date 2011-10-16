@@ -16,7 +16,8 @@ our $VERSION = '[% my_version %]';
     [% END %]
     [% CALL isa.push(my_packagemap.$c) %]
   [% END %]
-our $ISA     = qw/[% isa.join(' ') %]/;
+use base qw/[% isa.join(' ') %]/;
+#our @ISA = qw/[% isa.join(' ') %]/;
 [% END %]
 
 [% IF my_bootstrap %]

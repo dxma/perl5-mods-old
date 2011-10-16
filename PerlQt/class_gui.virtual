@@ -1,0 +1,5 @@
+# following classes are virtual
+QGraphicsObject
+QAccessibleObjectEx
+QAccessibleObject
+QAbstractGraphicsShapeItem

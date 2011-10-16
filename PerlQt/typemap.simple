@@ -25,7 +25,8 @@ size_t                  T_UV
 ssize_t                 T_IV
 time_t                  T_NV
 unsigned long *         T_OPAQUEPTR
-char **                 T_PACKEDARRAY
+#char **                 T_PACKEDARRAY
+char **                 T_PV_LIST
 char *&			T_PV
 void *                  T_PTR
 Time_t *                T_PV

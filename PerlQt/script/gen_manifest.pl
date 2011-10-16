@@ -39,14 +39,14 @@ sub load_yaml {
 
 sub find_files {
     my ( $root_dir, ) = @_;
-    
+
     my @dir = ( $root_dir, );
     my @file= ();
     while (@dir) {
         my $dir = pop @dir;
         local ( *D, );
         opendir D, $dir or croak "cannot opendir to read: $!";
-        my @e = map { File::Spec::->catfile($dir, $_) } 
+        my @e = map { File::Spec::->catfile($dir, $_) }
           grep { !/^\./o } readdir D;
         closedir D;
         foreach my $e (@e) {
@@ -73,14 +73,15 @@ sub main {
     #usage() if !@ARGV;
     croak "module.conf not found" if !-f $opt{conf};
     croak "template dir not found: $opt{template}" if !-d $opt{template};
-    
+
     my $mod_conf = load_yaml($opt{conf});
     my $top_xs   = (split /\:\:/, $mod_conf->{default_namespace})[-1];
     $top_xs .= '.xs';
     my $pm_files = find_files('lib');
     my $xs_files = find_files('xs');
     my $t_files  = find_files('t');
-    
+    my $dm_files = -d 'demo' ? find_files('demo') : [];
+
     my $out = '';
     my $template = Template::->new({
         INCLUDE_PATH => $opt{template},
@@ -96,8 +97,9 @@ sub main {
         my_xs_files => $xs_files,
         my_t_files  => $t_files,
         my_top_xs   => $top_xs,
+        my_dm_files => $dm_files,
     };
-    $template->process('manifest.tt2', $var, \$out) or 
+    $template->process('manifest.tt2', $var, \$out) or
       croak $template->error. "\n";
     $out .= "\n";
     if (defined $opt{o}) {

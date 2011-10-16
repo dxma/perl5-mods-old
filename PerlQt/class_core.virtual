@@ -1,0 +1,4 @@
+# following classes are virtual
+QAnimationGroup
+QAbstractTableModel
+QAbstractListModel

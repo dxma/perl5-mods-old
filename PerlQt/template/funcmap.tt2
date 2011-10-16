@@ -98,6 +98,8 @@
     SvOK([% arg %])
   [% CASE 'T_PACKEDARRAY' %]
     SvIOK([% arg %])
+  [% CASE 'T_PV_LIST' %]
+    (SvOK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVAV)
   [% CASE 'T_CALLBACK' %]
     SvOK([% arg %])
   [% CASE 'T_ARRAY' %]
