@@ -44,13 +44,13 @@ sub main {
     ) or usage();
     usage() if $opt{h};
     usage() if !@ARGV;
-    
-    my ( $in_xscode_dir, $out_xscode_dir, $out_pmcode_dir, 
+
+    my ( $in_xscode_dir, $out_xscode_dir, $out_pmcode_dir,
          $out_typemap_dir, $out, ) = @ARGV;
-    croak "directory $in_xscode_dir not found!" unless 
-      -d $in_xscode_dir; 
+    croak "directory $in_xscode_dir not found!" unless
+      -d $in_xscode_dir;
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
-    
+
     my $mod_conf      = load_yaml($opt{conf});
     my $export_mark   = exists $mod_conf->{dll_export_mark} ?
       $mod_conf->{dll_export_mark} : undef;
@@ -58,25 +58,25 @@ sub main {
     my @xs_files = ();
     my @pm_files = ();
     my ( $xs_file, $pm_file, );
-    
+
     foreach my $m (glob(File::Spec::->catfile(
         $in_xscode_dir, '*.meta'))) {
         my $meta_file = (File::Spec::->splitdir($m))[-1];
         ( my $classname = $meta_file ) =~ s/\.meta$//io;
         # no need to include classname.function
         # which has member function implementations
-        my @deps = 
-          grep { not m/\.(?:function|protected|friend)$/io } 
+        my @deps =
+          grep { not m/\.(?:function|protected|friend)$/io }
             glob(File::Spec::->catfile(
                 $in_xscode_dir, $classname. ".*"));
         push @deps, File::Spec::->catfile(
-            $out_typemap_dir, $classname. ".typemap") if 
-              -f File::Spec::->catfile($out_typemap_dir, 
+            $out_typemap_dir, $classname. ".typemap") if
+              -f File::Spec::->catfile($out_typemap_dir,
                                        $classname. ".typemap");
         # skip those have neither .enum nor .public
         my %deps = map { (split /\./)[-1] => 1 } @deps;
-        next unless exists $deps{enum} or exists $deps{public};
-        
+        # next unless exists $deps{enum} or exists $deps{public};
+
         # get module name from .meta
         my $meta = load_yaml($m);
         # skip masked
@@ -106,7 +106,7 @@ sub main {
         }
         my $module = exists $meta->{MODULE} ? $meta->{MODULE} : '';
         my @module = split /\:\:/, $module;
-        my @name   = split /\:\:/, $meta->{TYPE} eq 'namespace' ? 
+        my @name   = split /\:\:/, $meta->{TYPE} eq 'namespace' ?
           $meta->{NAME} : $meta->{PERL_NAME};
         $name[-1] .= '.pm';
         # FIXME
@@ -114,7 +114,7 @@ sub main {
             @module = ();
             goto MODULE_PM;
         }
-        
+
         # deps for module.xs
         $xs_file = File::Spec::->catfile($out_xscode_dir, "$classname.xs");
         # if ($meta->{TYPE} eq 'namespace') {
@@ -125,40 +125,40 @@ sub main {
         $xscode_dot_mk .= $xs_file. ": ". join(" ", @deps). "\n";
         # rule for module.xs
         $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
-        $xscode_dot_mk .= 
+        $xscode_dot_mk .=
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ". 
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_XS) ".
           "-conf \$(MODULE_DOT_CONF) ".
-            "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ". 
-              "-packagemap \$(PACKAGEMAP) -enummap \$(ENUMMAP) ". 
+            "-template \$(TEMPLATE_DIR) -typemap \$(TYPEMAP) ".
+              "-packagemap \$(PACKAGEMAP) -enummap \$(ENUMMAP) ".
                 "-default_typedef \$(DEFAULT_TYPEDEF) \$(addprefix -packagemap ,\$(wildcard \$(MAKE_ROOT)/packagemap.*)) -o \$@ \$^\n\n";
 
-MODULE_PM:        
+MODULE_PM:
         # deps for module.pm
         $pm_file = File::Spec::->catfile($out_pmcode_dir, @module, @name);
         push @pm_files, $pm_file;
         # .function.public for operator (function) overload
-        $xscode_dot_mk .= $pm_file. ": ". 
-          join(" ", grep { m/\.(?:meta|public|enum|typemap)$/o } @deps). 
+        $xscode_dot_mk .= $pm_file. ": ".
+          join(" ", grep { m/\.(?:meta|public|enum|typemap)$/o } @deps).
             " ". $xs_file. "\n";
         # rule for module.pm
         $xscode_dot_mk .= "\t\$(_Q)echo generating \$@\n";
-        $xscode_dot_mk .= 
+        $xscode_dot_mk .=
           "\t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)\n";
-        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ". 
-          "-conf \$(MODULE_DOT_CONF) ". 
-            "-template \$(TEMPLATE_DIR) -packagemap \$(PACKAGEMAP) ". 
+        $xscode_dot_mk .= "\t\$(_Q)\$(CMD_CREAT_PM) ".
+          "-conf \$(MODULE_DOT_CONF) ".
+            "-template \$(TEMPLATE_DIR) -packagemap \$(PACKAGEMAP) ".
                 "\$(addprefix -packagemap ,\$(wildcard \$(MAKE_ROOT)/packagemap.*)) ".
                   "-o \$@ \$^\n\n";
     }
-    
+
     # write XS_FILES and PM_FILES
     $xscode_dot_mk .= "XS_FILES := ". join(" ", @xs_files). "\n";
     $xscode_dot_mk .= "PM_FILES := ". join(" ", @pm_files). "\n";
-    
+
     if (defined $out) {
         local ( *OUT, );
-        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
+        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die
           "cannot open file to write: $!";
         print OUT $xscode_dot_mk;
         close OUT or die "cannot save to file: $!";

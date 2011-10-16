@@ -16,3 +16,6 @@ typemap
 [% FOREACH f = my_t_files %]
 [%+ f %]
 [% END %]
+[% FOREACH f = my_dm_files %]
+[%+ f %]
+[% END %]

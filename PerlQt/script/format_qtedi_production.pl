@@ -18,7 +18,7 @@ look. This will both strip unrelevant entry and renew the structure
 of other interested entries.
 
 B<NOTE>: All new hash keys inserted here will be uppercase to
-differentiate with QTEDI output, except meta field such as 'subtype'. 
+differentiate with QTEDI output, except meta field such as 'subtype'.
 
 =cut
 
@@ -47,7 +47,7 @@ B<NOTE>: Some properties are stored inside 'PROPERTY' field array for
 futher reference.
 
 B<NOTE>: Q_DECL_EXPORT == __attribute((visibility(default)))__ in
-gcc. 
+gcc.
 
 =back
 
@@ -78,13 +78,13 @@ my $FUNCTION_PROPERTIES = {
     static           => P_KEEP,
     friend           => P_KEEP,
     # const belongs to return type
-    # const           => P_IGNORE, 
-    %$QT_PROPERTIES, 
-    %$KDE_PROPERTIES, 
+    # const           => P_IGNORE,
+    %$QT_PROPERTIES,
+    %$KDE_PROPERTIES,
 };
 
 # class/struct/union-specific
-my $CLASS_PROPERTIES =  { 
+my $CLASS_PROPERTIES =  {
     # C++ standard
     inline           => P_IGNORE,
     static           => P_KEEP,
@@ -128,7 +128,7 @@ Each property field inside a Q_PROPERTY will be stored as a new
 
 sub __format_macro {
     my $entry = shift;
-    
+
     # keep Q_OBJECT Q_PROPERTY
     if ($entry->{name} eq 'Q_OBJECT') {
         delete $entry->{subtype};
@@ -159,13 +159,13 @@ sub __format_class_or_struct {
     # $type == 1 => struct
     # by default class
     $type = 0 unless defined $type;
-    
+
     # format name and property
     if ($entry->{name}) {
         my @values = split /\s+/, $entry->{name};
         my $cname = pop @values;
         foreach my $v (@values) {
-            if (exists $CLASS_PROPERTIES->{$v} and 
+            if (exists $CLASS_PROPERTIES->{$v} and
                   $CLASS_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
@@ -186,7 +186,7 @@ sub __format_class_or_struct {
                 my $name = $2;
                 my $rel  = $1;
                 $name =~ s/\s+$//o;
-                push @{$entry->{ISA}}, { 
+                push @{$entry->{ISA}}, {
                     NAME => $name, RELATIONSHIP => $rel, };
             }
         }
@@ -207,12 +207,12 @@ sub __format_class_or_struct {
     if (exists $entry->{body}) {
         if ($type == 0) {
             # class
-            ( $entry->{BODY}, $abstract_class ) = 
+            ( $entry->{BODY}, $abstract_class ) =
               _format_class_body($entry->{body});
         }
         else {
             # struct
-            ( $entry->{BODY}, $abstract_class ) = 
+            ( $entry->{BODY}, $abstract_class ) =
               _format_struct_body($entry->{body});
         }
         push @{$entry->{PROPERTY}}, 'abstract' if $abstract_class;
@@ -230,21 +230,21 @@ Extract class name string and store as new field. Recursively process
 
 Format inheritance line if has.
 
-  # spec 
-  
+  # spec
+
   ---
   type     : class
-  PROPERTY : 
+  PROPERTY :
      - [class property1]
      ...
   NAME     : [name]
-  ISA      : 
+  ISA      :
      - NAME         : [parent class name]
        RELATIONSHIP : public/private/protected
      ...
-  BODY     : 
+  BODY     :
      ...
-  VARIABLE : 
+  VARIABLE :
      - [variable1]
      ...
 
@@ -320,23 +320,23 @@ sub __normalize {
 
 =item __format_fpointer
 
-Format a function pointer entry. 
+Format a function pointer entry.
 
   # spec
 
   ---
   type          : fpointer
-  PROPERTY      : 
+  PROPERTY      :
      - [function property1]
      ...
   NAME          : [T_FPOINTER_BLAH]
   NAME_ORIGIN   : [BLAH]
   PROTOTYPE     : [prototype string]
   DEFAULT_VALUE : [default value, mostly 0]
-  FPOINTERINFO  : 
+  FPOINTERINFO  :
      - NAME      : [same as NAME above]
-                   [could be a ref to inner FPOINTERINFO structure 
-                    in case of function pointer which returns      
+                   [could be a ref to inner FPOINTERINFO structure
+                    in case of function pointer which returns
                     another function pointer                      ]
      - RETURN    : [similar as in function]
      - PARAMETER : [similar as in function]
@@ -347,14 +347,14 @@ Format a function pointer entry.
 
 sub __format_fpointer {
     my $entry = shift;
-    
+
     # grep function property from return field
-    my $properties = 
+    my $properties =
       exists $entry->{property} ? $entry->{property} : [];
     my $fpreturn   = [];
     my @return = split /\s*\b\s*/, $entry->{return};
     foreach my $e (@return) {
-        if (exists $FUNCTION_PROPERTIES->{$e} and 
+        if (exists $FUNCTION_PROPERTIES->{$e} and
               $FUNCTION_PROPERTIES->{$e} == P_KEEP) {
             push @$properties, $e;
         }
@@ -380,10 +380,10 @@ sub __format_fpointer {
     my $fpname;
     my $fpname_origin;
     my $fproto = $fpreturn_type. ' ';
-    
+
     my $get_parameters = sub {
         my ( $plist, $params ) = @_;
-        
+
         foreach my $p (@{$plist}) {
             if ($p->{subtype} eq 'fpointer') {
                 __format_fpointer($p);
@@ -412,15 +412,15 @@ sub __format_fpointer {
         ( my $patched = pop @n ) =~
           s/^(\*+\s*)(.+)/$1.$FP_TYPE_PREFIX.uc($2).'_'.uc($filename)/eio;
         my $origin = $2;
-        return [ join("::", @n, $patched), 
+        return [ join("::", @n, $patched),
              join("::", @n, $origin)];
     };
-    
+
     if (ref $entry->{name} eq 'HASH') {
-        # well, a function pointer which returns 
+        # well, a function pointer which returns
         # another function pointer
         my $name = $entry->{name}->{name};
-        ( $fpname, $fpname_origin ) = 
+        ( $fpname, $fpname_origin ) =
           @{ $patch_fpointer_name->($name) };
         $fproto .= '(('. $fpname. ')(';
         # process inner params
@@ -430,7 +430,7 @@ sub __format_fpointer {
     }
     else {
         my $name = $entry->{name};
-        ( $fpname, $fpname_origin ) = 
+        ( $fpname, $fpname_origin ) =
           @{ $patch_fpointer_name->($name) };
         $fproto .= '('. $fpname. ')';
     }
@@ -449,13 +449,13 @@ sub __format_fpointer {
             $fproto = $p. ' '. $fproto;
         }
     }
-    
+
     # masquerade as a normal function entry
-    # delegate to __format_function 
+    # delegate to __format_function
     # fill RETURN and PARAMETER fields
     # NOTE: soft copy
     my $masque_function = {};
-    $masque_function->{name}      = 
+    $masque_function->{name}      =
       join(" ", $entry->{return}, $fpname);
     $masque_function->{parameter} = $entry->{parameter};
     $masque_function->{type}      = 'function';
@@ -464,16 +464,16 @@ sub __format_fpointer {
         # a function pointer returns another functipn pointer
         # FIXME: delegate inner part to __format_function
         my $masque_inner_function = {};
-        $masque_inner_function->{name}      = 
+        $masque_inner_function->{name}      =
           join(" ", $entry->{return}, $entry->{name}->{name});
-        $masque_inner_function->{parameter} = 
+        $masque_inner_function->{parameter} =
           $entry->{name}->{parameter};
         $masque_inner_function->{type}      = 'function';
         __format_function($masque_inner_function);
         # store in $masque_function
         $masque_function->{NAME} = {};
-        $masque_function->{NAME}->{PARAMETER} = 
-          $masque_inner_function->{PARAMETER} if 
+        $masque_function->{NAME}->{PARAMETER} =
+          $masque_inner_function->{PARAMETER} if
             exists $masque_inner_function->{PARAMETER};
     }
     # normalize
@@ -506,17 +506,17 @@ sub __format_fpointer {
 Format a function entry. Extract return type, function name and all
 parameters from function entry from QTEDI.
 
-  # spec 
-  
+  # spec
+
   ---
   type      : function
   subtype   : 1/0 [is operator or not]
-  PROPERTY  : 
+  PROPERTY  :
      - [function property1]
      ...
   NAME      : [name]
   RETURN    : [return type]
-  PARAMETER : 
+  PARAMETER :
      - TYPE          : [param1 type]
                        [NOTE: could be '...' in ansi]
        NAME          : [param1 name]
@@ -529,7 +529,7 @@ parameters from function entry from QTEDI.
 
 sub __format_function {
     my $entry = shift;
-    
+
     #print STDERR $entry->{name}, "\n";
     my $fname_with_prefix = $entry->{name};
     # filter out keywords from name
@@ -598,7 +598,7 @@ sub __format_function {
         }
     }
     # get return type
-    # filter out properties 
+    # filter out properties
     foreach my $v (@fvalues) {
         if (exists $FUNCTION_PROPERTIES->{$v}) {
             if ($FUNCTION_PROPERTIES->{$v} == P_KEEP) {
@@ -611,7 +611,7 @@ sub __format_function {
     }
     if (exists $entry->{property}) {
         foreach my $p (@{$entry->{property}}) {
-            if (exists $FUNCTION_PROPERTIES->{$p} and 
+            if (exists $FUNCTION_PROPERTIES->{$p} and
                   $FUNCTION_PROPERTIES->{$p} == P_KEEP) {
                 unshift @$properties, $p;
             }
@@ -626,7 +626,7 @@ sub __format_function {
             if ($freturn_type[$i] eq '::') {
                 $return_type .= $freturn_type[$i]. $freturn_type[$i+1];
                 $i += 2;
-            } 
+            }
             elsif ($freturn_type[$i] eq '>::') {
                 $return_type .= $freturn_type[$i]. $freturn_type[$i+1];
                 $i += 2;
@@ -650,18 +650,18 @@ sub __format_function {
     }
     # format params
     my $parameters = [];
-    PARAMETER_MAIN_LOOP: 
+    PARAMETER_MAIN_LOOP:
     foreach my $p (@{$entry->{parameter}}) {
-        next PARAMETER_MAIN_LOOP if 
+        next PARAMETER_MAIN_LOOP if
           $p->{subtype} eq 'simple' and $p->{name} eq '';
-        
+
         my $pname_with_type = $p->{name};
         my $psubtype        = $p->{subtype};
-        my $pdefault_value  = 
+        my $pdefault_value  =
           exists $p->{default} ? $p->{default} : '';
         $pdefault_value =~ s/\s+$//o;
         my ( $pname, $ptype, $fpinfo, );
-        
+
         if ($psubtype eq 'fpointer') {
             __format_fpointer($p);
             $pname = $p->{PROTOTYPE};
@@ -675,23 +675,28 @@ sub __format_function {
             # store variable name in TYPE
             # fall decl string    in NAME
             # NOTE: transform char array[] into char *array
-            if ($pname_with_type =~ /^(.*?)\b(\w+)(\s*\[\])/o) {
+            if ($pname_with_type =~ /^((?:const\s+)?char\s*\*\s*)(?:const\s+)?\s*(\w+)\s*\[\]/o) {
+                $ptype = $1. '*';
+                $pname = $2;
+            }
+            elsif ($pname_with_type =~ /^(.*?)\b(\w+)(\s*\[\])/o) {
                 # int *array[] v.s. char[]
-                $pname_with_type = $1 ? $1. '* T_ARRAY_'. uc($2) : 
+                $pname_with_type = $1 ? $1. '* T_ARRAY_'. uc($2) :
                   $2. '* T_ARRAY_'. uc($2);
                 $ptype = 'T_ARRAY_'. uc($2);
+                $pname = $pname_with_type;
             }
             else {
                 $pname_with_type =~ s{^(.*?)\b(\w+)(\s*\[)}
                                      {$1.' T_ARRAY_'.uc($2).$3}eio;
                 $ptype = 'T_ARRAY_'. uc($2);
+                $pname = $pname_with_type;
             }
-            $pname = $pname_with_type;
         }
         else {
             # simple && template
             # split param name [optional] and param type
-            my @pvalues = 
+            my @pvalues =
               split /\s*(?<!::)\b(?!::)\s*/, $pname_with_type;
             my @pname = ();
             my @ptype = ();
@@ -715,7 +720,7 @@ sub __format_function {
                         unshift @pname, pop @pvalues;
                         unshift @pname, pop @pvalues;
                         $i -= 2;
-                    } 
+                    }
                     else {
                         last FP_LOOP;
                     }
@@ -724,7 +729,7 @@ sub __format_function {
             # left are type items
             @ptype = @pvalues;
             # workaround for '(un)signed' keyword
-            if ($ptype[$#ptype] eq 'signed' or 
+            if ($ptype[$#ptype] eq 'signed' or
                   $ptype[$#ptype] eq 'unsigned') {
                 # don't pull back 'short' unsigned like 'unsigned sec'
                 if ($pname[0] =~ m/^(?:int|long|short|char)$/io) {
@@ -733,7 +738,7 @@ sub __format_function {
                 }
             }
             # workaround for 'long long' keyword
-            if ($ptype[$#ptype] eq 'long' and 
+            if ($ptype[$#ptype] eq 'long' and
                   @pname and $pname[0] eq 'long') {
                 # (un)signed long long
                 push @ptype, shift @pname;
@@ -748,7 +753,7 @@ sub __format_function {
                     if ($ptype[$i] eq '::') {
                         $ptype .= $ptype[$i]. $ptype[$i+1];
                         $i += 2;
-                    } 
+                    }
                     elsif ($ptype[$i] eq '<') {
                         $ptype .= $ptype[$i];
                         $i++;
@@ -776,7 +781,7 @@ sub __format_function {
         }
         push @$parameters, $p;
     }
-    
+
     # format function name
     my $fname = '';
     if ($is_operator_function) {
@@ -787,7 +792,7 @@ sub __format_function {
             last FN_FORMAT_LOOP if $fname[$i] eq 'operator';
         }
         if ($fname[++$i] =~ m/^[a-z_A-Z_0-9_\_]+$/o) {
-            # type cast operator such as 
+            # type cast operator such as
             # operator int
             $fname .= ' '. $fname[$i++];
         }
@@ -833,18 +838,18 @@ sub __format_function {
 
 Format enum, normalize name, property and enum value entries.
 
-  # spec 
-  
+  # spec
+
   ---
   type     : enum
   NAME     : [name]
-  PROPERTY : 
+  PROPERTY :
      - [enum property1]
      ...
-  VALUE    : 
+  VALUE    :
      - [enum value1]
      ...
-  VARIABLE : 
+  VARIABLE :
      - [variable1]
      ...
 
@@ -854,13 +859,13 @@ Format enum, normalize name, property and enum value entries.
 
 sub __format_enum {
     my $entry = shift;
-    
+
     # format name and property
     if ($entry->{name}) {
         my @values = split /\s+/, $entry->{name};
         my $ename = pop @values;
         foreach my $v (@values) {
-            if (exists $ENUM_PROPERTIES->{$v} and 
+            if (exists $ENUM_PROPERTIES->{$v} and
                   $ENUM_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
@@ -901,13 +906,13 @@ sub __format_enum {
 
 Format accessibility, normalize value entries.
 
-B<NOTE>: private type should not appear here since being stripped. 
+B<NOTE>: private type should not appear here since being stripped.
 
-  # spec 
-  
+  # spec
+
   ---
   type     : accessibility
-  VALUE    : 
+  VALUE    :
      - [accessibility keyword1]
      ...
 
@@ -917,7 +922,7 @@ B<NOTE>: private type should not appear here since being stripped.
 
 sub __format_accessibility {
     my $entry = shift;
-    
+
     $entry->{VALUE} = $entry->{value};
     delete $entry->{value};
     return 1;
@@ -932,12 +937,12 @@ Format typedef, normalize value entry.
 Value entry could be of type:
 
   1. typedef simple type C<< typedef A B; >>
-  2. typedef (anonymous) class/struct/enum/union C<< typdef enum A { } B; >> 
+  2. typedef (anonymous) class/struct/enum/union C<< typdef enum A { } B; >>
   3. typedef function pointer C<< typedef void (*P)(int, uint); >>
-  4. typedef an array C<< typedef unsigned char Digest[16]; >> 
+  4. typedef an array C<< typedef unsigned char Digest[16]; >>
 
-  # spec 
-  
+  # spec
+
   ---
   type      : typedef
   subtype   : class/struct/enum/union/fpointer/simple
@@ -954,7 +959,7 @@ Value entry could be of type:
 
 sub __format_typedef {
     my $entry = shift;
-    
+
     # extract body entry
     if (ref $entry->{body} eq 'HASH') {
         $entry->{subtype} = $entry->{body}->{type};
@@ -996,7 +1001,7 @@ sub __format_typedef {
             # strip tail space
             $entry->{body} =~ s/\n+//sio;
             $entry->{body} =~ s/\s+$//io;
-            ( $entry->{FROM}, $entry->{TO} ) = 
+            ( $entry->{FROM}, $entry->{TO} ) =
               $entry->{body} =~ m/(.*)\s+([a-z_A-Z_0-9_\__\*_\&\>]+)$/io;
             # pointer/reference digit be moved into FROM
             if ($entry->{TO} =~ s/^\s*((?:\*|\&|\>))//io) {
@@ -1014,12 +1019,12 @@ sub __format_typedef {
 
 Format extern type body.
 
-  # spec 
-  
+  # spec
+
   ---
   type    : extern
   subtype : C/function/expression/class/struct/union/enum
-  BODY    : 
+  BODY    :
      ...
 
 B<NOTE>: For subtype C, there will be more than one entry in BODY
@@ -1032,7 +1037,7 @@ field array. For others, just one.
 sub __format_extern {
     my $entry = shift;
     my $rc    = 0;
-    
+
     # keep function/enum/class/struct/C
     if ($entry->{subtype} eq 'function') {
         __format_function($entry->{body});
@@ -1074,17 +1079,17 @@ sub __format_extern {
 =item __format_namespace
 
 Format namespace code block. Normalize name and recursively format
-body entries. 
+body entries.
 
-  # spec 
-  
+  # spec
+
   ---
   type     : namespace
   NAME     : [namespace name]
-  PROPERTY : 
+  PROPERTY :
      - [property1]
      ...
-  BODY     : 
+  BODY     :
      ...
 
 =back
@@ -1093,13 +1098,13 @@ body entries.
 
 sub __format_namespace {
     my $entry = shift;
-    
+
     # format name and property
     if ($entry->{name}) {
         my @values = split /\s+/, $entry->{name};
         my $nname = pop @values;
         foreach my $v (@values) {
-            if (exists $NAMESPACE_PROPERTIES->{$v} and 
+            if (exists $NAMESPACE_PROPERTIES->{$v} and
                   $NAMESPACE_PROPERTIES->{$v} == P_KEEP) {
                 push @{$entry->{property}}, $v;
             }
@@ -1126,10 +1131,10 @@ sub __format_namespace {
 
 Format expression.
 
-B<NOTE>: currently expression is stripped. 
+B<NOTE>: currently expression is stripped.
 
-  # spec 
-  
+  # spec
+
   ---
   type  : expression
   value : [expression line]
@@ -1152,47 +1157,47 @@ sub _format_primitive_loop {
     #use Data::Dumper;
     #print Dump($entry), "\n";
     if ($entry->{type} eq 'macro') {
-        __format_macro($entry) and 
+        __format_macro($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'class') {
-        __format_class($entry) and 
+        __format_class($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'struct') {
-        __format_struct($entry) and 
+        __format_struct($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'union') {
-        __format_union($entry) and 
+        __format_union($entry) and
           push @$formatted_entries, $entry;
     }
     elsif ($entry->{type} eq 'extern') {
-        __format_extern($entry) and 
+        __format_extern($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'namespace') {
-        __format_namespace($entry) and 
+        __format_namespace($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'function') {
-        __format_function($entry) and 
+        __format_function($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
     elsif ($entry->{type} eq 'fpointer') {
-        __format_fpointer($entry) and 
+        __format_fpointer($entry) and
           push @$formatted_entries, $entry;
     }
     elsif ($entry->{type} eq 'enum') {
-        __format_enum($entry) and 
+        __format_enum($entry) and
           push @$formatted_entries, $entry;
-    } 
+    }
 #    elsif ($entry->{type} eq 'accessibility') {
-#        __format_accessibility($entry) and 
+#        __format_accessibility($entry) and
 #          push @$formatted_entries, $entry;
-#    } 
+#    }
     elsif ($entry->{type} eq 'typedef') {
-        __format_typedef($entry) and 
+        __format_typedef($entry) and
           push @$formatted_entries, $entry;
     }
 }
@@ -1200,7 +1205,7 @@ sub _format_primitive_loop {
 sub _format {
     my $entries           = shift;
     my $formatted_entries = [];
-    
+
     # strip strategy: comment/expression/template
     foreach my $entry (@$entries) {
         #print STDERR $entry->{type}, "\n";
@@ -1215,7 +1220,7 @@ sub _format_with_accessibility {
     $private = defined $private ? $private : 1;
     my $formatted_entries = [];
     my $abstract_class    = 0;
-    
+
     # strip strategy: comment/template/expression
     LOOP_BODY:
     foreach my $entry (@$entries) {
@@ -1227,12 +1232,12 @@ sub _format_with_accessibility {
                     $private = 1;
                 }
                 else {
-                    __format_accessibility($entry) and 
+                    __format_accessibility($entry) and
                       push @$formatted_entries, $entry;
                 }
             }
             elsif ($entry->{type} eq 'expression') {
-                __format_expression($entry) and 
+                __format_expression($entry) and
                   push @$formatted_entries, $entry;
             }
             else {
@@ -1254,7 +1259,7 @@ sub _format_with_accessibility {
                 unless ($is_private) {
                     # non-private function/signal/slot begin
                     $private = 0;
-                    __format_accessibility($entry) and 
+                    __format_accessibility($entry) and
                       push @$formatted_entries, $entry;
                 }
             }
@@ -1272,12 +1277,12 @@ sub _format_with_accessibility {
 sub _format_keep_expression {
     my $entries           = shift;
     my $formatted_entries = [];
-    
+
     # strip strategy: comment/template
     foreach my $entry (@$entries) {
         #print STDERR $entry->{type}, "\n";
         if ($entry->{type} eq 'expression') {
-            __format_expression($entry) and 
+            __format_expression($entry) and
               push @$formatted_entries, $entry;
         }
         else {
@@ -1311,10 +1316,10 @@ sub main {
     close INPUT;
     my ( $entries ) = Load($cont);
     $cont = Dump(_format($entries));
-    
+
     if (defined $out) {
         local ( *OUTPUT );
-        sysopen OUTPUT, $out, O_CREAT|O_WRONLY|O_TRUNC or 
+        sysopen OUTPUT, $out, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file to write: $!";
         print OUTPUT $cont;
         close OUTPUT or die "cannot write to file: $!";
