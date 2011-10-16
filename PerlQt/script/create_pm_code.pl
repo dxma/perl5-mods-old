@@ -59,7 +59,7 @@ sub main {
     croak "module.conf not found" if !-f $opt{conf};
     croak "template dir not found" if !-d $opt{template};
     #croak "packagemap not found" if !-f $opt{packagemap};
-    
+
     my %f = ();
     foreach my $p (@ARGV) {
         my $f = (split /\//, $p)[-1];
@@ -70,7 +70,7 @@ sub main {
     }
     croak "<class>.meta not found: $f{meta}" if !-f $f{meta};
     #croak "<class>.enum not found: $f{enum}" if !-f $f{enum};
-    #croak "<class>.function.public not found: $f{'function.public'}" if 
+    #croak "<class>.function.public not found: $f{'function.public'}" if
     #  !-f $f{'function.public'};
     #croak "<class>.xs not found: $f{xs}" if !-f $f{xs};
     my $mod_conf   = load_yaml($opt{conf});
@@ -84,25 +84,37 @@ sub main {
     my $meta  = load_yaml($f{meta});
     my $typemap = exists $f{typemap} ? load_yaml($f{typemap}) : {};
     my $ns    = $meta->{TYPE} eq 'namespace' ? 1 : 0;
-    my $defns = 
+    my $defns =
       $meta->{NAME} eq $mod_conf->{default_namespace} ? 1 : 0;
     my $enums = exists $f{enum} ? load_yaml($f{enum}) : [];
     # scan for sprintf, vsprintf
-    my $funcs = exists $f{'function.public'} ? 
+    my $funcs = exists $f{'function.public'} ?
       load_yaml($f{'function.public'}) : [];
     my @parent = ();
-    my @dir = File::Spec::->splitpath($f{meta});
-    pop @dir;
+    my $dll_export_mark = exists $mod_conf->{dll_export_mark} ?
+      $mod_conf->{dll_export_mark} : undef;
     if (exists $meta->{ISA}) {
+        my @dir = File::Spec::->splitpath($f{meta});
+        pop @dir;
         foreach my $e (@{$meta->{ISA}}) {
             # FIXME: template class parent
             # FIXME: typedef template class parent
             next if $e->{NAME} =~ /^std/io;
             next if $e->{NAME} =~ /\</io;
             if ($e->{RELATIONSHIP} eq 'public') {
-                push @parent, $e->{NAME};
+                if (defined $dll_export_mark) {
+                    # skip non-exported
+                    ( my $file = $e->{NAME} ) =~ s/\:\:/__/go;
+                    my $path = File::Spec::->catpath(@dir, $file. '.meta');
+                    if (-f $path) {
+                        my $isa = load_yaml($path);
+                        push @parent, $e->{NAME} if exists $isa->{PROPERTY} and grep { $_ eq $dll_export_mark } @{ $isa->{PROPERTY} };
+                    }
+                }
+                else {
+                    push @parent, $e->{NAME};
+                }
             }
-            
         }
     }
     my @proto = ();
@@ -117,9 +129,9 @@ sub main {
             }
         }
     }
-    my @printf = grep { /^(?:vs|s)printf$/o } 
+    my @printf = grep { /^(?:vs|s)printf$/o }
       map { $_->{NAME} } @$funcs;
-    
+
     # generate xs file from template
     my $out = '';
     my $template = Template::->new({
@@ -148,11 +160,11 @@ sub main {
         my_packagemap=> $packagemap,
         my_typemap   => $typemap,
     };
-    $template->process('pmcode.tt2', $var, \$out) or 
+    $template->process('pmcode.tt2', $var, \$out) or
       croak $template->error. "\n";
     $out .= "\n";
     if ($opt{o}) {
-        open my $F, '>', $opt{o} or 
+        open my $F, '>', $opt{o} or
           croak "cannot open file to write: $!";
         print $F $out;
         close $F or croak "cannot save to file: $!";
@@ -160,7 +172,7 @@ sub main {
     else {
         print $out, "\n";
     }
-    
+
     exit 0;
 }
 

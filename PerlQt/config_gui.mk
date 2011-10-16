@@ -31,7 +31,7 @@ _IMACROS := QtCore/qglobal.h QtCore/qconfig.h QtCore/qfeatures.h
 # this line will be scaned by script/gen_makefile_pl.pl
 # no make variables inside, keep value in one line
 # disable S60, Windows, WindowMobile style
-GUI_DEFINES      := -DQT_GUI_LIB -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_S60 -DQT_NO_STYLE_S60 -DQT_NO_STYLE_WINDOWS
+GUI_DEFINES      := -DQT_GUI_LIB -DQT_SHARED -DQT_NO_DEBUG -DQT_NO_S60 -DQT_NO_STYLE_S60 -DQT_NO_STYLE_WINDOWS -DQT_NO_QWSEMBEDWIDGET -DQT_NO_QWS_SOUNDSERVER -DQT_NO_QWS_PROPERTIES
 
 # NOTE: keep the default visibility mark as 'Q_DECL_EXPORT'
 #       or else normally it will be expanded to

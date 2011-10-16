@@ -148,6 +148,13 @@
     [% var %] = XS_unpack_[% ntype %]([% arg %]);
   [% CASE 'T_PACKEDARRAY' %]
     [% var %] = reinterpret_cast<[% type %]>(SvIV([% arg %]));
+  [% CASE 'T_PV_LIST' %]
+    [% type.replace('\*$','') %] [% var %][av_len((AV *)SvRV([% arg %]))+1];
+    for (int i = 0; i < av_len((AV *)SvRV([% arg %])) + 1; i++) {
+        SV **svp = av_fetch((AV *)SvRV([% arg %]), i, 0);
+	char *str = SvPVX(*svp);
+	[%+ var %][i] = str;
+    }
   [% CASE 'T_CALLBACK' %]
     [% var %] = make_perl_cb_[% type %]([% arg %]);
   [% CASE 'T_ARRAY_UNUSED' %]
@@ -286,6 +293,13 @@
     XS_pack_[% ntype %]([% arg %], [% var %]);
   [% CASE 'T_PACKEDARRAY' %]
     sv_setiv([% arg %], PTR2IV([% var %]));
+  [% CASE 'T_PV_LIST' %]
+    AV *av = newAV();
+    int len= sizeof([% var %])/sizeof([% var %][0]);
+    for (int i = 0; i < len; i++) {
+        av_push(av, newSVpv([% var %][i], 0));
+    }
+    [% arg %] = newRV((SV *)av);
   [% CASE 'T_DATAUNIT' %]
     sv_setpvn([% arg %], [% var %].chp(), [% var %].size());
   [% CASE 'T_CALLBACK' %]

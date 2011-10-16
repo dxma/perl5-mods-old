@@ -5,6 +5,7 @@ use strict;
 #use English qw( -no_match_vars );
 use Carp;
 use Getopt::Long qw(GetOptions);
+use File::Spec;
 
 use YAML::Syck qw/Load Dump/;
 use Template;
@@ -65,8 +66,8 @@ my %OPERATOR_MAP = (
 
 =head1 DESCRIPTION
 
-Create <module>.xs according to 
-04group/<module>.{meta, function.public, enum} and 
+Create <module>.xs according to
+04group/<module>.{meta, function.public, enum} and
 05typemap/<module>.typemap
 
 .enum and .typemap are optional
@@ -108,7 +109,7 @@ sub main {
         'o|outoput=s'  => \$xs_file,
     );
     usage() unless @ARGV;
-    
+
     my %f = ();
     foreach my $p (@ARGV) {
         my $f = (split /\//, $p)[-1];
@@ -117,8 +118,21 @@ sub main {
         my $k = join(".", @f);
         $f{$k} = $p;
     }
-    
+
     croak "no module.conf found" if !-f $mod_conf_file;
+    my @path = File::Spec::->splitpath($mod_conf_file);
+    pop @path;
+    my $f_class_virtual = File::Spec::->catpath(@path, 'class.virtual');
+    my %abstract_class = ();
+    if (-f $f_class_virtual) {
+        open my $F, $f_class_virtual or croak "cannot open file to read: $!";
+        while (<$F>) {
+            next if /^\s*\#/io;
+            chomp;
+            $abstract_class{$_}++;
+        }
+        close $F;
+    }
     #croak "no packagemap file found" if !-f $packagemap_file;
     croak "no default typedef file found" if !-f $def_typedef_file;
     croak "no enummap file found" if !-f $enummap_file;
@@ -132,7 +146,7 @@ sub main {
     #     print STDERR "skip $f{meta}, not a class or struct\n";
     #     goto WRITE_FILE;
     # }
-    
+
     # public methods
     #carp "no public file found for $xs_file" unless grep { /public$/ } keys %f;
     my $publics = [];
@@ -196,7 +210,7 @@ sub main {
     my $enummap    = load_yaml($enummap_file);
     my $subst_with_fullname = sub {
         my ( $type, ) = @_;
-        
+
         # translate local typedef to full class name
         if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
             $type = $localtype->{$type};
@@ -208,11 +222,11 @@ sub main {
         }
         return $type;
     };
-    
+
     my $has_operator_new = 0;
     # loop into each public method, group by name
     my $pub_methods_by_name = {};
-    my $skip_methods = exists $mod_conf->{skip_methods} ? 
+    my $skip_methods = exists $mod_conf->{skip_methods} ?
       $mod_conf->{skip_methods} : [];
     METHOD_LOOP:
     foreach my $i (@$publics) {
@@ -242,7 +256,7 @@ sub main {
             }
             $i->{name2} = $name2;
         }
-        $i->{parameters} = exists $i->{PARAMETER} ? 
+        $i->{parameters} = exists $i->{PARAMETER} ?
           delete $i->{PARAMETER} : [];
         $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
         # substitude with full typename for entries in typemap
@@ -360,7 +374,7 @@ sub main {
     # foo(int, int, 0)
     my $cb_clone_method = sub {
         my ( $method, ) = @_;
-        
+
         my $clone = {};
         $clone->{parameters} = [];
         foreach my $k (keys %$method) {
@@ -380,7 +394,7 @@ sub main {
     };
     foreach my $name (keys %$pub_methods_by_name) {
         my $new_methods = [];
-        
+
         foreach my $method (@{$pub_methods_by_name->{$name}}) {
             for (my $i = $#{$method->{parameters}}; $i >= 0; $i--) {
                 my $p = $method->{parameters}->[$i];
@@ -395,14 +409,14 @@ sub main {
             }
             push @$new_methods, $method;
         }
-        $pub_methods_by_name->{$name} = [ sort { 
-            scalar(@{$a->{parameters}}) <=> scalar(@{$b->{parameters}}) 
+        $pub_methods_by_name->{$name} = [ sort {
+            scalar(@{$a->{parameters}}) <=> scalar(@{$b->{parameters}})
         } @$new_methods ];
     }
-    
+
     # generate xs file from template
     my $template = Template::->new({
-        INCLUDE_PATH => $template_dir, 
+        INCLUDE_PATH => $template_dir,
         INTERPOLATE  => 0,
         PRE_CHOMP    => 1,
         POST_CHOMP   => 0,
@@ -431,15 +445,17 @@ sub main {
             $abstract_class = 1;
             last;
         }
-        if (exists $m->{ISA}) {
-            foreach my $c (@{$m->{ISA}}) {
-                next if $c->{RELATIONSHIP} ne 'public';
-                ( my $n = $c->{NAME} ) =~ s/\:\:/__/go;
-                my $mf = File::Spec::->catpath(@dir, $n. '.meta');
-                push @parent, load_yaml($mf) if -f $mf;
-            }
-        }
+        # if (exists $m->{ISA}) {
+        #     foreach my $c (@{$m->{ISA}}) {
+        #         next if $c->{RELATIONSHIP} ne 'public';
+        #         ( my $n = $c->{NAME} ) =~ s/\:\:/__/go;
+        #         my $mf = File::Spec::->catpath(@dir, $n. '.meta');
+        #         push @parent, load_yaml($mf) if -f $mf;
+        #     }
+        # }
     }
+    $abstract_class = 1 if exists $abstract_class{$meta->{NAME}};
+
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
@@ -455,14 +471,14 @@ sub main {
         my_packagemap       => $packagemap,
         my_enummap          => $enummap,
         my_abstract         => $abstract_class,
-        my_has_operator_new => $has_operator_new, 
+        my_has_operator_new => $has_operator_new,
     };
-    $template->process('xscode.tt2', $var, \$out) or 
+    $template->process('xscode.tt2', $var, \$out) or
       croak $template->error. "\n";
     $out .= "\n";
 WRITE_FILE:
     if ($xs_file) {
-        open my $F, '>', $xs_file or 
+        open my $F, '>', $xs_file or
           croak "cannot open file to write: $!";
         print $F $out;
         close $F or croak "cannot save to file: $!";
@@ -470,7 +486,7 @@ WRITE_FILE:
     else {
         print $out, "\n";
     }
-    
+
     exit 0;
 }
 
