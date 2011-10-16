@@ -13,7 +13,7 @@ require Exporter;
 use Parse::RecDescent ();
 use YAML::Syck ();
 
-$VERSION = '0.19';
+$VERSION = '0.20';
 $VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 # Global flags 
