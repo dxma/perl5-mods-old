@@ -4,29 +4,29 @@ MODULE = TagLib			PACKAGE = TagLib::Ogg::Vorbis::File
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Ogg::Vorbis::File * 
+TagLib::Ogg::Vorbis::File *
 TagLib::Ogg::Vorbis::File::new(file, readProperties=true, propertiesStyle=TagLib::AudioProperties::Average)
 	char * file
 	bool readProperties
 	TagLib::AudioProperties::ReadStyle propertiesStyle
 CODE:
-	RETVAL = new TagLib::Ogg::Vorbis::File(file, readProperties, 
+	RETVAL = new TagLib::Ogg::Vorbis::File(file, readProperties,
 		propertiesStyle);
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::Vorbis::File::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::Ogg::Vorbis::File::tag()
 INIT:
 	TagLib::Ogg::XiphComment * tag = THIS->tag();
@@ -39,7 +39,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::Ogg::Vorbis::File::audioProperties()
 INIT:
 	TagLib::Ogg::Vorbis::Properties * p = THIS->audioProperties();
@@ -52,7 +52,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::Ogg::Vorbis::File::save()
 CODE:
 	RETVAL = THIS->save();

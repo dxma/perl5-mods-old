@@ -26,14 +26,14 @@ EOU
 
 sub study_type {
     my ( $ntype, $type, $known_primitive_type, $typemap, ) = @_;
-    
+
     my $type_primitive;
     # patch known pattern
     $type =~ s/^CONST_//o;
     $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/o;
     # rogue wave
     $type =~ s/\bT_RW_[^_]+_CLASS/T_CLASS/o;
-    
+
     if (exists $known_primitive_type->{$type}) {
         $type_primitive = $type;
     }
@@ -46,7 +46,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = 'T_PTROBJ' unless 
+            $typemap->{$noref_ntype} = 'T_PTROBJ' unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -56,7 +56,7 @@ sub study_type {
         $type_primitive = 'T_REFOBJ';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_OBJECT' unless 
+        $typemap->{$noref_ntype} = 'T_OBJECT' unless
           exists $typemap->{$noref_ntype};
     }
     elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)$/o) {
@@ -71,7 +71,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = 'T_PTROBJ' unless 
+            $typemap->{$noref_ntype} = 'T_PTROBJ' unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -81,7 +81,7 @@ sub study_type {
         $type_primitive = 'T_REFOBJ';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_OBJECT' unless 
+        $typemap->{$noref_ntype} = 'T_OBJECT' unless
           exists $typemap->{$noref_ntype};
     }
     elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+$/o) {
@@ -108,7 +108,7 @@ sub study_type {
         $type_primitive = 'T_PTRREF';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_PTR' unless 
+        $typemap->{$noref_ntype} = 'T_PTR' unless
           exists $typemap->{$noref_ntype};
     }
     # array
@@ -124,7 +124,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -136,7 +136,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -148,7 +148,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -163,9 +163,9 @@ sub study_type {
 
 sub get_known_primitive_types {
     my ( $type_template, ) = @_;
-    
+
     local ( *TEMPLATE, );
-    open TEMPLATE, '<', $type_template or 
+    open TEMPLATE, '<', $type_template or
       croak("cannot open file to read: $!");
     my $primitive_type_map = {};
     while (<TEMPLATE>) {
@@ -194,9 +194,9 @@ sub get_known_primitive_types {
 
 sub load_typemap {
     my ( $ftypemap, ) = @_;
-    
+
     local ( *TYPEMAP, );
-    open TYPEMAP, '<', $ftypemap or 
+    open TYPEMAP, '<', $ftypemap or
       croak("cannot open file to read: $!");
     my $cont = do { local $/; <TYPEMAP> };
     close TYPEMAP;
@@ -205,15 +205,15 @@ sub load_typemap {
 
 sub dump_typemap {
     my ( $typemap, $fout, ) = @_;
-    
+
     my $write_typemap = sub {
         my ( $typemap, $output, ) = @_;
-        
+
         print $output Dump($typemap);
     };
     local ( *OUTPUT, );
     if ($fout) {
-        open OUTPUT, '>', $fout or 
+        open OUTPUT, '>', $fout or
           croak("cannot open file to write: $!");
         $write_typemap->($typemap, \*OUTPUT);
         close OUTPUT or croak("cannot write to file: $!");
@@ -239,9 +239,9 @@ sub main {
     my $h           = '';
     GetOptions(
         't=s'    => \@ftemplate,
-        'o=s'    => \$fout, 
+        'o=s'    => \$fout,
         'd=s'    => \$group_dir,
-        'h|help' => \$h, 
+        'h|help' => \$h,
     );
     usage() if $h;
     usage() unless @ARGV;
@@ -250,10 +250,10 @@ sub main {
         croak("template not found: $ftemplate") unless -f $ftemplate;
     }
     croak("typemap not found: $ftypemap") unless -f $ftypemap;
-    croak("typemap_template not found: $ftypemap_template") unless 
+    croak("typemap_template not found: $ftypemap_template") unless
       -f $ftypemap_template;
     croak("group dir not found: $group_dir") unless -d $group_dir;
-    
+
     my $known_primitive_type = {};
     foreach my $ftemplate (@ftemplate) {
         my $primitive_type = get_known_primitive_types($ftemplate);
@@ -281,12 +281,12 @@ sub main {
         foreach my $t (keys %$typedef) {
             next if $t =~ /^T_/o;
             if ($typedef->{$t} =~ /^T_/o) {
-                $typemap->{$class. '::'. $t} = 
+                $typemap->{$class. '::'. $t} =
                   $typedef->{$t} =~ /^T_FPOINTER_/ ? 'T_FPOINTER' : $typedef->{$t};
             }
         }
     }
-    
+
     my $rc = 0;
     foreach my $ntype (keys %$typemap) {
         my $type = $typemap->{$ntype};

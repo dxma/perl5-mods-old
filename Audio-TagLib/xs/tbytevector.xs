@@ -6,18 +6,18 @@ PROTOTYPES: 	ENABLE
 
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
 TagLib::ByteVector *
 TagLib::ByteVector::new(...)
 CODE:
 	/*!
-	 * determine which constructor to call by argument number, 
+	 * determine which constructor to call by argument number,
 	 * internal flags, string length(if PV) and isObject
-	 */  
+	 */
 	switch(items) {
 	case 3:
 		/*!
@@ -25,15 +25,15 @@ CODE:
 		 * ByteVector(const char *data, uint length)
 		 */
 		if(SvOK(ST(1)) && SvOK(ST(2))) {
-			if((SvIOK(ST(1)) || SvNOK(ST(1)) || SvUOK(ST(1))) && 
+			if((SvIOK(ST(1)) || SvNOK(ST(1)) || SvUOK(ST(1))) &&
 			   SvPOK(ST(2)) && SvCUR(ST(2)) == 1) {
 				RETVAL = new
 					TagLib::ByteVector(SvUV(ST(1)),
-					*SvPV_nolen(ST(2))); 
+					*SvPV_nolen(ST(2)));
 			} else if(SvPOK(ST(1)) && (SvIOK(ST(2)) ||
 			   SvNOK(ST(2)) || SvUOK(ST(2)))) {
 				RETVAL = new
-					TagLib::ByteVector(SvPV_nolen(ST(1)), 
+					TagLib::ByteVector(SvPV_nolen(ST(1)),
 					SvUV(ST(2)));
 			} else {
 				croak("Usage: TagLib::ByteVector::->(...)");
@@ -87,7 +87,7 @@ void
 TagLib::ByteVector::DESTROY()
 CODE:
 	/*!
-	 * skip TagLib::ByteVector::null 
+	 * skip TagLib::ByteVector::null
 	 * since it is a static object
 	 */
 	if(THIS != &(TagLib::ByteVector::null) && !SvREADONLY(SvRV(ST(0))))
@@ -110,9 +110,9 @@ CODE:
 # different from the C version
 # the returned SV contains a copy of current internal string
 # while the C version returns a pointer
-# 
+#
 ################################################################
-SV * 
+SV *
 TagLib::ByteVector::data()
 INIT:
 	char * data = THIS->data();
@@ -129,7 +129,7 @@ OUTPUT:
 ################################################################
 #
 # const char * TagLib::ByteVector::data() const
-# not exported 
+# not exported
 #
 ################################################################
 
@@ -146,7 +146,7 @@ INIT:
 	 */
 	TagLib::ByteVector tmp = THIS->mid(index, length);
 CODE:
-	/*! 
+	/*!
 	 * invoke copy constructor here
 	 * not use ByteVector(char *) version
 	 * since it will cause a segfault when string is null
@@ -164,7 +164,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::ByteVector::find(pattern, offset = 0, byteAlign = 1)
 	TagLib::ByteVector *pattern
 	unsigned int offset
@@ -174,7 +174,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::ByteVector::rfind(pattern, offset = 0, byteAlign = 1)
 	TagLib::ByteVector *pattern
 	unsigned int offset
@@ -184,19 +184,19 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::containsAt(pattern, offset, patternOffset=0, patternLength=0xffffffff)
 	TagLib::ByteVector *pattern
 	unsigned int offset
 	unsigned int patternOffset
 	unsigned int patternLength
 CODE:
-	RETVAL = THIS->containsAt(*pattern, offset, 
+	RETVAL = THIS->containsAt(*pattern, offset,
 		patternOffset, patternLength);
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::startsWith(pattern)
 	TagLib::ByteVector *pattern
 CODE:
@@ -204,7 +204,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::endsWith(pattern)
 	TagLib::ByteVector *pattern
 CODE:
@@ -212,7 +212,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::ByteVector::endsWithPartialMatch(pattern)
 	TagLib::ByteVector *pattern
 CODE:
@@ -220,25 +220,25 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ByteVector::append(v)
 	TagLib::ByteVector *v
 CODE:
 	THIS->append(*v);
 
-void 
+void
 TagLib::ByteVector::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 TagLib::ByteVector::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ByteVector::resize(size, padding = 0)
 	unsigned int size
 	char padding
@@ -246,8 +246,8 @@ PPCODE:
 	(void)THIS->resize(size, padding);
 	XSRETURN(1);
 
-TagLib::ByteVector::Iterator * 
-TagLib::ByteVector::begin() 
+TagLib::ByteVector::Iterator *
+TagLib::ByteVector::begin()
 CODE:
 	RETVAL = new TagLib::ByteVector::Iterator(THIS->begin());
 OUTPUT:
@@ -262,7 +262,7 @@ OUTPUT:
 #
 ################################################################
 
-TagLib::ByteVector::Iterator * 
+TagLib::ByteVector::Iterator *
 TagLib::ByteVector::end()
 CODE:
 	RETVAL = new TagLib::ByteVector::Iterator(THIS->end());
@@ -273,31 +273,31 @@ OUTPUT:
 #
 # ConstIterator TagLib::ByteVector::end() const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::ByteVector::isNull()
 CODE:
 	RETVAL = THIS->isNull();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ByteVector::checksum()
 CODE:
 	RETVAL = THIS->checksum();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ByteVector::toUInt(mostSignificantByteFirst = true)
 	bool mostSignificantByteFirst
 CODE:
@@ -305,7 +305,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-short 
+short
 TagLib::ByteVector::toShort(mostSignificantByteFirst = true)
 	bool mostSignificantByteFirst
 CODE:
@@ -313,7 +313,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-long long 
+long long
 TagLib::ByteVector::toLongLong(mostSignificantByteFirst = true)
 	bool mostSignificantByteFirst
 CODE:
@@ -322,26 +322,26 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # const char & TagLib::ByteVector::operator[] (int index) const
-# char & TagLib::ByteVector::operator[] (int index) 
+# char & TagLib::ByteVector::operator[] (int index)
 # for get value: implemented by overload
 #                refer to ByteVector.pm
 # for set value: see below
-#                TagLib::ByteVector::setItem(uint index, 
+#                TagLib::ByteVector::setItem(uint index,
 #                     const char & c)
 # it is hard to manage by sv_magic
 # export a new symbol instead
-# 
+#
 ################################################################
 
 ################################################################
 #
 # THIS IS A NEW ADDED PUBLIC SYMBOL
-# 
+#
 ################################################################
-void 
-TagLib::ByteVector::setItem(index, c) 
+void
+TagLib::ByteVector::setItem(index, c)
 	unsigned int index
 	const char & c
 CODE:
@@ -355,11 +355,11 @@ CODE:
 # bool TagLib::ByteVector::operator==(const char *s) const
 # bool TagLib::ByteVector::operator!=(const ByteVector &v) const
 # bool TagLib::ByteVector::operator!=(const char *s) const
-# 
+#
 # refer to ByteVector.pm
-# 
+#
 ################################################################
-bool 
+bool
 TagLib::ByteVector::_equal(...)
 PROTOTYPE: $
 PREINIT:
@@ -368,7 +368,7 @@ PREINIT:
 CODE:
 	if(sv_isobject(ST(1)) && sv_derived_from(ST(1),
 	    "Audio::TagLib::ByteVector")) {
-		inst = INT2PTR(TagLib::ByteVector *, 
+		inst = INT2PTR(TagLib::ByteVector *,
 			SvIV((SV*)SvRV(ST(1))));
 		RETVAL = THIS->operator==(*inst);
 	} else if(SvPOK(ST(1))) {
@@ -380,7 +380,7 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # THIS IS A NEW ADDED PRIVATE SYMBOL
 # which implements
 # bool TagLib::ByteVector::operator<(const ByteVector &v) const
@@ -388,9 +388,9 @@ OUTPUT:
 # CAUTION!!
 # PARAM swap IS REQUIRED FOR OVERLOAD OP IN PERL
 # refer to ByteVector.pm
-# 
+#
 ################################################################
-bool 
+bool
 TagLib::ByteVector::_lessThan(v, swap = false)
 	TagLib::ByteVector *v
 	bool swap
@@ -400,17 +400,17 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # THIS IS A NEW ADDED PRIVATE SYMBOL
 # which implements
 # bool TagLib::ByteVector::operator>(const ByteVector &v) const
-# 
+#
 # CAUTION!!
 # PARAM swap IS REQUIRED FOR OVERLOAD OP IN PERL
 # refer to ByteVector.pm
-# 
+#
 ################################################################
-bool 
+bool
 TagLib::ByteVector::_greatThan(v, swap = false)
 	TagLib::ByteVector *v
 	bool swap
@@ -420,15 +420,15 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # THIS IS A NEW ADDED PRIVATE SYMBOL
 # which implements
 # bool TagLib::ByteVector::operator+(const ByteVector &v) const
-# 
+#
 # CAUTION!!
 # PARAM swap IS REQUIRED FOR OVERLOAD OP IN PERL
 # refer to ByteVector.pm
-# 
+#
 ################################################################
 TagLib::ByteVector *
 TagLib::ByteVector::_add(v, swap = false)
@@ -443,13 +443,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # THIS IS A NEW ADDED PRIVATE SYMBOL
 # which implements
 # ByteVector & operator=(const ByteVector &v)
-# 
+#
 ################################################################
-void  
+void
 TagLib::ByteVector::copy(v)
 	TagLib::ByteVector * v
 PPCODE:
@@ -457,16 +457,16 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ByteVector::fromUInt(value, mostSignificantByteFirst=true)
 	unsigned int value
 	bool mostSignificantByteFirst
 INIT:
-	TagLib::ByteVector tmp = TagLib::ByteVector::fromUInt(value, 
+	TagLib::ByteVector tmp = TagLib::ByteVector::fromUInt(value,
 		mostSignificantByteFirst);
 CODE:
 	//RETVAL = new TagLib::ByteVector(tmp.data());
@@ -474,12 +474,12 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ByteVector::fromShort(value, mostSignificantByteFirst=true)
 	short value
 	bool mostSignificantByteFirst
 INIT:
-	TagLib::ByteVector tmp = TagLib::ByteVector::fromShort(value, 
+	TagLib::ByteVector tmp = TagLib::ByteVector::fromShort(value,
 		mostSignificantByteFirst);
 CODE:
 	//RETVAL = new TagLib::ByteVector(tmp.data());
@@ -487,7 +487,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ByteVector::fromLongLong(value, mostSignificantByteFirst=true)
 	long long value
 	bool mostSignificantByteFirst
@@ -500,7 +500,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ByteVector::fromCString(s, length=0xffffffff)
 	const char *s
 	unsigned int length
@@ -514,16 +514,16 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC ATTRIBUTES
-# 
+#
 ################################################################
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ByteVector::null()
 CODE:
 	/*!
 	 * MUST declare as static or will cause a segfault
-	 * 
+	 *
 	 * from perl 5.8 a module can keep a static data
 	 * but it is global for MODULE not PACKAGE
 	 * just wrap the static object as a sub here
@@ -534,33 +534,33 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void TagLib::ByteVector::detach()
 # no spec found
-# 
+#
 ################################################################
 # not exported
-#void 
+#void
 #TagLib::ByteVector::detach()
 #CODE:
 #	THIS->detach();
 
 ################################################################
-# 
+#
 # SPECIAL MEMBER FUNCTIONS
-# 
+#
 # for special use in Perl
-# 
+#
 ################################################################
 
 ################################################################
-# 
-# return the memory address of instance 
-# 
+#
+# return the memory address of instance
+#
 ################################################################
-void 
+void
 TagLib::ByteVector::_memoAddress()
 PREINIT:
 	char strAddress[512];

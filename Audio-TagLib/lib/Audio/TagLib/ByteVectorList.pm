@@ -21,9 +21,9 @@ Audio::TagLib::ByteVectorList - A list of ByteVectors
 =head1 SYNOPSIS
 
   use Audio::TagLib::ByteVectorList;
-  
+
   my $i = Audio::TagLib::ByteVctorList->split(
-    Audio::TagLib::ByteVector->new("Here I am"), 
+    Audio::TagLib::ByteVector->new("Here I am"),
     Audio::TagLib::ByteVector->new(" "));
   print $i->toByteVector()->data(), "\n"; # got "here I am"
 
@@ -41,7 +41,7 @@ Construct an empty ByteVectorList.
 
 Make a shallow, implicitly shared, copy of $l. Because this is
  implicitly shared, this method is lightweight and suitable for
- pass-by-value usage. 
+ pass-by-value usage.
 
 =item I<DESTROY()>
 
@@ -56,7 +56,7 @@ Convert the ByteVectorList to a ByteVector separated by $separator. By
 =item I<L<ByteVectorList|Audio::TagLib::ByteVectorList>
 split(L<ByteVector|Audio::TagLib::ByteVector> $v,
 L<ByteVector|Audio::TagLib::ByteVector> $pattern, IV $byteAlign = 1)>
-[static] 
+[static]
 
 Splits the ByteVector $v into several strings at $pattern. This will
 not include the pattern in the returned ByteVectors.
@@ -64,7 +64,7 @@ not include the pattern in the returned ByteVectors.
 =item I<L<ByteVectorList|Audio::TagLib::ByteVectorList>
 split(L<ByteVector|Audio::TagLib::ByteVector> $v,
 L<ByteVector|Audio::TagLib::ByteVector> $pattern, IV byteAlign, IV max)>
-[static] 
+[static]
 
 Splits the ByteVector $v into several strings at $pattern. This will
 not include the pattern in the returned ByteVectors. $max is the

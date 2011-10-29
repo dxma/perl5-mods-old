@@ -23,7 +23,7 @@ Audio::TagLib::FLAC::File - An implementation of FLAC metadata
 =head1 SYNOPSIS
 
   use Audio::TagLib::FLAC::File;
-  
+
   my $i = Audio::TagLib::FLAC::File->new("sample file.flac");
   $i->ID3v2Tag(1)->setTitle(Audio::TagLib::String->new("sample title"));
   print $i->tag()->title()->toCString(), "\n"; # got "sample title"
@@ -46,26 +46,26 @@ providing some additional information specific to FLAC files.
 =over
 
 =item I<new(PV $file, BOOL readProperties = TRUE,
-L<PV|Audio::TagLib::AudioProperties> $propertiesStyle = "Average")> 
+L<PV|Audio::TagLib::AudioProperties> $propertiesStyle = "Average")>
 
 Contructs a FLAC file from $file. If $readProperties is true the
   file's audio properties will also be read using $propertiesStyle. If
-  false, $propertiesStyle is ignored. 
+  false, $propertiesStyle is ignored.
 
 This constructor will be dropped in favor of the one below in a future
-version. 
+version.
 
 =item I<new(PV $file,
 L<ID3v2::FrameFactory|Audio::TagLib::ID3v2::FrameFactory> $frameFactory, BOOL
 $readProperties = TRUE,
-L<PV|Audio::TagLib::AudioProperties> $propertiesStyle = "Average"> 
+L<PV|Audio::TagLib::AudioProperties> $propertiesStyle = "Average">
 
 Contructs a FLAC file from $file. If $readProperties is true the
 file's audio properties will also be read using $propertiesStyle. If
 false, $propertiesStyle is ignored.
 
 If this file contains and ID3v2 tag the frames will be created using
-  $frameFactory. 
+  $frameFactory.
 
 =item I<DESTROY()>
 
@@ -89,12 +89,12 @@ file.  If no audio properties were read then this will return undef.
 
 Save the file.  This will primarily save the XiphComment, but will
 also keep any old ID3-tags up to date. If the file has no XiphComment,
-one will be constructed from the ID3-tags. 
+one will be constructed from the ID3-tags.
 
 This returns true if the save was successful.
 
 =item I<L<ID3v2::Tag|Audio::TagLib::ID3v2::Tag> ID3v2Tag(BOOL $create =
-FALSE)> 
+FALSE)>
 
 Returns an ID3v2 tag of the file.
 
@@ -104,20 +104,20 @@ If $create is false (the default) this will return undef if there is
 
 note The Tag B<is still> owned by the FLAC::File and should not be
   delete by the user.  It will be deleted when the file (object) is
-  destroyed. 
+  destroyed.
 
 =item I<L<ID3v1::Tag|Audio::TagLib::ID3v1::Tag> ID3v1Tag(BOOL $create =
-FALSE)> 
+FALSE)>
 
 Returns an ID3v1 tag of the file.
 
 If $create is false (the default) this will return undef if there is
 no valid ID3v1 tag. If $create is true it will create an ID3v1 tag if
-one does not exist. 
+one does not exist.
 
 note The Tag B<is still> owned by the FLAC::File and should not be
 deleted by the user.  It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 =item I<L<Ogg::XiphComment|Audio::TagLib::Ogg::XiphComment> xiphComment(BOOL
 $create = FALSE)>
@@ -130,15 +130,15 @@ if one does not exist.
 
 note The Tag B<is still> owned by the FLAC::File and should not be
 deleted by the user. It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 =item I<void
 setID3v2FrameFactory(L<ID3v2::FrameFactory|Audio::TagLib::ID3v2::FrameFactory>
-$factory)> 
+$factory)>
 
 Set the ID3v2::FrameFactory to something other than the default.  This
 can be used to specify the way that ID3v2 frames will be interpreted
-when 
+when
 
 see I<ID3v2FrameFactory>
 

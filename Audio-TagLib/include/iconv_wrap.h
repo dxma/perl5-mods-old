@@ -7,7 +7,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #ifdef _BSD_ICONV
-    
+
 size_t iconv_wrap(iconv_t cd,
 		  char **inbuf, size_t *inbytesleft,
 		  char **outbuf, size_t *outbytesleft)
@@ -15,18 +15,18 @@ size_t iconv_wrap(iconv_t cd,
 	char *in = *inbuf;
 	//const char *in_c = (const char*) in;
 	const char *in_c = const_cast<const char*>(in);
-	return iconv(cd, 
+	return iconv(cd,
 		     &in_c, inbytesleft,
 		     outbuf, outbytesleft);
 }
 
 #else
-    
+
 size_t iconv_wrap(iconv_t cd,
 		  char **inbuf, size_t *inbytesleft,
 		  char **outbuf, size_t *outbytesleft)
 {
-	return iconv(cd, 
+	return iconv(cd,
 		     inbuf, inbytesleft,
 		     outbuf, outbytesleft);
 }

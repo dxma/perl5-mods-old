@@ -20,7 +20,7 @@ Audio::TagLib::ID3v1::GenreMap - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v1::GenreMap;
-  
+
   my $map = Audio::TagLib::ID3v1->genreMap();
   tie my %map, ref($map), $map;
   print $map{(keys %map)[0]}, "\n"; # got 123
@@ -69,7 +69,7 @@ L<Audio::TagLib::ID3v1::GenreMap::Iterator|Audio::TagLib::ID3v1::GenreMap::Itera
 =item I<void insert(L<String|Audio::TagLib::String> $key, IV $value)>
 
 Inserts $value under $key in the map. If a value for $key already
-  exists it will be overwritten. 
+  exists it will be overwritten.
 
 =item I<void clear()>
 

@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_AudioProperties.t'
 
 #########################
@@ -15,5 +15,5 @@ BEGIN { use_ok('Audio::TagLib::AudioProperties') };
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 my @methods = qw(DESTROY length bitrate sampleRate channels);
-can_ok("Audio::TagLib::AudioProperties", @methods) 			or 
+can_ok("Audio::TagLib::AudioProperties", @methods) 			or
 	diag("can_ok failed");

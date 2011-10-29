@@ -12,12 +12,12 @@ our @ISA = qw(Audio::TagLib::Ogg::File);
 
 # Preloaded methods go here.
 
-BEGIN : 
+BEGIN :
   {
       no strict 'refs';
       unless (grep {/^new$/ } keys %__PACKAGE__::) {
           *Audio::TagLib::Vorbis::File:: = *Audio::TagLib::Ogg::Vorbis::File:: ;
-            
+
       }
   }
 
@@ -28,12 +28,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Vorbis::File - An implementation of Ogg::File with Vorbis
-specific methods 
+specific methods
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::Vorbis::File;
-  
+
   my $i = Audio::TagLib::Vorbis::File->new("sample vorblis file.ogg");
   print $i->tag()->comment()->toCString(), "\n"; # got comment
 
@@ -43,7 +43,7 @@ This is the central class in the Ogg Vorbis metadata processing
 collection of classes. It's built upon Ogg::File which handles
 processing of the Ogg logical bitstream and breaking it down into
 pages which are handled by the codec implementations, in this case
-Vorbis specifically. 
+Vorbis specifically.
 
 =over
 
@@ -62,7 +62,7 @@ Destroys this instance of the File.
 
 Returns the XiphComment for this file. XiphComment implements the tag
 interface, so this serves as the reimplementation of
-Audio::TagLib::File::tag(). 
+Audio::TagLib::File::tag().
 
 =item I<L<Properties|Audio::TagLib::Vorbis::Properties>
 audioProperties()>

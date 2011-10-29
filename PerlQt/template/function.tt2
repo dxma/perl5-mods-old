@@ -28,11 +28,11 @@
     [% s_item = 'ST(' _ loop.count _ ')' %]
     [% PROCESS get_pn_type c_type = p.type %]
     [% cond = BLOCK %]
-      [% INCLUDE funcmap_in 
-        var   = 'arg' _ gen_arg_num(mindex, loop.index), 
-        arg   = s_item, 
-        type  = p.type, 
-        ptype = p_type, 
+      [% INCLUDE funcmap_in
+        var   = 'arg' _ gen_arg_num(mindex, loop.index),
+        arg   = s_item,
+        type  = p.type,
+        ptype = p_type,
         ntype = my_packagemap.$n_type
       %]
     [% END %]
@@ -46,12 +46,12 @@
     [% NEXT IF p.exists('default') %]
     [% s_item = 'ST(' _ loop.count _ ')' %]
     [% PROCESS get_pn_type c_type = p.type %]
-      [%+ INCLUDE typemap_in 
-        var   = 'arg' _ gen_arg_num(mindex, loop.index), 
-        arg   = s_item, 
+      [%+ INCLUDE typemap_in
+        var   = 'arg' _ gen_arg_num(mindex, loop.index),
+        arg   = s_item,
 	name  = p.name,
-        type  = p.type, 
-        ptype = p_type, 
+        type  = p.type,
+        ptype = p_type,
         ntype = my_packagemap.$n_type
        %]
   [% END %]

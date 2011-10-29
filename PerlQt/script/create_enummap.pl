@@ -45,7 +45,7 @@ sub main {
     usage() if $opt{h};
     croak "directory not found: $opt{dir}" if !-d $opt{dir};
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
-    
+
     my $mod_conf = load_yaml($opt{conf});
     my $default_namespace = $mod_conf->{default_namespace};
     my %enum_map = ();
@@ -82,7 +82,7 @@ sub main {
     if ($opt{o}) {
         close $out or croak "cannot save to file: $!";
     }
-    
+
     exit 0;
 }
 

@@ -3,9 +3,9 @@
 [% gen_arg_num = format("%x%x") %]
 [% INCLUDE header.tt2 %]
 ################################################################
-#### 
+####
 #### PUBLIC MEMBER FUNCTIONS
-#### 
+####
 ################################################################
 
 [% PROCESS typemap.tt2  %]
@@ -18,13 +18,13 @@
 [% IF my_methods_by_name.exists(my_cclass2) %]
   [% constructors = my_methods_by_name.$my_cclass2 %]
   [% my_methods_by_name.delete(my_cclass2) %]
-  [% INCLUDE echo_func_proto 
-    method_name = my_cclass, 
-    methods     = constructors 
+  [% INCLUDE echo_func_proto
+    method_name = my_cclass,
+    methods     = constructors
   %]
-  
-  [% INCLUDE make_func_xscode 
-    method_name = 'new', 
+
+  [% INCLUDE make_func_xscode
+    method_name = 'new',
     methods     = constructors
   %]
 [% END %]
@@ -32,8 +32,8 @@
 
 [% IF my_methods_by_name.exists('~' _ my_cclass2) %]
   [% my_methods_by_name.delete('~' _ my_cclass2) %]
-  [% INCLUDE echo_func_proto 
-    method_name = '~' _ my_cclass2, 
+  [% INCLUDE echo_func_proto
+    method_name = '~' _ my_cclass2,
     methods     = [ {} ]
   %]
 void
@@ -46,14 +46,14 @@ CODE:
 
 [% FOREACH name = my_methods %]
   [% entries = my_methods_by_name.$name %]
-  [% INCLUDE echo_func_proto 
-    method_name = name, 
-    methods     = entries 
+  [% INCLUDE echo_func_proto
+    method_name = name,
+    methods     = entries
   %]
 
-  [% INCLUDE make_func_xscode 
-    method_name = name, 
-    methods     = entries 
+  [% INCLUDE make_func_xscode
+    method_name = name,
+    methods     = entries
   %]
 
 
@@ -62,9 +62,9 @@ CODE:
 
 [% IF my_enums.size > 0 %]
 ################################################################
-#### 
+####
 #### ENUMS
-#### 
+####
 ################################################################
   [% FOREACH enum = my_enums %]
     [% FOREACH val = enum.VALUE %]

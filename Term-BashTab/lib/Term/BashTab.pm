@@ -20,13 +20,13 @@ our @ISA = qw(Term::ReadLine);
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
 #our %EXPORT_TAGS = ( 'all' => [ qw(
-#	
+#
 #) ] );
 
 #our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 #our @EXPORT = qw(
-#	
+#
 #);
 
 our $VERSION = '0.03';
@@ -36,7 +36,7 @@ our @COMMAND = qw();
 # Treat first param as ONLY command by default
 our $FIRST_NOT_COMMAND = undef;
 # Directory separator, Unix family by default
-our $DIR_SEPARATOR = $^O eq 'MSWin32' ? q(\\) 
+our $DIR_SEPARATOR = $^O eq 'MSWin32' ? q(\\)
   : q(/);
 
 # Preloaded methods go here.
@@ -53,13 +53,13 @@ sub __complete(@) {
     # @_ is (current last param, entire command line, length)
     my ($last, $cmd) = @_;
     #print "\n", $last, ":", $cmd, "\n";
-    
+
     local *DIR;
     if($last eq $cmd and not $FIRST_NOT_COMMAND) {
         # one param only
         # complete list is @COMMAND if no input
         return @COMMAND if $cmd eq '';
-        # complete list grepped from `keys $COMMAND' 
+        # complete list grepped from `keys $COMMAND'
         return sort grep { m/^\Q$last\E/ } @COMMAND;
     } else {
         my $path;
@@ -69,26 +69,26 @@ sub __complete(@) {
             # command + path
             (undef, $path) = split / /, $cmd, 2;
         }
-        
+
         my (@entry, @match);
         #print "\npath = '$path'\n";
         if($path) {
             # return if no need to complete
-            return +() if 
-              substr($path, -1, 1) eq ' ' and 
+            return +() if
+              substr($path, -1, 1) eq ' ' and
                 -e substr($path, 0, length($path)-1);
             # glob all the matched entries if possible
-            
-            my $dirmatch_reg 
-              = $^O eq 'MSWin32' ? qr/^((?i:[a-z]\:\\)?(?:\\?[^\\]+)*)\\(.*)/o 
+
+            my $dirmatch_reg
+              = $^O eq 'MSWin32' ? qr/^((?i:[a-z]\:\\)?(?:\\?[^\\]+)*)\\(.*)/o
                 : qr{^((?:/?[^/]+)*)/(.*)}o;
-            
+
             #if($path =~ m#^((?:/?[^/]*)*)/(.*)#o) {
             if ($path =~ $dirmatch_reg) {
                 #print "\n1 = '$1'\n2 = '$2'";
                 # $1 is basedir or null
                 return +() unless -d $1.$DIR_SEPARATOR;
-                    
+
                 opendir DIR, "$1$DIR_SEPARATOR" or do {
                     #warn "opendir: $!";
                     return +();
@@ -106,14 +106,14 @@ sub __complete(@) {
                         # tail space for dir
                         my $file = $1.$DIR_SEPARATOR.$match[0];
                         #print $1, "\n";
-                        
+
                         my $complete;
                         # check space in $2 and then $1
                         # $1 will be replaced after next reg-match
                         my $dir = $1;
                         my $name = $2;
                         if ($name and $name =~ m/ /o) {
-                            $complete = substr($match[0], 
+                            $complete = substr($match[0],
                                                rindex($name, " ")+1);
                         } elsif ($dir and $dir =~ m/ /o) {
                             $complete = (split / /, $dir)[-1].$DIR_SEPARATOR.$match[0];
@@ -121,7 +121,7 @@ sub __complete(@) {
                             $complete = $file;
                         }
                         if (-d $file) {
-                            return +($complete.$DIR_SEPARATOR, 
+                            return +($complete.$DIR_SEPARATOR,
                                      $complete.$DIR_SEPARATOR." ");
                         } else {
                             return $complete;
@@ -132,19 +132,19 @@ sub __complete(@) {
                     } else {
                         # grep the match list and try to get the
                         # longest common string
-                        my ($min_match) = (sort { 
+                        my ($min_match) = (sort {
                             length($a) <=> length($b) } @match)[0];
                         my $min_length = length($min_match);
                         my $common;
-                        
+
                         COMMON: for (my $length =
                                        length($2);;$length++) {
-                            
+
                             if($length == $min_length) {
                                 $common = $min_match;
                                 last COMMON;
                             }
-                            
+
                             my $char = substr($match[0], $length, 1);
                             #print "\nchar = $char\n";
                             foreach (@match[1 .. $#match]) {
@@ -152,10 +152,10 @@ sub __complete(@) {
                                     $common = substr($match[0], 0,
                                                      $length);
                                     last COMMON;
-                                }    
+                                }
                             }
                         }
-                        
+
                         if ($2 eq $common) {
                             # $2 is the longest common string
                             return +(@match, undef);
@@ -166,7 +166,7 @@ sub __complete(@) {
                             my $name = $2;
                             #print $name, "\n";
                             if ($name and $name =~ m/ /o) {
-                                $complete = substr($common, 
+                                $complete = substr($common,
                                                   rindex($name, " ")+1);
                             } elsif ($dir and $dir =~ m/ /o) {
                                 $complete = (split / /, $dir)[-1].
@@ -174,7 +174,7 @@ sub __complete(@) {
                             } else {
                                 $complete = $1.$DIR_SEPARATOR.$common;
                             }
-                            return +("$complete", 
+                            return +("$complete",
                                      "$complete ");
                         }
                         # NOREACH
@@ -203,7 +203,7 @@ sub __complete(@) {
                         $complete = $file;
                     }
                     if (-d $file) {
-                        return +($complete.$DIR_SEPARATOR, 
+                        return +($complete.$DIR_SEPARATOR,
                                  $complete.$DIR_SEPARATOR." ");
                     } else {
                         return $complete;
@@ -213,11 +213,11 @@ sub __complete(@) {
                 } else {
                     # grep the match list and try to get the
                     # longest common string
-                    my ($min_match) = (sort { 
+                    my ($min_match) = (sort {
                         length($a) <=> length($b) } @match)[0];
                     my $min_length = length($min_match);
                     my $common;
-                    
+
                     COMMON: for (my $length =
                                    length($path);;$length++) {
 
@@ -225,17 +225,17 @@ sub __complete(@) {
                             $common = $min_match;
                             last COMMON;
                         }
-                        
+
                         my $char = substr($match[0], $length, 1);
                         foreach (@match[1 .. $#match]) {
                             if(substr($_, $length, 1) ne $char) {
                                 $common = substr($match[0], 0,
                                                  $length);
                                 last COMMON;
-                            }    
+                            }
                         }
                     }
-                    
+
                     if ($path eq $common) {
                         # $path is the longest common string
                         return +(@match, undef);
@@ -244,12 +244,12 @@ sub __complete(@) {
                         my $complete;
                         my $name = $path;
                         if ($name and $name =~ m/ /o) {
-                            $complete = substr($common, 
+                            $complete = substr($common,
                                                rindex($name, " ")+1);
                         } else {
                             $complete = $common;
                         }
-                        return +("$complete", 
+                        return +("$complete",
                                  "$complete ");
                     }
                     # NOREACH
@@ -258,7 +258,7 @@ sub __complete(@) {
         } else {
             # no param
             # ls all entries under cwd
-            opendir DIR, "." or do { 
+            opendir DIR, "." or do {
                 #warn "opendir: $!";
                 return +();
             };
@@ -276,7 +276,7 @@ sub readline {
     # set callback stub
     my $attr   = $term->Attribs;
     if($term->ReadLine eq "Term::ReadLine::Gnu") {
-        $attr->{attempted_completion_function} = 
+        $attr->{attempted_completion_function} =
           __PACKAGE__."::__complete";
     } elsif($term->ReadLine eq "Term::ReadLine::Perl") {
         $attr->{completion_function} = __PACKAGE__."::__complete";
@@ -300,7 +300,7 @@ Term::BashTab - A simple wrapper of ReadLine with bash-like E<lt>TABE<gt>
 =head1 SYNOPSIS
 
   use Term::BashTab;
-  
+
   my $term = Term::BashTab->new();
   print $term->readline("blah");
 
@@ -309,9 +309,9 @@ Term::BashTab - A simple wrapper of ReadLine with bash-like E<lt>TABE<gt>
 =head1 DESCRIPTION
 
 A simple wrapper of L<Term::ReadLine|Term::ReadLine>, offerring bash-like E<lt>TABE<gt>
-feature. 
+feature.
 
-=over 
+=over
 
 =item WHEN TO USE
 
@@ -322,7 +322,7 @@ input. User can use E<lt>TABE<gt> to auto-complete.
 
 The module can parse two modes of input line:
 I<command B<E<lt>ONE ENTIRE PATHE<gt>>>
-and 
+and
 I<B<E<lt>ONE ENTIRE PATHE<gt>>>
 
 In the first mode, all commands/subs available to user is specified by

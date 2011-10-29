@@ -27,12 +27,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::MPC::File - An implementation of Audio::TagLib::File with MPC
-specific methods 
+specific methods
 
 =head1 SYNOPSIS
 
   use Audio::TagLib;
-  
+
   my $i = Audio::TagLib::MPC::File->new("sample mpc file.mpc");
   print $i->tag()->title()->toCString(), "\n"; # got title
 
@@ -44,7 +44,7 @@ implementing the abstract Audio::TagLib::File API as well as providing some
 additional information specific to MPC files.
 
 The only invalid tag combination supported is an ID3v1 tag after an
-APE tag. 
+APE tag.
 
 =over
 
@@ -85,7 +85,7 @@ If $create is false (the default) this will return undef if there is
 
  B<NOTE> The Tag is B<STILL> owned by the APE::File and should not be
  deleted by the user. It will be deleted when the file (object) is
- destroyed. 
+ destroyed.
 
 =item I<L<APE::Tag|Audio::TagLib::APE::Tag> APETag(BOOL $create = FALSE)>
 
@@ -98,7 +98,7 @@ be placed before it.
 
 B<NOTE> The Tag is B<STILL> owned by the APE::File and should not be
 deleted by the user. It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 =item I<void remove(PV $tags = "ALLTags")>
 
@@ -109,13 +109,13 @@ B<NOTE> This will also invalidate pointers to the tags as their memory
 will be freed.
 
 B<NOTE> In order to make the removal permanent save() still needs to
-be called. 
+be called.
 
 =item %_TagTypes
 
 This set of flags is used for various operations. C<keys
 %Audio::TagLib::MPC::File::_TagTypes> lists all available values used in Perl
-code. 
+code.
 
 B<WARNING> The values are not allowed to be OR-ed together in Perl.
 

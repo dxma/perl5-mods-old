@@ -303,7 +303,7 @@
   [% CASE 'T_DATAUNIT' %]
     sv_setpvn([% arg %], [% var %].chp(), [% var %].size());
   [% CASE 'T_CALLBACK' %]
-    sv_setpvn([% arg %], [% var %].context.value().chp(), 
+    sv_setpvn([% arg %], [% var %].context.value().chp(),
       [% var %].context.vlaue().size());
   [% CASE 'T_ARRAY_UNUSED' %]
     {

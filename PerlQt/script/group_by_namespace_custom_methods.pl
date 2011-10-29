@@ -9,7 +9,7 @@ A fake bin which contains custom methods for __get_qt_module_name
 
 sub __get_custom_module_name {
     my ($module, $path ) = @_;
-    
+
     require File::Spec;
     my $name = (File::Spec::->splitdir($path))[-2];
     $name =~ s/^Qt//o;

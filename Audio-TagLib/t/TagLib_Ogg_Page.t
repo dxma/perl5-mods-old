@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_Ogg_Page.t'
 
 #########################
@@ -18,7 +18,7 @@ BEGIN { use_ok('Audio::TagLib::Ogg::Page') };
 my @methods = qw(new DESTROY fileOffset header firstPacketIndex
 setFirstPacketIndex containsPacket packetCount packets size render
 paginate);
-can_ok("Audio::TagLib::Ogg::Page", @methods) 							or 
+can_ok("Audio::TagLib::Ogg::Page", @methods) 							or
 	diag("can_ok failed");
 
 SKIP: {

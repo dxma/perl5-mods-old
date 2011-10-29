@@ -33,7 +33,7 @@ Audio::TagLib::Ogg::Page - An implementation of Ogg pages
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::Page;
-  
+
   my $i    = Audio::TagLib::Ogg::Page->new($file, $pageOffset);
   my $data = $i->render();
 
@@ -46,7 +46,7 @@ that contiain multiple packets.
 
 In most Xiph.org formats the comments are found in the first few
 packets, this however is a reasonably complete implementation of Ogg
-pages that could potentially be useful for non-meta data purposes. 
+pages that could potentially be useful for non-meta data purposes.
 
 =over
 
@@ -84,14 +84,14 @@ see I<firstPacketIndex()>
 
 When checking to see if a page contains a given packet this set of
 flags represents the possible values for that packets status in the
-page. 
+page.
 
 see I<containsPacket()>
 
 =item I<PV containsPacket($index)>
 
 Checks to see if the specified packet is contained in the current
-page. 
+page.
 
 see %_ContainsPacketFlags
 
@@ -137,11 +137,11 @@ in the last rendered Ogg page's header. $streamSerialNumber should be
 set to the serial number for this stream.
 
 B<NOTE> The "absolute granule position" is currently always zeroed
-using this method as this suffices for the comment headers. 
+using this method as this suffices for the comment headers.
 
 This returns a list of all the pages.
 
-see %_PaginationStrategy 
+see %_PaginationStrategy
 
 =back
 

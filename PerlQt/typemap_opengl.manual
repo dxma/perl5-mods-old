@@ -1,4 +1,4 @@
-# Manually maintained types, which might come from: 
+# Manually maintained types, which might come from:
 # 1. 3rd party header
 # 2. template
 # 3. imported by #include directive

@@ -1,7 +1,7 @@
 ################################################################
 ####
 #### Author: Dongxu Ma <dongxu.ma@gmail.com>
-#### License: Artistic 
+#### License: Artistic
 ####
 ################################################################
 
@@ -86,19 +86,19 @@ CMD_PARSE_HD       := $(CMD_PARSE)
 CMD_PARSE_MK       := $(SCRIPT_DIR)/gen_parse_mk.pl
 CMD_FORMAT_YML     := $(SCRIPT_DIR)/format_qtedi_production.pl
 CMD_FORMAT_MK      := $(SCRIPT_DIR)/gen_format_mk.pl
-CMD_GROUP_MK       := $(SCRIPT_DIR)/gen_group_mk.pl 
+CMD_GROUP_MK       := $(SCRIPT_DIR)/gen_group_mk.pl
 CMD_GROUP_YML      := $(SCRIPT_DIR)/group_by_namespace.pl
 CMD_GROUP_CHECK    := $(SCRIPT_DIR)/check_class_consistency.sh
-CMD_GROUPLIST_MK   := $(SCRIPT_DIR)/gen_grouplist_mk.pl 
+CMD_GROUPLIST_MK   := $(SCRIPT_DIR)/gen_grouplist_mk.pl
 CMD_XSCODE_MK      := $(SCRIPT_DIR)/gen_xscode_mk.pl
 CMD_CREAT_TP       := $(SCRIPT_DIR)/create_typemap.pl
-CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl 
-CMD_TYPEMAP        := $(SCRIPT_DIR)/finalize_typemap.pl 
+CMD_TYPEMAPLIST_MK := $(SCRIPT_DIR)/gen_typemaplist_mk.pl
+CMD_TYPEMAP        := $(SCRIPT_DIR)/finalize_typemap.pl
 CMD_PKGMAP         := $(SCRIPT_DIR)/create_packagemap.pl
 CMD_CREAT_XS       := $(SCRIPT_DIR)/create_xs_code.pl
 CMD_TYPEMAP_XS     := $(SCRIPT_DIR)/create_xs_typemap.pl
 CMD_CREAT_PM       := $(SCRIPT_DIR)/create_pm_code.pl
-CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl 
+CMD_YGREP          := $(SCRIPT_DIR)/ygrep.pl
 CMD_GET_CONF       := $(SCRIPT_DIR)/get_module_conf_value.pl
 CMD_ROOT_XS        := $(SCRIPT_DIR)/create_top_dot_xs.pl
 CMD_ENUMMAP        := $(SCRIPT_DIR)/create_enummap.pl
@@ -106,7 +106,7 @@ CMD_MAKEFILE_PL    := $(SCRIPT_DIR)/gen_makefile_pl.pl
 CMD_00USE_T        := $(SCRIPT_DIR)/gen_00use_t.pl
 CMD_MANIFEST       := $(SCRIPT_DIR)/gen_manifest.pl
 
-MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf 
+MODULE_DOT_CONF    := $(MAKE_ROOT)/module.conf
 HEADER_DOT_MK      := $(MAKE_ROOT)/header.mk
 STRIP_DOT_MK       := $(MAKE_ROOT)/strip.mk
 PREPRO_DOT_MK      := $(MAKE_ROOT)/preprocess.mk
@@ -176,7 +176,7 @@ _generate_imacros = $(addprefix -imacros ,$(addprefix             \
 #################### PHONY and FRIENDS #########################
 
 # default goal
-all: 
+all:
 .PHONY: all
 
 .SUFFIXES: .$(HEADER_PREFIX) .i .yml .meta                        \
@@ -214,7 +214,7 @@ $(PREPRO_DOT_MK): $(HEADER_DOT_MK)
 
 # parse preprocessed headers
 # YAML output
-$(PARSE_DOT_MK): $(HEADER_DOT_MK) 
+$(PARSE_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)echo generating $@
 	$(_Q)[[ -d $(OUT_PARSE_DIR) ]] || $(CMD_MKDIR) $(OUT_PARSE_DIR)
 	$(_Q)$(CMD_PARSE_MK) $< $(IN_STRIP_DIR) $(IN_PARSE_DIR) \
@@ -228,13 +228,13 @@ $(FORMAT_DOT_MK): $(HEADER_DOT_MK)
 	$(_Q)$(CMD_FORMAT_MK) $< $(IN_STRIP_DIR) $(IN_FORMAT_DIR) \
         $(OUT_FORMAT_DIR) $@
 
-# group formatted yaml 
+# group formatted yaml
 $(GROUP_DOT_MK): $(HEADER_DOT_MK) $(MODULE_DOT_CONF)
 	$(_Q)echo generating $@
 	$(_Q)$(CMD_GROUP_MK) $< $(IN_STRIP_DIR) $(IN_GROUP_DIR) \
         $(OUT_GROUP_DIR) $(MODULE_DOT_CONF) $@
 
-$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK) 
+$(GROUPLIST_DOT_MK): $(GROUP_DOT_MK)
 
 $(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
                      $(TYPEMAPLIST_DOT_MK) $(GROUP_YAMLS)
@@ -250,10 +250,10 @@ $(XSCODE_DOT_MK)   : $(GROUP_DOT_MK) $(GROUPLIST_DOT_MK)     \
 # grouplist.mk be rebuilt finally
 # priority:
 # group.mk > grouplist.mk > files under OUT_GROUP_DIR
-# on the other hand, grouplist.mk behaves like a 
+# on the other hand, grouplist.mk behaves like a
 # checksum of staff under OUT_GROUP_DIR
-# removal of any file which was produced by latest 
-# gen_group triggers rebuild of all so-called 
+# removal of any file which was produced by latest
+# gen_group triggers rebuild of all so-called
 # 'standard' files
 # $(GROUPLIST_DOT_MK) defined in $(GROUP_DOT_MK)
 ifeq ($(filter clean%,$(_GOALS)),)
@@ -348,9 +348,9 @@ clean_dot_mk :
 .PHONY: clean_dot_mk
 
 gen_strip    : $(STRIP_HEADERS)
-clean_strip  : 
+clean_strip  :
 	$(_Q)$(call _remove_file,$(STRIP_DOT_MK))
-	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR)) 
+	$(_Q)$(call _remove_dir,$(OUT_STRIP_DIR))
 .PHONY: gen_strip clean_strip
 
 gen_prepro   : gen_strip $(PREPRO_HEADERS)
@@ -366,7 +366,7 @@ clean_parse  :
 .PHONY: gen_parse clean_parse
 
 gen_format   : gen_parse $(FORMAT_YAMLS)
-clean_format : 
+clean_format :
 	$(_Q)$(call _remove_file,$(FORMAT_DOT_MK))
 	$(_Q)$(call _remove_dir,$(OUT_FORMAT_DIR))
 .PHONY: gen_format clean_format
@@ -380,7 +380,7 @@ clean_group  :
 
 gen_mapfile  : gen_group $(GROUPLIST_DOT_MK) $(TYPEMAPLIST_DOT_MK) \
                $(GROUP_YAMLS) $(PACKAGEMAP) $(ENUMMAP)
-clean_mapfile: 
+clean_mapfile:
 	$(_Q)$(call _remove_dir,$(OUT_TYPEMAP_DIR))
 	$(_Q)$(call _remove_file,$(TYPEMAPLIST_DOT_MK))
 .PHONY: gen_mapfile clean_mapfile
@@ -390,7 +390,7 @@ clean_mapfile:
 gen_xscode   : gen_mapfile $(XSCODE_DOT_MK)                    \
                $(XS_FILES) $(TYPEMAP_XS) $(ROOT_XS)
 	$(_Q)if [[ ! -e xs ]]; then $(CMD_SYMLINK) $(OUT_XSCODE_DIR) xs; fi
-clean_xscode : 
+clean_xscode :
 	$(_Q)$(call _remove_dir,$(OUT_XSCODE_DIR))
 	$(_Q)$(call _remove_file,$(XSCODE_DOT_MK))
 	$(_Q)$(call _remove_file,$(TYPEMAP_XS))
@@ -401,7 +401,7 @@ gen_pmcode   : gen_xscode $(XS_FILES) $(PM_FILES)
 	$(_Q)echo copying $(OUT_PMCODE_DIR) to lib
 	$(_Q)$(CMD_RMDIR) lib blib
 	$(_Q)$(CMD_CPDIR) $(OUT_PMCODE_DIR) lib
-clean_pmcode : 
+clean_pmcode :
 	$(_Q)$(call _remove_dir,$(OUT_PMCODE_DIR))
 .PHONY: gen_pmcode clean_pmcode
 
@@ -409,7 +409,7 @@ include $(BUILD_DOT_MK)
 
 test         : $(00USE_T)
 	$(_Q)$(MAKE) -f Makefile test
-clean_test   : 
+clean_test   :
 	$(_Q)$(call _remove_file,$(00USE_T))
 .PHONY: test clean_test
 
@@ -418,11 +418,11 @@ class_sanity_check:
 	$(_Q)$(CMD_GROUP_CHECK) $(OUT_GROUP_DIR)
 .PHONY: class_sanity_check
 
-list_group_yamls : 
+list_group_yamls :
 	$(_Q)echo # $(_GOALS)
 	$(_Q)echo # $(GROUP_YAMLS)
 
-list_typemap_yamls : 
+list_typemap_yamls :
 	$(_Q)echo # $(TYPEMAP_YAMLS)
 
 list_template_types: $(TYPEMAP_TEMPLATE_DRAFT)

@@ -72,7 +72,7 @@ sub main {
             }
         }
     }
-    
+
     my $OUT;
     if ($opt{o}) {
         open $OUT, '>', $opt{o} or croak "cannot open file to write: $!";
@@ -95,7 +95,7 @@ INPUT
 EOL
     for (my $i = 0; $i < @class; $i++) {
         my $type    = $class[$i];
-        croak "no package found for type: $type" if 
+        croak "no package found for type: $type" if
           !exists $packagemap->{$type};
         my $package = $packagemap->{$type};
         my $index   = sprintf("%04d", $i);
@@ -115,7 +115,7 @@ OUTPUT
 EOL
     for (my $i = 0; $i < @class; $i++) {
         my $type    = $class[$i];
-        croak "no package found for type: $type" if 
+        croak "no package found for type: $type" if
           !exists $packagemap->{$type};
         my $package = $packagemap->{$type};
         my $index   = sprintf("%04d", $i);

@@ -17,12 +17,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::RelativeVolumeFrame::PeakVolume - Struct that stores
-the relevant values for ID3v2 peak volume 
+the relevant values for ID3v2 peak volume
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::RelativeVolumeFrame::PeakVolume;
-  
+
   my $i = Audio::TagLib::ID3v2::RelativeVolumeFrame::PeakVolume->new();
   $i->setBitsRepresentingPeak(20);
   print $i->bitsRepresentingPeak(), "\n"; # got 20
@@ -33,7 +33,7 @@ the relevant values for ID3v2 peak volume
 
 The peak volume is described as a series of bits that is padded to
 fill a block of bytes. These two values should always be updated in
-tandem. 
+tandem.
 
 =over
 
@@ -49,7 +49,7 @@ the peak volume.
 =item I<void setBitsRepresentingPeak(UV $b)>
 
 Sets the number of bits to $b, which is used to describe the peak
-volume. 
+volume.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> peakVolume()>
 
@@ -59,7 +59,7 @@ describe the peak volume.
 =item I<void setPeakVolume(L<ByteVector|Audio::TagLib::ByteVector> $v)>
 
 Sets the array of bits to $v, which is used ot describe the peak
-volume. 
+volume.
 
 =back
 

@@ -23,14 +23,14 @@ __END__
 =head1 NAME
 
 Audio::TagLib::File -  A file class with some useful methods for tag
-manipulation 
+manipulation
 
 =head1 DESCRIPTION
 
 This class is a basic file class with some methods that are
 particularly useful for tag editors.  It has methods to take advantage
 of ByteVector and a binary search method for finding patterns in a
-file. 
+file.
 
 =over
 
@@ -45,7 +45,7 @@ Returns the file name in the local file system encoding.
 =item I<L<Tag|Audio::TagLib::Tag> tag()> [pure virtual]
 
 Returns this file's tag. This should be reimplemented in the concrete
-subclasses. 
+subclasses.
 
 =item I<L<AudioProperties|Audio::TagLib::AudioProperties> audioProperties()>
 [pure virtual]
@@ -83,7 +83,7 @@ Searching starts at $fromOffset, which defaults to the beginning of
 
 This has the practial limitation that $pattern can not be longer
   than the buffer size used by readBlock().  Currently this is 1024
-  bytes. 
+  bytes.
 
 =item I<IV rfind(L<ByteVector|Audio::TagLib::ByteVector> $pattern, IV
 $fromOffset = 0, L<ByteVector|Audio::TagLib::ByteVector> $before =
@@ -121,7 +121,7 @@ the removed portion.
 =item I<BOOL readOnly()>
 
 Returns true if the file is read only (or if the file can not be
-opened). 
+opened).
 
 =item I<BOOL isOpen()>
 

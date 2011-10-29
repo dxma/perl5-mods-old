@@ -21,7 +21,7 @@ Audio::TagLib::ID3v2::Footer - ID3v2 footer implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::Footer;
-  
+
   my $i = Audio::TagLib::ID3v2::Footer->new();
   my $v = $i->render($header);
 
@@ -47,10 +47,10 @@ Destroys the footer.
 
 =item I<UV size()> [static]
 
-Returns the size of the footer. Presently this is always 10 bytes. 
+Returns the size of the footer. Presently this is always 10 bytes.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector>
-render(L<Header|Audio::TagLib::ID3v2::Header> $header)> 
+render(L<Header|Audio::TagLib::ID3v2::Header> $header)>
 
 Renders the footer based on the data in $header.
 

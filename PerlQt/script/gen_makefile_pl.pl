@@ -57,7 +57,7 @@ sub main {
     croak "module.conf not found" if !-f $opt{conf};
     croak "config.mk not found" if !-f $opt{mk};
     croak "template dir not found" if !-d $opt{template};
-    
+
     my $mod_conf = load_yaml($opt{conf});
     my $mod = uc($mod_conf->{root_filename});
     local ( *F, );
@@ -95,11 +95,11 @@ sub main {
         my_defines => $def,
         my_include => $inc,
     };
-    $template->process('makefile.pl.tt2', $var, \$out) or 
+    $template->process('makefile.pl.tt2', $var, \$out) or
       croak $template->error. "\n";
     $out .= "\n";
     if ($opt{o}) {
-        open my $F, '>', $opt{o} or 
+        open my $F, '>', $opt{o} or
           croak "cannot open file to write: $!";
         print $F $out;
         close $F or croak "cannot save to file: $!";
@@ -107,7 +107,7 @@ sub main {
     else {
         print $out, "\n";
     }
-    
+
     exit 0;
 }
 

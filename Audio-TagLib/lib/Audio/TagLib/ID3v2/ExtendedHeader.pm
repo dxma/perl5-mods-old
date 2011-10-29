@@ -21,7 +21,7 @@ Audio::TagLib::ID3v2::ExtendedHeader - ID3v2 extended header implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::ExtendedHeader;
-  
+
   my $i = Audio::TagLib::ID3v2::ExtendedHeader->new();
   $i->setData($data);
 
@@ -32,7 +32,7 @@ both semantically and programatically, the structure specified in the
 ID3v2 standard. The API is based on the properties of ID3v2 extended
 headers specified there. If any of the terms used in this
 documentation are unclear please check the specification in the linked
-section. 
+section.
 
 =over
 

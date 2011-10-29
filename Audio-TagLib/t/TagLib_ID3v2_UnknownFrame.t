@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_ID3v2_UnknownFrame.t'
 
 #########################
@@ -17,16 +17,16 @@ BEGIN { use_ok('Audio::TagLib::ID3v2::UnknownFrame') };
 
 my @methods = qw(new DESTROY toString data frameID size setData
 setText render headerSize textDelimiter);
-can_ok("Audio::TagLib::ID3v2::UnknownFrame", @methods) 					or 
+can_ok("Audio::TagLib::ID3v2::UnknownFrame", @methods) 					or
 	diag("can_ok failed");
 
 my $i = Audio::TagLib::ID3v2::UnknownFrame->new(Audio::TagLib::ByteVector->new(""));
-isa_ok($i, "Audio::TagLib::ID3v2::UnknownFrame") 							or 
+isa_ok($i, "Audio::TagLib::ID3v2::UnknownFrame") 							or
 	diag("method new(data) failed");
-is($i->toString()->toCString(), "") 								or 
+is($i->toString()->toCString(), "") 								or
 	diag("method toString() failed");
 SKIP: {
 skip "data() skipped", 1 if 1;
-is($i->data()->data(), undef) 										or 
+is($i->data()->data(), undef) 										or
 	diag("method data() failed");
 }

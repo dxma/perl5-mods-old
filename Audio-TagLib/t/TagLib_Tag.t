@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_Tag.t'
 
 #########################
@@ -17,5 +17,5 @@ BEGIN { use_ok('Audio::TagLib::Tag') };
 my @methods = qw(DESTROY title artist album comment genre year track
 setTitle setArtist setAlbum setComment setGenre setYear setTrack
 isEmpty );
-can_ok("Audio::TagLib::Tag", @methods) 			or 
+can_ok("Audio::TagLib::Tag", @methods) 			or
 	diag("can_ok failed");

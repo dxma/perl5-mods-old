@@ -19,7 +19,7 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Ogg::File - An implementation of Audio::TagLib::File with some
-helpers for Ogg based formats 
+helpers for Ogg based formats
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ This is an implementation of Ogg file page and packet rendering and is
 of use to Ogg based formats. While the API is small this handles the
 non-trivial details of breaking up an Ogg stream into packets and
 makes these available (via subclassing) to the codec meta data
-implementations. 
+implementations.
 
 =over
 

@@ -5,14 +5,14 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::FrameList
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # NOTE:
 # TagLib::ID3v2::Frame should normally be a ptr
 # Normally list takes NO charge of deleting each ptr
-# 
+#
 ################################################################
 
-TagLib::ID3v2::FrameList * 
+TagLib::ID3v2::FrameList *
 TagLib::ID3v2::FrameList::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v2::FrameList"))
 			l = INT2PTR(TagLib::ID3v2::FrameList *, SvIV(SvRV(ST(1))));
 		else
@@ -38,20 +38,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameList::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ID3v2::FrameList::Iterator * 
+TagLib::ID3v2::FrameList::Iterator *
 TagLib::ID3v2::FrameList::begin()
 CODE:
 	RETVAL = new TagLib::ID3v2::FrameList::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-TagLib::ID3v2::FrameList::Iterator * 
+TagLib::ID3v2::FrameList::Iterator *
 TagLib::ID3v2::FrameList::end()
 CODE:
 	RETVAL = new TagLib::ID3v2::FrameList::Iterator(THIS->end());
@@ -59,28 +59,28 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::ID3v2::FrameList::insert(it, value)
 	TagLib::ID3v2::FrameList::Iterator * it
 	TagLib::ID3v2::Frame * value
 CODE:
 	THIS->insert(*it, value);
 
-void 
+void
 TagLib::ID3v2::FrameList::sortedInsert(value, unique=false)
 	TagLib::ID3v2::Frame * value
 	bool unique
 CODE:
 	THIS->sortedInsert(value, unique);
 
-TagLib::ID3v2::FrameList * 
+TagLib::ID3v2::FrameList *
 TagLib::ID3v2::FrameList::append(...)
 PROTOTYPE: $
 PREINIT:
@@ -101,7 +101,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-TagLib::ID3v2::FrameList * 
+TagLib::ID3v2::FrameList *
 TagLib::ID3v2::FrameList::prepend(...)
 PROTOTYPE: $
 PREINIT:
@@ -122,26 +122,26 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameList::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::FrameList::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameList::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-TagLib::ID3v2::FrameList::Iterator *  
+TagLib::ID3v2::FrameList::Iterator *
 TagLib::ID3v2::FrameList::find(value)
 	TagLib::ID3v2::Frame * value
 CODE:
@@ -150,13 +150,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const T &value) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::ID3v2::FrameList::contains(value)
 	TagLib::ID3v2::Frame * value
 CODE:
@@ -164,13 +164,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameList::erase(it)
 	TagLib::ID3v2::FrameList::Iterator * it
 CODE:
 	THIS->erase(*it);
 
-void 
+void
 TagLib::ID3v2::FrameList::front()
 PPCODE:
 	TagLib::ID3v2::Frame * item = THIS->front();
@@ -179,7 +179,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v2::FrameList::back()
 PPCODE:
 	TagLib::ID3v2::Frame * item = THIS->back();
@@ -189,20 +189,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & front() const
 # const T & back() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::ID3v2::FrameList::setAutoDelete(autoDelete)
 	bool autoDelete
 CODE:
 	THIS->setAutoDelete(autoDelete);
 
-void 
+void
 TagLib::ID3v2::FrameList::getItem(i)
 	unsigned int i
 PPCODE:
@@ -213,20 +213,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](uint i) const
 # not exported
-# 
+#
 ################################################################
 
-void  
+void
 TagLib::ID3v2::FrameList::copy(l)
 	TagLib::ID3v2::FrameList * l
 PPCODE:
 	(void)THIS->operator=(*l);
 	XSRETURN(1);
 
-bool 
+bool
 TagLib::ID3v2::FrameList::equals(l)
 	TagLib::ID3v2::FrameList * l
 CODE:
@@ -235,21 +235,21 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
-# not exported 
-# 
+# not exported
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS for TIE MAGIC
-# 
+#
 ################################################################
 
-static void 
+static void
 TagLib::ID3v2::FrameList::TIEARRAY(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -262,7 +262,7 @@ PPCODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v2::FrameList")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				/* READONLY on, create a new SV */
@@ -283,7 +283,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v2::FrameList::FETCH(index)
 	unsigned int index
 PPCODE:
@@ -296,7 +296,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::ID3v2::FrameList::STORE(index, item)
 	unsigned int index
 	TagLib::ID3v2::Frame * item
@@ -304,8 +304,8 @@ INIT:
 	TagLib::ID3v2::FrameList::Iterator it = THIS->begin();
 CODE:
 	/*!
-	 * insert item into specific index 
-	 * append to the end if index out of bound 
+	 * insert item into specific index
+	 * append to the end if index out of bound
 	 */
 	if( 0 <= index && index < THIS->size()) {
 		for(int i = 0; i < index + 1; i++, it++)
@@ -315,37 +315,37 @@ CODE:
 	} else
 		THIS->append(item);
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::FrameList::FETCHSIZE()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameList::STORESIZE(s)
 	unsigned int s
 CODE:
 	/* do nothing here */
 
-void 
+void
 TagLib::ID3v2::FrameList::EXTEND(s)
 	unsigned int s
 CODE:
 	/* do nothing here */
 
-bool 
+bool
 TagLib::ID3v2::FrameList::EXISTS(key)
 	unsigned int key
 CODE:
 	if( 0 <= key && key < THIS->size())
 		RETVAL = true;
-	else 
+	else
 		RETVAL = false;
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameList::DELETE(key)
 	unsigned int key
 INIT:
@@ -357,18 +357,18 @@ CODE:
 		THIS->erase(it);
 	}
 
-void 
+void
 TagLib::ID3v2::FrameList::CLEAR()
 CODE:
 	THIS->clear();
 
-void 
+void
 TagLib::ID3v2::FrameList::PUSH(...)
 PPCODE:
 	if(items > 1) {
 		/* ensure all items are of type TagLib::ID3v2::Frame/TagLib::ID3v2::FrameList before pushing */
 		for(int i = 1; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") || 
+			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") ||
 				sv_derived_from(ST(i), "Audio::TagLib::ID3v2::FrameList")))
 				croak("ST(i) is not of type Audio::TagLib::ID3v2::Frame/TagLib::ID3v2::FrameList");
 		}
@@ -376,22 +376,22 @@ PPCODE:
 			if(sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame"))
 				(void)THIS->append(INT2PTR(TagLib::ID3v2::Frame *, SvIV(SvRV(ST(i)))));
 			else /* TagLib::ID3v2::FrameList */
-				(void)THIS->append(*INT2PTR(TagLib::ID3v2::FrameList *, 
+				(void)THIS->append(*INT2PTR(TagLib::ID3v2::FrameList *,
 					SvIV(SvRV(ST(i)))));
 		}
 		ST(0) = sv_2mortal(newSVuv(THIS->size()));
 		XSRETURN(1);
-	} else 
+	} else
 		XSRETURN_UNDEF;
 
 ################################################################
-# 
+#
 # POPed & SHIFTed item will ALWAYS be marks as READONLY
 # which means it is only a reference
 # NEVER takes charge of performing delete action
-# 
+#
 ################################################################
-void 
+void
 TagLib::ID3v2::FrameList::POP()
 PREINIT:
 	TagLib::ID3v2::FrameList::Iterator it;
@@ -404,9 +404,9 @@ PPCODE:
 		THIS->erase(--it);
 		XSRETURN(1);
 	} else
-		XSRETURN_UNDEF; 
+		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::ID3v2::FrameList::SHIFT()
 PPCODE:
 	if(!THIS->isEmpty()) {
@@ -418,13 +418,13 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::ID3v2::FrameList::UNSHIFT(...)
 PPCODE:
 	if(items > 1) {
 		/* ensure all items are of type TagLib::ID3v2::Frame/TagLib::ID3v2::FrameList firstly */
 		for(int i = 1; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") || 
+			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") ||
 				sv_derived_from(ST(i), "Audio::TagLib::ID3v2::FrameList")))
 				croak("ST(i) is not of type TagLib::ID3v2::Frame/TagLib::ID3v2::FrameList");
 		}
@@ -432,7 +432,7 @@ PPCODE:
 			if(sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame"))
 				(void)THIS->append(INT2PTR(TagLib::ID3v2::Frame *, SvIV(SvRV(ST(i)))));
 			else /* TagLib::ID3v2::FrameList */
-				(void)THIS->append(*INT2PTR(TagLib::ID3v2::FrameList *, 
+				(void)THIS->append(*INT2PTR(TagLib::ID3v2::FrameList *,
 					SvIV(SvRV(ST(i)))));
 		}
 		ST(0) = sv_2mortal(newSVuv(THIS->size()));
@@ -440,7 +440,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::ID3v2::FrameList::SPLICE(...)
 PROTOTYPE: $;$@
 PREINIT:
@@ -483,8 +483,8 @@ PPCODE:
 			croak("ST(2) is not of type uint");
 		/* (items-3) items to insert */
 		for(int i = 3; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && 
-				sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") || 
+			if(!(sv_isobject(ST(i)) &&
+				sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame") ||
 				sv_derived_from(ST(i), "Audio::TagLib::ID3v2::FrameList")))
 			croak("ST(i) is not of type Audio::TagLib::ID3v2::Frame/TagLib::ID3v2::FrameList");
 		}
@@ -494,7 +494,7 @@ PPCODE:
 		it++;
 		for(int i = 3; i < items; i++) {
 			if(sv_derived_from(ST(i), "Audio::TagLib::ID3v2::Frame"))
-				THIS->insert(it--, 
+				THIS->insert(it--,
 					INT2PTR(TagLib::ID3v2::Frame *, SvIV(SvRV(ST(i)))));
 			else { /* TagLib::ID3v2::FrameList */
 				obj = INT2PTR(TagLib::ID3v2::FrameList *, SvIV(SvRV(ST(i))));
@@ -522,7 +522,7 @@ PPCODE:
 		XSRETURN_EMPTY;
 
 ################################################################
-# 
+#
 # NO UNTIE method defined
-# 
+#
 ################################################################

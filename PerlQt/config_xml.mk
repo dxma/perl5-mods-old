@@ -1,8 +1,8 @@
 ################################################################
-#### 
+####
 #### Author: Dongxu Ma <dongxu.ma@gmail.com>
 #### License: Artistic
-#### 
+####
 ################################################################
 
 # QT4 META CONFIGURATION
@@ -11,7 +11,7 @@
 _HEADER_DIR := /usr/include/qt4
 
 #_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
-#               Qt3Support 
+#               Qt3Support
 _QT := QtXml
 
 #_QT_EXTRA := QtAssistant QtDBus QtUiTools QtDesigner QtTest

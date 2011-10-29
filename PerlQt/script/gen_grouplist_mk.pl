@@ -27,24 +27,24 @@ EOU
 sub main {
     usage() if @ARGV < 1;
     my ( $out_group_dir, $group_dot_mk, $out ) = @ARGV;
-    die "directory $out_group_dir not found" unless 
+    die "directory $out_group_dir not found" unless
       -e $out_group_dir;
-    die "file $group_dot_mk not found" unless 
+    die "file $group_dot_mk not found" unless
       -f $group_dot_mk;
     local ( *DIR, );
     opendir DIR, $out_group_dir or die "cannot open dir: $!";
-    my @f = map { File::Spec::->catfile($out_group_dir, $_) } 
-      grep { not m/^\./io } 
+    my @f = map { File::Spec::->catfile($out_group_dir, $_) }
+      grep { not m/^\./io }
         readdir DIR;
     closedir DIR;
-    my $grouplist_dot_mk = 
+    my $grouplist_dot_mk =
       "GROUP_YAMLS := ". join(" ", @f). "\n\n";
     # lost of standard files produced by latest gen_group
-    # forces re-run of gen_group 
+    # forces re-run of gen_group
     local ( *GROUP_DOT_MK, );
-    open GROUP_DOT_MK, '<', $group_dot_mk or 
+    open GROUP_DOT_MK, '<', $group_dot_mk or
       die "cannot open file to read: $!";
-    $grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUP_DOT_MK) ". 
+    $grouplist_dot_mk .= "\$(GROUP_YAMLS): \$(GROUP_DOT_MK) ".
       "\$(GROUPLIST_DOT_MK)\n";
     # copy rule to make GROUPLIST_DOT_MK
     my $strip = <GROUP_DOT_MK>;
@@ -55,15 +55,15 @@ sub main {
     }
     close GROUP_DOT_MK;
     # depends on definition of GROUP_YAMLS
-    $grouplist_dot_mk .= "\nifneq (\$(filter gen_mapfile ". 
+    $grouplist_dot_mk .= "\nifneq (\$(filter gen_mapfile ".
       "gen_xscode gen_pmcode build test all list_\%,\$(_GOALS)),)\n";
     $grouplist_dot_mk .= "\$(info including \$(TYPEMAPLIST_DOT_MK))\n";
     $grouplist_dot_mk .= "include \$(TYPEMAPLIST_DOT_MK)\n";
     $grouplist_dot_mk .= "endif\n";
-    
+
     if (defined $out) {
         local ( *OUT, );
-        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
+        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die
           "cannot open file to write: $!";
         print OUT $grouplist_dot_mk;
         close OUT or die "cannot save to file: $!";

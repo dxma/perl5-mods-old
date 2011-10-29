@@ -23,7 +23,7 @@ Audio::TagLib::Ogg::XiphComment - Ogg Vorbis comment implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::XiphComment;
-  
+
   my $i = Audio::TagLib::Ogg::XiphComment->new();
   $i->setGenre(Audio::TagLib::String->new("genre"));
   print $i->genre()->toCString(), "\n"; # got "genre"
@@ -94,7 +94,7 @@ Returns the number of fields present in the comment.
 Returns a reference to the map of field lists. Because Xiph comments
 support multiple fields with the same key, a pure Map would not
 work. As such this is a Map of string lists, keyed on the comment
-field name. 
+field name.
 
 The standard set of Xiph/Vorbis fields (which may or may not be
  contained in any specific comment) is:
@@ -110,7 +110,7 @@ B<NOTE> The Ogg Vorbis comment specification does allow these key
  for them to be upper case. As such, Audio::TagLib, when parsing a
  Xiph/Vorbis comment, converts all fields to uppercase. When you are
  using this data structure, you will need to specify the field name in
- upper case. 
+ upper case.
 
 B<WARNING> You should not modify this data structure directly, instead
  use addField() and removeField().
@@ -125,7 +125,7 @@ L<String|Audio::TagLib::String> $value, BOOL $replace = TRUE)>
 
 Add the field specified by $key with the data $value. If $replace is
 true, then all of the other fields with the same key will be removed
-frist. 
+frist.
 
 If the field value is empty, the field will be removed.
 
@@ -138,7 +138,7 @@ null, all of the fields with the given key will be removed.
 =item I<L<ByteVector|Audio::TagLib::ByteVector> render()>
 
 Renders the comment to a ByteVector suitable for inserting into a
- file. 
+ file.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> render(BOOL $addFramingBit)>
 

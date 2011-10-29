@@ -55,7 +55,7 @@ sub main {
     croak ".typemap.dep not found: $opt{manifest}" if !-f $opt{manifest};
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
     croak "xscode.mk not found: $opt{mk}" if !-f $opt{mk};
-    
+
     my $mod_conf= load_yaml($opt{conf});
     my %header  = ();
     my @typedef = ();
@@ -106,7 +106,7 @@ sub main {
             push @xscode, $f;
         }
     }
-    
+
     my $OUT;
     if ($opt{o}) {
         open $OUT, '>', $opt{o} or croak "cannot open file to write: $!";
@@ -125,7 +125,7 @@ EOL
             print $OUT "#include \"", $f, "\"\n";
         }
     }
-    my %skip_include = map { $_ => 1 } 
+    my %skip_include = map { $_ => 1 }
       exists $mod_conf->{skip_includes} ?
         @{$mod_conf->{skip_includes}} : ();
     foreach my $f (sort keys %header) {
@@ -157,7 +157,7 @@ EOL
     for (my $i = 0; $i < @xscode; $i++) {
         print $OUT "INCLUDE:\t\t", $xscode[$i], "\n";
     }
-    
+
     if ($opt{o}) {
         close($OUT) or croak "cannot save to file: $!";
     }

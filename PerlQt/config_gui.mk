@@ -1,8 +1,8 @@
 ################################################################
-#### 
+####
 #### Author: Dongxu Ma <dongxu.ma@gmail.com>
 #### License: Artistic
-#### 
+####
 ################################################################
 
 # QT4 META CONFIGURATION
@@ -11,10 +11,10 @@
 _HEADER_DIR := /usr/include/qt4
 
 #_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
-#               Qt3Support 
+#               Qt3Support
 _QT := QtGui
 
-# QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
+# QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest
 
 # filter out s60 due to bug in source
 _HEADERS  := $(filter-out %/qs60style.h, $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT))))

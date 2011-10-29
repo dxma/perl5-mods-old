@@ -11,7 +11,7 @@ Of course, I modified some parts slightly :-)
 
 DESCRIPTION
 
-TagLib -  a library for reading and editing audio meta data, commonly 
+TagLib -  a library for reading and editing audio meta data, commonly
 know as tags.
 
 Some goals of TagLib:

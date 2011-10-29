@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::MPC::Properties
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::MPC::Properties * 
+TagLib::MPC::Properties *
 TagLib::MPC::Properties::new(data, streamLength, style=TagLib::AudioProperties::Average)
 	TagLib::ByteVector * data
 	long streamLength
@@ -19,41 +19,41 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPC::Properties::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-int 
+int
 TagLib::MPC::Properties::length()
 CODE:
 	RETVAL = THIS->length();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPC::Properties::bitrate()
 CODE:
 	RETVAL = THIS->bitrate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPC::Properties::sampleRate()
 CODE:
 	RETVAL = THIS->sampleRate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPC::Properties::channels()
 CODE:
 	RETVAL = THIS->channels();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPC::Properties::mpcVersion()
 CODE:
 	RETVAL = THIS->mpcVersion();

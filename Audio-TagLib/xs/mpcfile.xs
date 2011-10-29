@@ -4,29 +4,29 @@ MODULE = TagLib			PACKAGE = TagLib::MPC::File
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::MPC::File * 
+TagLib::MPC::File *
 TagLib::MPC::File::new(file, readProperties=true, propertiesStyle=TagLib::AudioProperties::Average)
 	char * file
 	bool readProperties
 	TagLib::AudioProperties::ReadStyle propertiesStyle
 CODE:
-	RETVAL = new TagLib::MPC::File(file, readProperties, 
+	RETVAL = new TagLib::MPC::File(file, readProperties,
 		propertiesStyle);
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPC::File::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::MPC::File::tag()
 INIT:
 	TagLib::Tag * tag = THIS->tag();
@@ -39,7 +39,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPC::File::audioProperties()
 INIT:
 	TagLib::MPC::Properties * p = THIS->audioProperties();
@@ -52,14 +52,14 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::MPC::File::save()
 CODE:
 	RETVAL = THIS->save();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPC::File::ID3v1Tag(create=false)
 	bool create
 INIT:
@@ -73,7 +73,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPC::File::APETag(create=false)
 	bool create
 INIT:
@@ -87,7 +87,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPC::File::remove(tags=TagLib::MPC::File::AllTags)
 	TagLib::MPC::File::TagTypes tags
 CODE:

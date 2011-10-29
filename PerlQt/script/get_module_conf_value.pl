@@ -45,7 +45,7 @@ sub main {
     usage() if $opt{h};
     #usage() if !@ARGV;
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
-    
+
     my $mod_conf= load_yaml($opt{conf});
     croak "no such field: $opt{f}" if !exists $mod_conf->{$opt{f}};
     print $mod_conf->{$opt{f}}, "\n";

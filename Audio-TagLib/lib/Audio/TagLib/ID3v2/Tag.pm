@@ -23,7 +23,7 @@ Audio::TagLib::ID3v2::Tag - An ID3v2 implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::Tag;
-  
+
   my $i = Audio::TagLib::ID3v2::Tag->new();
   $i->setTitle(Audio::TagLib::String->new("sample title"));
   print $i->title()->toCString(), "\n"; # got "sample title"
@@ -40,7 +40,7 @@ from the file and split into data components.
 ID3v2 tags have several parts, Audio::TagLib attempts to provide an interface
 for them all. header(), footer() and extendedHeader() corespond to
 those data structures in the ID3v2 standard and the APIs for the
-classes that they return attempt to reflect this. 
+classes that they return attempt to reflect this.
 
 Also ID3v2 tags are built up from a list of frames, which are in turn
 have a header and a list of fields. Audio::TagLib provides two ways of
@@ -56,7 +56,7 @@ ID3v2::Frame class.
 
 read() and parse() pass binary data to the other ID3v2 class
 structures, they do not handle parsing of flags or fields, for
-instace. Those are handled by similar functions within those classes. 
+instace. Those are handled by similar functions within those classes.
 
 B<NOTE> All pointers to data structures within the tag will become
 invalid when the tag is destroyed.
@@ -82,7 +82,7 @@ B<NOTE> You must create at least one frame for this tag to be valid.
 
 =item I<new(PV $file, IV $tagOffset,
 L<FrameFactory|Audio::TagLib::ID3v2::FrameFactory> $factory =
-FrameFactory::instance())> 
+FrameFactory::instance())>
 
 Constructs an ID3v2 tag read from $file starting from
 $tagOffset. $factory specifies which FrameFactory will be used for the
@@ -92,7 +92,7 @@ B<NOTE> You should be able to ignore the $factory parameter in almost
 all situations.  You would want to specify your own FrameFactory
 subclass in the case that you are extending Audio::TagLib to support
 additional frame types, which would be incorperated into your
-factory. 
+factory.
 
 see L<FrameFactory|Audio::TagLib::ID3v2::FrameFactory>
 
@@ -140,7 +140,7 @@ Returns the tag's header.
 extendedHeader()>
 
 Returns teh tag's extended header or undef if there is no extended
-header. 
+header.
 
 =item I<L<Footer|Audio::TagLib::ID3v2::Footer> footer()>
 
@@ -149,7 +149,7 @@ Returns the tag's footer or undef if there is no footer.
 B<deprecated> I don't see any reason to keep this around since there's
 nothing useful to be retrieved from the footer, but well, again, I'm
 prone to change my mind, so this gets to stay around until near a
-release. 
+release.
 
 =item I<L<FrameListMap|Audio::TagLib::ID3v2::FrameListMap> frameListMap()>
 
@@ -169,7 +169,7 @@ see I<frameList()>
 =item I<L<FrameList|Audio::TagLib::ID3v2::FrameList> frameList()>
 
 Returns a reference to the frame list. This is an FrameList of all of
-the frames in the tag in the order that they were parsed. 
+the frames in the tag in the order that they were parsed.
 
 This can be useful if for example you want iterate over the tag's
 frames in the order that they occur in the tag.
@@ -181,17 +181,17 @@ use addFrame() and removeFrame().
 frameList(L<ByteVector|Audio::TagLib::ByteVector> $frameID)>
 
 Returns the frame list for frames with the id $frameID or an empty
-list if there are no frames of that type. 
+list if there are no frames of that type.
 
 see I<frameListMap()>
 
 =item I<void addFrame(L<Frame|Audio::TagLib::ID3v2::Frame> $frame)>
 
 Add a frame to the tag. At this point the tag takes ownership of  the
-frame and will handle freeing its memory. 
+frame and will handle freeing its memory.
 
 B<NOTE> Using this method will invalidate any pointers on the list
-returned by frameList() 
+returned by frameList()
 
 =item I<void removeFrame(L<Frame|Audio::TagLib::ID3v2::Frame> $frame, BOOL
 $del = TRUE)>
@@ -211,7 +211,7 @@ returned by frameList()
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> render()>
 
-Render the tag back to binary data, suitable to be written to disk. 
+Render the tag back to binary data, suitable to be written to disk.
 
 =back
 

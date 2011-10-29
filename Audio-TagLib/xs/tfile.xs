@@ -4,32 +4,32 @@ MODULE = TagLib			PACKAGE = TagLib::File
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::File::DESTROY()
 CODE:
 	/* skip if READONLY flag on */
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-const char * 
+const char *
 TagLib::File::name()
 CODE:
 	RETVAL = THIS->name();
 OUTPUT:
 	RETVAL
 
-TagLib::Tag * 
+TagLib::Tag *
 TagLib::File::tag()
 
-TagLib::AudioProperties * 
+TagLib::AudioProperties *
 TagLib::File::audioProperties()
 
-bool 
+bool
 TagLib::File::save()
 
 TagLib::ByteVector *
@@ -40,13 +40,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::File::writeBlock(data)
 	TagLib::ByteVector * data
 CODE:
 	THIS->writeBlock(*data);
 
-long 
+long
 TagLib::File::find(pattern, fromOffset=0, before=&(TagLib::ByteVector::null))
 	TagLib::ByteVector * pattern
 	long fromOffset
@@ -56,7 +56,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-long 
+long
 TagLib::File::rfind(pattern, fromOffset=0, before=&(TagLib::ByteVector::null))
 	TagLib::ByteVector * pattern
 	long fromOffset
@@ -66,7 +66,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::File::insert(data, start=0, replace=0)
 	TagLib::ByteVector * data
 	unsigned long start
@@ -74,54 +74,54 @@ TagLib::File::insert(data, start=0, replace=0)
 CODE:
 	THIS->insert(*data, start, replace);
 
-void 
+void
 TagLib::File::removeBlock(start=0, replace=0)
 	unsigned long start
 	unsigned long replace
 CODE:
 	THIS->removeBlock(start, replace);
 
-bool 
+bool
 TagLib::File::readOnly()
 CODE:
 	RETVAL = THIS->readOnly();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::File::isOpen()
 CODE:
 	RETVAL = THIS->isOpen();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::File::isValid()
 CODE:
 	RETVAL = THIS->isValid();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::File::seek(offset, position=TagLib::File::Beginning)
 	long offset
 	TagLib::File::Position position
 CODE:
 	THIS->seek(offset, position);
 
-void 
+void
 TagLib::File::clear()
 CODE:
 	THIS->clear();
 
-long 
+long
 TagLib::File::tell()
 CODE:
 	RETVAL = THIS->tell();
 OUTPUT:
 	RETVAL
 
-long 
+long
 TagLib::File::length()
 CODE:
 	RETVAL = THIS->length();
@@ -132,18 +132,18 @@ OUTPUT:
 # An special method to mark the SV READONLY
 ################################################################
 
-void 
+void
 TagLib::File::_setReadOnly()
 CODE:
 	SvREADONLY_on(SvRV(ST(0)));
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static bool 
+static bool
 TagLib::File::isReadable(file)
 	const char * file
 CODE:
@@ -151,7 +151,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static bool 
+static bool
 TagLib::File::isWritable(name)
 	const char * name
 CODE:
@@ -160,22 +160,22 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # File(const char *file)
 # void setValid(bool valid)
 # void truncate(long length)
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # STATIC PROTECTED MEMBER FUNCTIONS
-# 
+#
 # uint bufferSize()
 # not exported
-# 
+#
 ################################################################
 

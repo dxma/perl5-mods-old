@@ -29,7 +29,7 @@ Audio::TagLib::ByteVector::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ByteVector::Iterator;
-  
+
   my $v = Audio::TagLib::ByteVector->new("blah blah blah");
   my $i = $v->begin();
   print $$i, "\n"; # got 'b'

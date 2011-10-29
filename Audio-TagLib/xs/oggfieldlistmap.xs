@@ -5,24 +5,24 @@ MODULE = TagLib		PACKAGE = TagLib::Ogg::FieldListMap
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Ogg::FieldListMap * 
+TagLib::Ogg::FieldListMap *
 TagLib::Ogg::FieldListMap::new(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::Ogg::FieldListMap * m;
 CODE:
-	/*! 
+	/*!
 	 * MAP()
 	 * MAP(const MAP< Key, T > &m)
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::Ogg::FieldListMap"))
 			m = INT2PTR(TagLib::Ogg::FieldListMap *, SvIV(SvRV(ST(1))));
 		else
@@ -36,20 +36,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::FieldListMap::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::Ogg::FieldListMap::Iterator * 
+TagLib::Ogg::FieldListMap::Iterator *
 TagLib::Ogg::FieldListMap::begin()
 CODE:
 	RETVAL = new TagLib::Ogg::FieldListMap::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-TagLib::Ogg::FieldListMap::Iterator * 
+TagLib::Ogg::FieldListMap::Iterator *
 TagLib::Ogg::FieldListMap::end()
 CODE:
 	RETVAL = new TagLib::Ogg::FieldListMap::Iterator(THIS->end());
@@ -57,40 +57,40 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::Ogg::FieldListMap::insert(key, value)
 	TagLib::String * key
 	TagLib::StringList * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::Ogg::FieldListMap::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 TagLib::Ogg::FieldListMap::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-TagLib::Ogg::FieldListMap::Iterator *  
+TagLib::Ogg::FieldListMap::Iterator *
 TagLib::Ogg::FieldListMap::find(key)
 	TagLib::String * key
 CODE:
@@ -99,13 +99,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::contains(key)
 	TagLib::String * key
 CODE:
@@ -113,14 +113,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::FieldListMap::erase(key)
 	TagLib::String * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::Ogg::FieldListMap::getItem(key)
 	TagLib::String * key
 INIT:
@@ -132,20 +132,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # Map<Key, T> & operator=(const Map<Key, T> &m)
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::Ogg::FieldListMap::copy(m)
 	TagLib::Ogg::FieldListMap * m
 PPCODE:
@@ -154,33 +154,33 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS FOR TIE MAGIC
-# 
+#
 ################################################################
 
-static void  
+static void
 TagLib::Ogg::FieldListMap::TIEHASH(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::Ogg::FieldListMap * map;
 PPCODE:
-	/*! 
+	/*!
 	 * tie %h, "TagLib::Ogg::FieldListMap"
 	 * tie %h, "TagLib::Ogg::FieldListMap", $obj_to_tie
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::Ogg::FieldListMap")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				ST(0) = sv_newmortal();
@@ -200,7 +200,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 TagLib::Ogg::FieldListMap::FETCH(key)
 	TagLib::String * key
 PPCODE:
@@ -217,26 +217,26 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::Ogg::FieldListMap::STORE(key, value)
 	TagLib::String * key
 	TagLib::StringList * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::Ogg::FieldListMap::DELETE(key)
 	TagLib::String * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::Ogg::FieldListMap::CLEAR()
 CODE:
 	THIS->clear();
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::EXISTS(key)
 	TagLib::String * key
 CODE:
@@ -244,7 +244,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::FieldListMap::FIRSTKEY()
 PREINIT:
 	TagLib::Ogg::FieldListMap::Iterator it;
@@ -259,7 +259,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-TagLib::String * 
+TagLib::String *
 TagLib::Ogg::FieldListMap::NEXTKEY(lastkey)
 	TagLib::String * lastkey
 PREINIT:
@@ -274,7 +274,7 @@ CODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-unsigned int 
+unsigned int
 TagLib::Ogg::FieldListMap::SCALAR()
 CODE:
 	/* return size of current map */
@@ -283,10 +283,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
-# TagLib::Ogg::FieldListMap::UNTIE() 
+#
+# TagLib::Ogg::FieldListMap::UNTIE()
 # not implemented
 # since there is no special action to do normally
-# 
+#
 ################################################################
 

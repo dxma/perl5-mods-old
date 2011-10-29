@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_ID3v1_StringHandler.t'
 
 #########################
@@ -16,7 +16,7 @@ BEGIN { use_ok('Audio::TagLib::ID3v1::StringHandler') };
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 my @methods = qw(parse render);
-can_ok("Audio::TagLib::ID3v1::StringHandler", @methods) 					or 
+can_ok("Audio::TagLib::ID3v1::StringHandler", @methods) 					or
 	diag("can_ok failed");
 
 TODO: {

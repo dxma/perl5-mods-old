@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_APE_ItemListMap_Iterator.t'
 
 #########################
@@ -23,18 +23,18 @@ $apetag->setArtist(Audio::TagLib::String->new("artist"));
 $apetag->setYear(1981);
 my $map = $apetag->itemListMap();
 my $i = $map->begin();
-isa_ok($i, "Audio::TagLib::APE::ItemListMap::Iterator") 					or 
+isa_ok($i, "Audio::TagLib::APE::ItemListMap::Iterator") 					or
 	diag("method Audio::TagLib::APE::Tag::itemListMap() failed");
-isa_ok(Audio::TagLib::APE::ItemListMap::Iterator->new(), 
-	"Audio::TagLib::APE::ItemListMap::Iterator") 							or 
+isa_ok(Audio::TagLib::APE::ItemListMap::Iterator->new(),
+	"Audio::TagLib::APE::ItemListMap::Iterator") 							or
 	diag("method new() failed");
-isa_ok(Audio::TagLib::APE::ItemListMap::Iterator->new($i), 
-	"Audio::TagLib::APE::ItemListMap::Iterator") 							or 
+isa_ok(Audio::TagLib::APE::ItemListMap::Iterator->new($i),
+	"Audio::TagLib::APE::ItemListMap::Iterator") 							or
 	diag("method new(i) failed");
 
-is($i->data()->toString()->toCString(), "artist") 					or 
+is($i->data()->toString()->toCString(), "artist") 					or
 	diag("method data() failed");
-is($i->next()->data()->toString()->toCString(), "title") 			or 
+is($i->next()->data()->toString()->toCString(), "title") 			or
 	diag("method next() failed");
-is((--$i)->data()->toString()->toCString(), "artist") 				or 
+is((--$i)->data()->toString()->toCString(), "artist") 				or
 	diag("method last() failed");

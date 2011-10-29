@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_Ogg_FLAC_File.t'
 
 #########################
@@ -19,7 +19,7 @@ my @methods = qw(new DESTROY streamLength packet setPacket firstPageHeader
 lastPageHeader name tag audioProperties save
 readBlock writeBlock find rfind insert removeBlock readOnly isOpen
 isValid seek clear tell length );
-can_ok("Audio::TagLib::Ogg::FLAC::File", @methods) 					or 
+can_ok("Audio::TagLib::Ogg::FLAC::File", @methods) 					or
 	diag("can_ok failed");
 
 SKIP: {

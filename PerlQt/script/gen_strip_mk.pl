@@ -21,11 +21,11 @@ EOU
 
 sub main {
     usage if @ARGV < 3;
-    
-    my ( $in, $in_noinc_dir, $out_noinc_dir, $out ) = 
+
+    my ( $in, $in_noinc_dir, $out_noinc_dir, $out ) =
       @ARGV;
     die "header.mk not found!" unless -f $in;
-    
+
     local ( *IN, );
     open IN, "<", $in or die "cannot open $in: $!";
     my $cont = do { local $/; <IN> };
@@ -35,12 +35,12 @@ sub main {
 \t\$(_Q)echo generating \$@
 \t\$(_Q)[[ -d \$(dir \$@) ]] || \$(CMD_MKDIR) \$(dir \$@)
 \t\$(_Q)\$(CMD_STRIP_INC) \$< \$@
-$out_noinc_dir$1: 
+$out_noinc_dir$1:
 }miogx;
-    
+
     if (defined $out) {
         local ( *OUT, );
-        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die 
+        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or die
           "cannot open file to write: $!";
         print OUT $cont;
         close OUT or die "cannot save to file: $!";

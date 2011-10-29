@@ -24,7 +24,7 @@ This class is the main ID3v2 frame implementation. In ID3v2, a tag is
 split between a collection of frames (which are in turn split into
 fields. This class provides an API for gathering information about and
 modifying ID3v2 frames. Funtionallity specific to a given frame type
-is handed in one of the many subclasses. 
+is handed in one of the many subclasses.
 
 =over
 
@@ -47,11 +47,11 @@ Returns the size of the frame header.
 This is only accurate for ID3v2.3 or ID3v2.4. Please use the call
   below  which accepts an ID3v2 version number. In the next non-binary
   compatible release this will be made into a non-static member that
-  checks the internal ID3v2 version. 
+  checks the internal ID3v2 version.
 
 =item I<UV headerSize(UV version)> [static]
 
-Returns the size of the frame header for the given ID3v2 version. 
+Returns the size of the frame header for the given ID3v2 version.
 
 Please see the explanation above.
 
@@ -76,14 +76,14 @@ B<NOTE> If the frame type supports multiple text encodings, this will
 
 This returns the textual representation of the data in the
 frame. Subclasses must reimplement this method to provide a string
-representation of the frame's data. 
+representation of the frame's data.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> render()>
 
 Render the frame back to its binary format in a ByteVector.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> textDelimiter(PV $t)>
-[static] 
+[static]
 
 Returns the text delimiter that is used between fields for the string
 type $t.

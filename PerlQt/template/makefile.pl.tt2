@@ -7,7 +7,7 @@ BEGIN {
         Carp::croak(<<EOF);
 ERROR: This binding requires C++ Qt4 libraries and devel header files installed.
        Usually the header files are located within /usr/include/qt4.
-       There is no such directory on your system, it is very likely this 
+       There is no such directory on your system, it is very likely this
        installation will not proceed properly.
 ABORT NOW!
 EOF
@@ -27,7 +27,7 @@ WriteMakefile(
     LD           => 'g++',
     LDDLFLAGS    => '-shared',
     XSOPT        => '-C++ -hiertype',
-    LIBS         => '[% my_ldflags %]', 
+    LIBS         => '[% my_ldflags %]',
     DEFINE       => '[% my_defines %]',
     INC          => '-I/usr/include -I[% my_include %]',
     # Un-comment this if you add C files to link with later:

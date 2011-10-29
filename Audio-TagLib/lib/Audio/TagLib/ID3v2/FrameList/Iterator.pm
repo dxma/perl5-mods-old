@@ -30,7 +30,7 @@ Audio::TagLib::ID3v2::FrameList::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::FrameList::Iterator;
-  
+
   my $tag  = Audio::TagLib::ID3v2::Tag->new();
   $tag->setTitle(Audio::TagLib::String->new("title"));
   $tag->setArtist(Audio::TagLib::String->new("artist"));

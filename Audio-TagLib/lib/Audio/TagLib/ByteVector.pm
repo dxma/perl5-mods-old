@@ -13,13 +13,13 @@ sub _toArray() {
 # This has a shortingcoming
 # index out of bound will not croak
     my $this   = shift;
-    my $vector = $this->data(); 
+    my $vector = $this->data();
     return [] if $vector eq '';
     return [ map { substr($vector, $_, 1) } (0 .. length($vector)-1)
-         ];     
+         ];
 }
 
-use overload 
+use overload
   q(@{}) => \&_toArray,
   q(==)  => \&_equal,
   q(eq)  => \&_equal,
@@ -43,7 +43,7 @@ Audio::TagLib::ByteVector - A byte vector
 =head1 SYNOPSIS
 
   use Audio::TagLib::ByteVector;
-  
+
   my $i = Audio::TagLib::ByteVector->new();
   $i->setData("blah blah blah");
   print $i->data(), "\n"; # got "blah blah blah"
@@ -52,7 +52,7 @@ Audio::TagLib::ByteVector - A byte vector
 
 This class provides a byte vector with some methods that are useful
 for tagging purposes.  Many of the search functions are tailored to
-what is useful for finding tag related paterns in a data array. 
+what is useful for finding tag related paterns in a data array.
 
 =over
 
@@ -63,7 +63,7 @@ Constructs an empty byte vector.
 =item I<new(UV $size, PV $value = 0)>
 
 Construct a vector of size $size with all values set to $value by
-default. 
+default.
 
 =item I<new(L<ByteVector|Audio::TagLib::ByteVector> $v)>
 
@@ -76,7 +76,7 @@ Contructs a byte vector that contains $data if length($data) is 1.
 Constructs a byte vector that copies $data up to the first null  byte.
 The behavior is undefined if $data is not null terminated. This is
 particularly useful for constructing byte arrays from string
-constants. 
+constants.
 
 =item I<new(PV $data, IV $length)>
 
@@ -89,19 +89,19 @@ Destroys this ByteVector instance.
 =item I<void setData(PV $data, UV $length)>
 
 Sets the data for the byte array using the first $length bytes of
-$data. 
+$data.
 
 =item I<void setData(PV $data)>
 
 Sets the data for the byte array copies $data up to the first null
-byte.  The behavior is undefined if \a data is not null terminated. 
+byte.  The behavior is undefined if \a data is not null terminated.
 
 =item I<PV data()>
 
 Returns a copy to the internal data structure.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> mid(UV $index, UV $length =
-0xffffffff)> 
+0xffffffff)>
 
 Returns a byte vector made up of the bytes starting at $index and for
 $length bytes. If $length is not specified it will return the bytes
@@ -110,7 +110,7 @@ from $index  to the end of the vector.
 =item I<PV at(UV $index)>
 
 Returns a char at the specific $index. If the index is out of bounds,
-it will return a null byte. 
+it will return a null byte.
 
 =item I<IV find(L<ByteVector|Audio::TagLib::ByteVector> $pattern, UV $offset
 = 0, IV $byteAlign = 1)>
@@ -146,14 +146,14 @@ Returns true if the vector starts with $pattern.
 Returns true if the vector ends with $pattern.
 
 =item I<IV endsWithPartialMatch(L<ByteVector|Audio::TagLib::ByteVector>
-$pattern)> 
+$pattern)>
 
 Checks for a partial match of $pattern at the end of the vector. It
 returns the offset of the partial match within the vector, or -1 if
 the pattern is not found.  This method is particularly useful when
 searching for patterns that start in one vector and end in another.
 When combined with startsWith() it can be used to find a pattern that
-overlaps two buffers. 
+overlaps two buffers.
 
 note This will not match the complete pattern at the end of the
  string; use endsWith() for that.
@@ -222,13 +222,13 @@ Converts the first 2 bytes of the vector to a short.
 If $mostSignificantByteFirst is true this will operate left to right
   evaluating the integer.  For example if $mostSignificantByteFirst is
   true then $00 $01 == 0x0001 == 1, if false, $01 00 == 0x01000000 ==
-  1. 
+  1.
 
 see I<fromShort()>
 
 =item I<IV toLongLong(BOOL $mostSignificantByteFirst = true)>
 
-Converts the first 8 bytes of the vector to a (signed) long long. 
+Converts the first 8 bytes of the vector to a (signed) long long.
 
 If $mostSignificantByteFirst is true this will operate left to right
   evaluating the integer.  For example if $mostSignificantByteFirst is
@@ -255,7 +255,7 @@ Creates a 2 byte ByteVector based on $value. If
   $mostSignificantByteFirst is true, then this will operate left to
   right in building the ByteVector.  For example if
   $mostSignificantByteFirst is true then $00 01 == 0x0001 == 1, if
-  false, $01 00 == 0x0100 == 1. 
+  false, $01 00 == 0x0100 == 1.
 
 see I<toShort()>
 
@@ -267,7 +267,7 @@ $mostSignificantByteFirst is true, then this will operate left to
 right in building the ByteVector.  For example if
 $mostSignificantByteFirst is true then $00 00 00 01 ==
 0x0000000000000001 == 1, if false, $01 00 00 00 00 00 00 00 ==
-0x0100000000000000 == 1. 
+0x0100000000000000 == 1.
 
 see I<toLongLong()>
 
@@ -282,7 +282,7 @@ Sets the char at $index to $c.
 
 =item I<copy(L<ByteVector|Audio::TagLib::ByteVector> $v)>
 
-Inplements operator=. 
+Inplements operator=.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> null()> [static]
 

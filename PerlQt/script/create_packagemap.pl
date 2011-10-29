@@ -33,7 +33,7 @@ sub load_yaml {
 sub main {
     my ( $out_group_dir, $packagemap_file ) = @ARGV;
     usage() unless -d $out_group_dir;
-    
+
     my $packagemap = {};
     my @metas = glob("$out_group_dir/*.meta");
     foreach my $m (@metas) {
@@ -43,18 +43,18 @@ sub main {
             $packagemap->{$meta->{NAME}} = $meta->{MODULE};
         }
         else {
-            $packagemap->{$meta->{NAME}} = exists $meta->{PERL_NAME} ? 
-              join('::', $meta->{MODULE}, $meta->{PERL_NAME}) : 
+            $packagemap->{$meta->{NAME}} = exists $meta->{PERL_NAME} ?
+              join('::', $meta->{MODULE}, $meta->{PERL_NAME}) :
                 $meta->{MODULE};
         }
     }
-    
+
     local ( *PKGMAP, );
-    open PKGMAP, ">", $packagemap_file or 
+    open PKGMAP, ">", $packagemap_file or
       croak("cannot open file to write: $!");
     print PKGMAP Dump($packagemap);
     close PKGMAP or croak("cannot save to file: $!");
-    
+
     exit 0;
 }
 

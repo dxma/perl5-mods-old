@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::MPEG::File
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::MPEG::File * 
+TagLib::MPEG::File *
 TagLib::MPEG::File::new(...)
 PROTOTYPE: $;$$$
 PREINIT:
@@ -23,10 +23,10 @@ INIT:
 	propertiesStyle = TagLib::MPEG::Properties::Average;
 CODE:
 	/*!
-	 * File(const char *file, bool readProperties=true, 
+	 * File(const char *file, bool readProperties=true,
 	 * 	Properties::ReadStyle propertiesStyle=Properties::Average)
-	 * File(const char *file, ID3v2::FrameFactory *frameFactory, 
-	 * 	bool readProperties=true, 
+	 * File(const char *file, ID3v2::FrameFactory *frameFactory,
+	 * 	bool readProperties=true,
 	 * 	Properties::ReadStyle propertiesStyle=Properties::Average)
 	 */
 	switch(items) {
@@ -42,9 +42,9 @@ CODE:
 			file = SvPV_nolen(ST(1));
 		else
 			croak("ST(1) is not a valid string");
-		if(sv_isobject(ST(2)) && 
+		if(sv_isobject(ST(2)) &&
 			sv_derived_from(ST(2), "Audio::TagLib::ID3v2::FrameFactory")) {
-			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *, 
+			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *,
 				SvIV(SvRV(ST(2))));
 			RETVAL = new TagLib::MPEG::File(file, frameFactory);
 		} else {
@@ -57,12 +57,12 @@ CODE:
 			file = SvPV_nolen(ST(1));
 		else
 			croak("ST(1) is not a valid string");
-		if(sv_isobject(ST(2)) && 
+		if(sv_isobject(ST(2)) &&
 			sv_derived_from(ST(2), "Audio::TagLib::ID3v2::FrameFactory")) {
-			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *, 
+			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *,
 				SvIV(SvRV(ST(2))));
 			readProperties = SvTRUE(ST(3));
-			RETVAL = new TagLib::MPEG::File(file, frameFactory, 
+			RETVAL = new TagLib::MPEG::File(file, frameFactory,
 				readProperties);
 		} else {
 			readProperties = SvTRUE(ST(2));
@@ -78,7 +78,7 @@ CODE:
 				propertiesStyle = TagLib::AudioProperties::Accurate;
 			else
 				croak("ST(3) is not a valid value of ReadStyle");
-			RETVAL = new TagLib::MPEG::File(file, readProperties, 
+			RETVAL = new TagLib::MPEG::File(file, readProperties,
 				propertiesStyle);
 		}
 		break;
@@ -86,13 +86,13 @@ CODE:
 		/* items == 5 */
 		if(SvPOK(ST(1)))
 			file = SvPV_nolen(ST(1));
-		else 
+		else
 			croak("ST(1) is not a valid string");
-		if(sv_isobject(ST(2)) && 
+		if(sv_isobject(ST(2)) &&
 			sv_derived_from(ST(2), "Audio::TagLib::ID3v2::FrameFactory"))
-			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *, 
+			frameFactory = INT2PTR(TagLib::ID3v2::FrameFactory *,
 				SvIV(SvRV(ST(2))));
-		else 
+		else
 			croak("ST(2) is not of type ID3v2::FrameFactory");
 		readProperties = SvTRUE(ST(3));
 		if(SvPOK(ST(4)))
@@ -107,19 +107,19 @@ CODE:
 			propertiesStyle = TagLib::AudioProperties::Accurate;
 		else
 			croak("ST(4) is not a valid value of ReadStyle");
-		RETVAL = new TagLib::MPEG::File(file, frameFactory, 
+		RETVAL = new TagLib::MPEG::File(file, frameFactory,
 			readProperties, propertiesStyle);
 	}
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPEG::File::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::MPEG::File::tag()
 INIT:
 	TagLib::Tag * tag = THIS->tag();
@@ -132,7 +132,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPEG::File::audioProperties()
 INIT:
 	TagLib::MPEG::Properties * p = THIS->audioProperties();
@@ -145,7 +145,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::MPEG::File::save(...)
 PROTOTYPE: ;$$
 PREINIT:
@@ -169,7 +169,7 @@ CODE:
 			tags = TagLib::MPEG::File::APE;
 		else if(strncasecmp(type, "AllTags", 7) == 0)
 			tags = TagLib::MPEG::File::AllTags;
-		else 
+		else
 			croak("ST(1) is not of type MPEG::File::TagTypes");
 		stripOthers = SvTRUE(ST(2));
 		RETVAL = THIS->save(tags, stripOthers);
@@ -189,7 +189,7 @@ CODE:
 			tags = TagLib::MPEG::File::APE;
 		else if(strncasecmp(type, "AllTags", 7) == 0)
 			tags = TagLib::MPEG::File::AllTags;
-		else 
+		else
 			croak("ST(1) is not of type MPEG::File::TagTypes");
 		RETVAL = THIS->save(tags);
 		break;
@@ -200,7 +200,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPEG::File::ID3v2Tag(create=false)
 	bool create
 INIT:
@@ -214,7 +214,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPEG::File::ID3v1Tag(create=false)
 	bool create
 INIT:
@@ -228,7 +228,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::MPEG::File::APETag(create=false)
 	bool create
 INIT:
@@ -242,7 +242,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::MPEG::File::strip(...)
 PROTOTYPE: ;$$
 PREINIT:
@@ -266,7 +266,7 @@ CODE:
 			tags = TagLib::MPEG::File::APE;
 		else if(strncasecmp(type, "AllTags", 7) == 0)
 			tags = TagLib::MPEG::File::AllTags;
-		else 
+		else
 			croak("ST(1) is not of type MPEG::File::TagTypes");
 		freeMemory = SvTRUE(ST(2));
 		RETVAL = THIS->strip(tags, freeMemory);
@@ -286,7 +286,7 @@ CODE:
 			tags = TagLib::MPEG::File::APE;
 		else if(strncasecmp(type, "AllTags", 7) == 0)
 			tags = TagLib::MPEG::File::AllTags;
-		else 
+		else
 			croak("ST(1) is not of type MPEG::File::TagTypes");
 		RETVAL = THIS->strip(tags);
 		break;
@@ -297,20 +297,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPEG::File::setID3v2FrameFactory(factory)
 	TagLib::ID3v2::FrameFactory * factory
 CODE:
 	THIS->setID3v2FrameFactory(factory);
 
-long 
+long
 TagLib::MPEG::File::firstFrameOffset()
 CODE:
 	RETVAL = THIS->firstFrameOffset();
 OUTPUT:
 	RETVAL
 
-long 
+long
 TagLib::MPEG::File::nextFrameOffset(position)
 	long position
 CODE:
@@ -318,7 +318,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-long 
+long
 TagLib::MPEG::File::previousFrameOffset(position)
 	long position
 CODE:
@@ -326,7 +326,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-long 
+long
 TagLib::MPEG::File::lastFrameOffset()
 CODE:
 	RETVAL = THIS->lastFrameOffset();

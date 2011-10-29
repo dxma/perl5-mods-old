@@ -5,12 +5,12 @@ PROTOTYPES: ENABLE
 
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ByteVectorList * 
+TagLib::ByteVectorList *
 TagLib::ByteVectorList::new(...)
 PROTOTYPE: ;$
 CODE:
@@ -31,13 +31,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ByteVectorList::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ByteVectorList::toByteVector(...)
 PROTOTYPE: ;$
 INIT:
@@ -56,7 +56,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVectorList * 
+static TagLib::ByteVectorList *
 TagLib::ByteVectorList::split(...)
 PROTOTYPE: $$$;$
 PREINIT:
@@ -67,9 +67,9 @@ INIT:
 	int byteAlign = 1;
 CODE:
 	/*!
-	 * ByteVectorList split(const ByteVector &v, 
+	 * ByteVectorList split(const ByteVector &v,
 	 * 	const ByteVector &pattern, int byteAlign=1)
-	 * ByteVectorList split(const ByteVector &v, 
+	 * ByteVectorList split(const ByteVector &v,
 	 * 	const ByteVector &pattern, int byteAlign, int max)
 	 */
 	switch(items) {
@@ -85,12 +85,12 @@ CODE:
 			croak("ST(3) is not of type int");
 	default:
 		/* items == 3 */
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector"))
 			v = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 		else
 			croak("ST(1) is not of type TagLib::ByteVector");
-		if(sv_isobject(ST(2)) && 
+		if(sv_isobject(ST(2)) &&
 			sv_derived_from(ST(2), "Audio::TagLib::ByteVector"))
 			pattern = INT2PTR(TagLib::ByteVector *,
 				SvIV(SvRV(ST(2))));

@@ -29,7 +29,7 @@ Audio::TagLib::String::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::String::Iterator;
-  
+
   my $s = Audio::TagLib::String->new("blah blah blah");
   my $i = $s->begin();
   print ${$i++}, "\n"; # got 'b'

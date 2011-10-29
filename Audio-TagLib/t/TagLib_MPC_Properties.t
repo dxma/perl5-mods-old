@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_MPC_Properties.t'
 
 #########################
@@ -17,7 +17,7 @@ BEGIN { use_ok('Audio::TagLib::MPC::Properties') };
 
 my @methods = qw(new DESTROY length bitrate sampleRate channels
 mpcVersion);
-can_ok("Audio::TagLib::MPC::Properties", @methods) 					or 
+can_ok("Audio::TagLib::MPC::Properties", @methods) 					or
 	diag("can_ok failed");
 
 SKIP: {

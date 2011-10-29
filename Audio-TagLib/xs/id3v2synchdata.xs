@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::SynchData
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC FUNCTIONS in this NAMESPACE
-# 
+#
 ################################################################
 
-static unsigned int 
+static unsigned int
 TagLib::ID3v2::SynchData::toUInt(data)
 	TagLib::ByteVector * data
 CODE:
@@ -17,7 +17,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ID3v2::SynchData::fromUInt(value)
 	unsigned int value
 CODE:

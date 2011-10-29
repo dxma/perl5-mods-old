@@ -24,7 +24,7 @@ identification frame implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::UserTextIdentificationFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::UserTextIdentificationFrame->new("Latin1");
   $i->setDescription(Audio::TagLib::String->new("blah blah"));
   print $i->description()->toCString(), "\n"; # got "blah blah"
@@ -33,7 +33,7 @@ identification frame implementation
 
 This is a specialization of text identification frames that allows for
 user defined entries. Each entry has a description in addition to the
-normal list of fields that a text identification frame has. 
+normal list of fields that a text identification frame has.
 
 This description identifies the frame and must be unique.
 
@@ -65,14 +65,14 @@ Sets the description of the frame to $s. $s must be unique. You can
 =item I<void setText(L<StringList|Audio::TagLib::StringList> $fields)>
 
 see
-L<Audio::TagLib::ID3v2::TextIdentificationFrame|Audio::TagLib::ID3v2::TextIdentificationFrame> 
+L<Audio::TagLib::ID3v2::TextIdentificationFrame|Audio::TagLib::ID3v2::TextIdentificationFrame>
 
 =item I<UserTextIdentificationFrame find(L<Tag|Audio::TagLib::ID3v2::Tag>
 $tag, L<String|Audio::TagLib::String> $description)> [static]
 
 Searches for the user defined text frame with the description
 $description in $tag. This returns undef if no matching frame were
-found. 
+found.
 
 =back
 

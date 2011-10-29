@@ -1,8 +1,8 @@
 ################################################################
-#### 
+####
 #### Author: Dongxu Ma <dongxu.ma@gmail.com>
 #### License: Artistic
-#### 
+####
 ################################################################
 
 # QT4 META CONFIGURATION
@@ -11,14 +11,14 @@
 _HEADER_DIR := /usr/include/qt4
 
 #_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
-#               Qt3Support 
+#               Qt3Support
 _QT := QtWebKit
 
 #_QT_EXTRA := QtAssistant QtDBus QtUiTools QtDesigner QtTest
 
 _HEADERS  := $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT)))
 # common enums declared in qnamespace.h
-_HEADERS  += $(_HEADER_DIR)/QtCore/qnamespace.h $(_HEADER_DIR)/QtCore/qglobal.h $(_HEADER_DIR)/QtGui/qpainter.h $(_HEADER_DIR)/QtGui/qgraphicswidget.h $(_HEADER_DIR)/QtGui/qgraphicsitem.h 
+_HEADERS  += $(_HEADER_DIR)/QtCore/qnamespace.h $(_HEADER_DIR)/QtCore/qglobal.h $(_HEADER_DIR)/QtGui/qpainter.h $(_HEADER_DIR)/QtGui/qgraphicswidget.h $(_HEADER_DIR)/QtGui/qgraphicsitem.h
 
 HEADER_PREFIX := h
 

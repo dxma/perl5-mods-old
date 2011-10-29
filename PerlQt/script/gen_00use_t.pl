@@ -50,7 +50,7 @@ sub main {
     #usage() if !@ARGV;
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
     croak "template dir not found: $opt{template}" if !-d $opt{template};
-    
+
     my $lib_root = 'lib';
     my $pm_suffix= '.pm';
     my $dir_delm = File::Spec::->rootdir;
@@ -61,7 +61,7 @@ sub main {
         my $dir = pop @dir;
         local ( *D, );
         opendir D, $dir or croak "cannot opendir to read: $!";
-        my @e = map { File::Spec::->catfile($dir, $_) } 
+        my @e = map { File::Spec::->catfile($dir, $_) }
           grep { !/^\./o } readdir D;
         closedir D;
         foreach my $e (@e) {
@@ -89,7 +89,7 @@ sub main {
     my $var = {
         my_uses => \@use,
     };
-    $template->process('test.tt2', $var, \$out) or 
+    $template->process('test.tt2', $var, \$out) or
       croak $template->error. "\n";
     $out .= "\n";
     if (defined $opt{o}) {

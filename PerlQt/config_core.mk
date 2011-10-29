@@ -1,8 +1,8 @@
 ################################################################
-#### 
+####
 #### Author: Dongxu Ma <dongxu.ma@gmail.com>
 #### License: Artistic
-#### 
+####
 ################################################################
 
 # QT4 META CONFIGURATION
@@ -11,10 +11,10 @@
 _HEADER_DIR := /usr/include/qt4
 
 #_QT         := QtCore QtGui QtOpenGL QtSvg QtNetwork QtSql QtXml \
-#               Qt3Support 
+#               Qt3Support
 _QT := QtCore
 
-# QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest 
+# QT-EXTRA = QtAssistant + QtDBus + QtUiTools + QtDesigner + QtTest
 
 _HEADERS  := $(addprefix $(_HEADER_DIR)/$(_QT)/, $(shell script/grep_headers.sh $(_HEADER_DIR)/$(_QT)/$(_QT)))
 

@@ -78,7 +78,7 @@ __END__
 
 =head1 NAME
 
-Audio::TagLib -  a library for reading and editing audio meta data, commonly 
+Audio::TagLib -  a library for reading and editing audio meta data, commonly
 known as I<tags>.
 
 =head1 SYNOPSIS
@@ -152,7 +152,7 @@ None by default.
 
 =head1 ENUM TYPE MAPPING
 
-All over TagLib in Perl, ALL the enum value is mapped to a specific 
+All over TagLib in Perl, ALL the enum value is mapped to a specific
 string. For instace, Audio::TagLib::String::UTF8 => "UTF8". Usually there
 will be a hash you can query all the available values.
 
@@ -193,7 +193,7 @@ some methods will often return certain internal structure of an
 instance, for example, I<tag()> & I<audioProperties()> in all
 subclasses of L<AudioProperties|Audio::TagLib::AudioProperties>. In such
 case, a READONLY flag is set on for the returned structure to bypass
-I<DESTROY()>. 
+I<DESTROY()>.
 
 =head1 SEE ALSO
 

@@ -27,17 +27,17 @@ Audio::TagLib::APE::ItemListMap - Perl-only class
   my $i       = Audio::TagLib::APE::ItemListMap->new();
   $i->insert($key, $item);
   print $i->size(), "\n"; # got 1
-  
+
   my $tag     = Audio::TagLib::APE::Tag->new();
   $tag->setTitle(Audio::TagLib::String->new("title"));
   my $map = $tag->itemListMap();
   tie my %map, ref($map), $map;
   print $_->toCString(), "\n" foreach keys %map; # got "TITLE"
-  
+
   print
   $map{Audio::TagLib::String->new("TITLE")}->toString()->toCString(),
   "\n"; # got "title"
-  
+
   my @key = keys %map;
   print $map{$key[0]}->toString()->toCString(), "\n"; # got "title"
 
@@ -86,7 +86,7 @@ L<Audio::TagLib::APE::ItemListMap::Iterator|Audio::TagLib::APE::ItemListMap::Ite
 L<Item|Audio::TagLib::APE::Item> $value)>
 
 Inserts $value under $key in the map. If a value for $key already
-  exists it will be overwritten. 
+  exists it will be overwritten.
 
 =item I<void clear()>
 

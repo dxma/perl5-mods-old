@@ -43,12 +43,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::AttachedPictureFrame - An ID3v2 attached picture frame
-implementation 
+implementation
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::AttachedPictureFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::AttachedPictureFrame->new();
   $i->setTextEncoding("UTF8");
   $i->setDescription(Audio::TagLib::String->new("utf8 sample string", "UTF8"));
@@ -144,7 +144,7 @@ see I<setTextEncoding()>
 Returns the image data as a ByteVector.
 
 ByteVector has a data() method that returns a const char * which
-  should make it easy to export this data to external programs. 
+  should make it easy to export this data to external programs.
 
 see I<setPicture()>
 

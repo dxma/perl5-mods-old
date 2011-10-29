@@ -2,7 +2,7 @@
     copyright            : (C) 2005 - 2006 by Dongxu Ma
     email                : dongxu@cpan.org
  ***************************************************************************
- *   This library is free software; you can redistribute it and/or modify 
+ *   This library is free software; you can redistribute it and/or modify
  *   it under the same terms as Perl itself, either Perl version 5.8.7 or,
  *   at your option, any later version of Perl 5 you may have available.
  ***************************************************************************/

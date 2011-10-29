@@ -27,19 +27,19 @@ see file TODO.
 
 BACKGROUND
 
-14 years ago Ashley Winters made the 1st PerlQt binding for Qt, the 
-fantastic ghraphic library. 
-Time passed by, Qt became more popular and has been introduced to 
-many other dynamic languages such as python, perl is now a bit 
-behind. 
-For a while I wanted to bring the latest Qt 4 back to perl. But 
+14 years ago Ashley Winters made the 1st PerlQt binding for Qt, the
+fantastic ghraphic library.
+Time passed by, Qt became more popular and has been introduced to
+many other dynamic languages such as python, perl is now a bit
+behind.
+For a while I wanted to bring the latest Qt 4 back to perl. But
 this is not an easy job as you may know.
 I started this project since 2007, when I wrote QTEDI first, which
-is a LR parser to extract interface information from cpp header, 
-based on Parse::RecDescent. However, due to the environment and some 
+is a LR parser to extract interface information from cpp header,
+based on Parse::RecDescent. However, due to the environment and some
 personal reasons, the entire project was paused during 2008 and 2009.
 I have been able to re-pick it up in 2010 and made some progress.
-From Spring 2011, further progress has been made. 
+From Spring 2011, further progress has been made.
 
 TECH NOTE
 
@@ -63,7 +63,7 @@ steps:
    collection of all declared enum type;
 7. xs code automation
    generate xs code for each class from results of #5 and #6 above,
-   create top Core.xs skeleton; 
+   create top Core.xs skeleton;
 8. pm code automation
    generate pm code for each class from results of #5 and #6 above,
    create top lib/Qt/Core.pm skeleton;

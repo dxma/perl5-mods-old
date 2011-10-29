@@ -39,7 +39,7 @@ Audio::TagLib::String - A wide string class suitable for unicode
 =head1 SYNOPSIS
 
   use Audio::TagLib::String;
-  
+
   my $i = Audio::TagLib::String->new("blah blah blah");
   print $i->toCString(), "\n"; # got "blah blah blah"
 
@@ -57,17 +57,17 @@ also makes this class suitable as a function return type.
 
 In addition to adding implicit sharing, this class keeps track of four
 possible encodings, which are the four supported by the ID3v2
-standard. 
+standard.
 
-=over 
+=over
 
-=item 
+=item
 
 =item %_Type
 
 The four types of string encodings supported by the ID3v2
 specification. ID3v1 is assumed to be Latin1 and Ogg Vorbis comments
-use UTF8. 
+use UTF8.
 
 qw(Latin1 UTF16 UTF16BE UTF16LE UTF8)
 
@@ -92,7 +92,7 @@ Makes a deep copy of the data in $v.
 
 B<NOTE> This should only be used with the 8-bit codecs Latin1 and
 UTF8, when used with other codecs it will simply print a warning and
-exit. 
+exit.
 
 =item I<new(PV $data, PV $encode)>
 
@@ -100,7 +100,7 @@ Constructs a String from the data $data encoded by $encode.
 
 =item I<new(PV $data)>
 
-Constructs a String from the data $data. 
+Constructs a String from the data $data.
 
 B<NOTE> $data should be the internal format of Perl. It will check the
 UTF8 to determine the encode to use(Latin1 or UTF8 in this case).
@@ -139,12 +139,12 @@ $offset. If the pattern is not found, -1 is returned.
 =item I<String substr(UV $position, UV $n = 0xffffffff)>
 
 Extract a substring from this string starting at $position and
- continuing for $n characters. 
+ continuing for $n characters.
 
 =item I<String apppend(String $s)>
 
 Append $s to the current string and return a reference to the current
-string. 
+string.
 
 =item I<String uppper()>
 
@@ -183,7 +183,7 @@ Convert the string to an integer.
 
 =item I<String stripWhiteSpace()>
 
-Returns a string with the leading and trailing whitespace stripped. 
+Returns a string with the leading and trailing whitespace stripped.
 
 =item I<String number(IV $n)> [static]
 

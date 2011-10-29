@@ -4,18 +4,18 @@ MODULE = TagLib			PACKAGE = TagLib::Ogg::File
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::Ogg::File::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::Ogg::File::packet(i)
 	unsigned int i
 CODE:
@@ -23,14 +23,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::File::setPacket(i, p)
 	unsigned int i
 	TagLib::ByteVector * p
 CODE:
 	THIS->setPacket(i, *p);
 
-void 
+void
 TagLib::Ogg::File::firstPageHeader()
 INIT:
 	const TagLib::Ogg::PageHeader * h = THIS->firstPageHeader();
@@ -43,7 +43,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::Ogg::File::lastPageHeader()
 INIT:
 	const TagLib::Ogg::PageHeader * h = THIS->lastPageHeader();
@@ -56,7 +56,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::Ogg::File::save()
 CODE:
 	RETVAL = THIS->save();
@@ -64,10 +64,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # File(const char *file)
 # not exported
-# 
+#
 ################################################################

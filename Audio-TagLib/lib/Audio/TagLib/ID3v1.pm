@@ -21,7 +21,7 @@ Audio::TagLib::ID3v1 - Functions in this namespace
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v1;
-  
+
   my $list     = Audio::TagLib::ID3v1->genreList();
   my $genremap = Audio::TagLib::ID3v1->genreMap();
 

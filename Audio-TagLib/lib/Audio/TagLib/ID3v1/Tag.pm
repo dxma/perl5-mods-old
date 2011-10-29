@@ -23,7 +23,7 @@ Audio::TagLib::ID3v1::Tag - An ID3v1 tag implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v1::Tag;
-  
+
   my $i = Audio::TagLib::ID3v1::Tag->new();
   $i->setYear(1981);
   print $i->year(), "\n"; # got 1981
@@ -40,7 +40,7 @@ ID3v1 tags should generally only contain Latin1 information.  However
 because many applications do not follow this rule there is now support
 for overriding the ID3v1 string handling using the
 ID3v1::StringHandler class.  Please see the documentation for that
-class for more information. 
+class for more information.
 
 see L<StringHandler|Audio::TagLib::ID3v1::StringHandler>
 
@@ -56,7 +56,7 @@ Create an ID3v1 tag with default values.
 =item I<new(L<File|Audio::TagLib::File> $file, IV $tagOffset)>
 
 Create an ID3v1 tag and parse the data in $file starting at
-$tagOffset. 
+$tagOffset.
 
 =item I<DESTROY()>
 
@@ -70,7 +70,7 @@ the file.
 =item I<L<ByteVector|Audio::TagLib::ByteVector> fileIdentifier()> [static]
 
 Returns the string "TAG" suitable for usage in locating the tag in a
-  file. 
+  file.
 
 =item I<L<String|Audio::TagLib::String> title()>
 
@@ -107,7 +107,7 @@ setStringHandler(L<StringHandler|Audio::TagLib::ID3v1::StringHandler>
 $handler)> [static]
 
 Sets the string handler that decides how the ID3v1 data will be
-converted to and from binary data. 
+converted to and from binary data.
 
 see L<StringHandler|Audio::TagLib::ID3v1::StringHandler>
 

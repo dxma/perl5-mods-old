@@ -23,7 +23,7 @@ Audio::TagLib::ID3v2::UnknownFrame - A frame type unkown to Audio::TagLib
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::UnknownFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::UnknownFrame->new(
     Audio::TagLib::ByteVector->new("blah"));
   print $i->data()->data(), "\n"; # got "blah"
@@ -38,7 +38,7 @@ of rendering such unknown frames.
 Please note that a cleaner way of handling frame types that Audio::TagLib
 does not understand is to subclass ID3v2::Frame and
 ID3v2::FrameFactory to have your frame type supported through the
-standard ID3v2 mechanism. 
+standard ID3v2 mechanism.
 
 =over
 
@@ -56,7 +56,7 @@ see L<Audio::TagLib::ID3v2::Frame::toString()|Audio::TagLib::ID3v2::Frame>
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> data()>
 
-Returns the field data (everything but the header) for this frame. 
+Returns the field data (everything but the header) for this frame.
 
 =back
 

@@ -4,25 +4,25 @@ MODULE = TagLib			PACKAGE = TagLib::APE::Tag
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
-# PUBLIC MEMBER FUNCTIONS 
-# 
+#
+# PUBLIC MEMBER FUNCTIONS
+#
 ################################################################
 
-TagLib::APE::Tag * 
+TagLib::APE::Tag *
 TagLib::APE::Tag::new(...)
 PROTOTYPE: ;$$
 PREINIT:
 	TagLib::File * file;
 	long tagOffset;
 CODE:
-	/*! 
+	/*!
 	 * Tag()
 	 * Tag(File *file, long tagOffset)
 	 */
 	switch(items) {
 	case 3:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::File"))
 			file = INT2PTR(TagLib::File *, SvIV(SvRV(ST(1))));
 		else
@@ -42,111 +42,111 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Tag::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::APE::Tag::render()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->render());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::Tag::title()
 CODE:
 	RETVAL = new TagLib::String(THIS->title());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::Tag::artist()
 CODE:
 	RETVAL = new TagLib::String(THIS->artist());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::Tag::album()
 CODE:
 	RETVAL = new TagLib::String(THIS->album());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::Tag::comment()
 CODE:
 	RETVAL = new TagLib::String(THIS->comment());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::Tag::genre()
 CODE:
 	RETVAL = new TagLib::String(THIS->genre());
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::APE::Tag::year()
 CODE:
 	RETVAL = THIS->year();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::APE::Tag::track()
 CODE:
 	RETVAL = THIS->track();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Tag::setTitle(s)
 	TagLib::String * s
 CODE:
 	THIS->setTitle(*s);
 
-void 
+void
 TagLib::APE::Tag::setArtist(s)
 	TagLib::String * s
 CODE:
 	THIS->setArtist(*s);
 
-void 
+void
 TagLib::APE::Tag::setAlbum(s)
 	TagLib::String * s
 CODE:
 	THIS->setAlbum(*s);
 
-void 
+void
 TagLib::APE::Tag::setComment(s)
 	TagLib::String * s
 CODE:
 	THIS->setComment(*s);
 
-void 
+void
 TagLib::APE::Tag::setGenre(s)
 	TagLib::String * s
 CODE:
 	THIS->setGenre(*s);
 
-void 
+void
 TagLib::APE::Tag::setYear(i)
 	unsigned int i
 CODE:
 	THIS->setYear(i);
 
-void 
+void
 TagLib::APE::Tag::setTrack(i)
 	unsigned int i
 CODE:
 	THIS->setTrack(i);
 
-void 
+void
 TagLib::APE::Tag::footer()
 PREINIT:
 	TagLib::APE::Footer * f;
@@ -157,7 +157,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::APE::Tag::itemListMap()
 PREINIT:
 	SV * refobj, * refhash;
@@ -180,13 +180,13 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::APE::Tag::removeItem(key)
 	TagLib::String * key
 CODE:
 	THIS->removeItem(*key);
 
-void 
+void
 TagLib::APE::Tag::addValue(key, value, replace=true)
 	TagLib::String * key
 	TagLib::String * value
@@ -194,7 +194,7 @@ TagLib::APE::Tag::addValue(key, value, replace=true)
 CODE:
 	THIS->addValue(*key, *value, replace);
 
-void 
+void
 TagLib::APE::Tag::setItem(key, item)
 	TagLib::String * key
 	TagLib::APE::Item * item
@@ -202,26 +202,26 @@ CODE:
 	THIS->setItem(*key, *item);
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::APE::Tag::fileIdentifier()
 CODE:
-	RETVAL = new 
+	RETVAL = new
 		TagLib::ByteVector(TagLib::APE::Tag::fileIdentifier());
 OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void read()
 # void parse(const ByteVector &data)
 # not exported
-# 
+#
 ################################################################
 
