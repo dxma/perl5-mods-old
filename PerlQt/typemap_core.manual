@@ -5,6 +5,7 @@
 # NOTE: _FULL_ qualified name if possible
 std::string				T_STD_STRING_PV
 std::forward_iterator_tag		T_STRUCT
+std::exception				T_CLASS
 
 # private struct
 QByteArray::Data			T_STRUCT

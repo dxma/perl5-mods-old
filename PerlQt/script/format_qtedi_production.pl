@@ -1206,7 +1206,7 @@ sub _format {
     my $entries           = shift;
     my $formatted_entries = [];
 
-    # strip strategy: comment/expression/template
+    # strip comment/expression/template
     foreach my $entry (@$entries) {
         #print STDERR $entry->{type}, "\n";
         _format_primitive_loop($entry, $formatted_entries);
