@@ -25,7 +25,7 @@
 	break;
     }
   [% CASE 'T_QFLAGS' %]
-    [% var %] = [% type.remove('^const ') %]((int)SvIV([% arg %]));
+    [% var %] = [% type %](([% my_typemap_template.$type.arg0_type %])SvIV([% arg %]));
   [% CASE DEFAULT %]
     [% PERL %] warn('typemap_in2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
   [% END %]
@@ -44,7 +44,7 @@
         sv_setiv([% arg %], 2);
     }
   [% CASE 'T_QFLAGS' %]
-    sv_setiv([% arg %], (IV)[% var %]);
+    sv_setiv([% arg %], (int)[% var %]);
   [% CASE DEFAULT %]
     [% PERL %] warn('typemap_out2 unknown type: '. $stash->get('type'). ' '. $stash->get('ptype')) [% END %]
   [% END %]

@@ -90,6 +90,38 @@ sub load_yaml {
     return Load($cont);
 }
 
+# method copied from script/finalize_typemap.pl
+sub get_known_primitive_types {
+    my ( $type_template, ) = @_;
+
+    local ( *TEMPLATE, );
+    open TEMPLATE, '<', $type_template or
+      croak("cannot open file to read: $!");
+    my $primitive_type_map = {};
+    while (<TEMPLATE>) {
+        if (m/^\s*\[\%-?\s+CASE\s+(.+)\s+-?\%\]\s*$/o) {
+            next if $1 eq 'DEFAULT';
+            my $str = $1;
+            if ($str =~ /^'([^']+)'$/o) {
+                $primitive_type_map->{$1}++;
+            }
+            elsif ($str =~ /^\[\s*(.+)\s*\]$/o) {
+                my $str2 = $1;
+                foreach my $t (split /\s*,\s*/, $str2) {
+                    if ($t =~ /^'([^']+)'$/o) {
+                        $primitive_type_map->{$1}++;
+                    }
+                }
+            }
+            else {
+                carp("unknown CASE line in typemap: ". $_);
+            }
+        }
+    }
+    close TEMPLATE;
+    return $primitive_type_map;
+}
+
 sub main {
     my $mod_conf_file   = '';
     my $template_dir    = '';
@@ -133,6 +165,14 @@ sub main {
         }
         close $F;
     }
+    my %known_primitive_type = ();
+    foreach my $f (qw/typemap.tt2 typemap2.tt2/) {
+        croak "template file not found: $f" if !-f File::Spec::->catfile($template_dir, $f);
+        my $known = get_known_primitive_types(File::Spec::->catfile($template_dir, $f));
+        foreach my $t (keys %$known) {
+            $known_primitive_type{$t}++;
+        }
+    }
     #croak "no packagemap file found" if !-f $packagemap_file;
     croak "no default typedef file found" if !-f $def_typedef_file;
     croak "no enummap file found" if !-f $enummap_file;
@@ -165,6 +205,7 @@ sub main {
     my $typedef = exists $f{typedef} ? load_yaml($f{typedef}) : {};
     # global typemap
     my $typemap = {};
+    my $typemap_template = {};
     foreach my $f (@typemap_files) {
         # open my $F, $f or croak "cannot open file to read: $!";
         # while (<$F>) {
@@ -178,6 +219,13 @@ sub main {
         my $map = load_yaml($f);
         foreach my $k (keys %$map) {
             $typemap->{$k} = $map->{$k};
+        }
+        my $f2 = $f. '_template_draft';
+        if (-f $f2) {
+            $map = load_yaml($f2);
+            foreach my $i (@$map) {
+                $typemap_template->{$i->{ctype}} = $i;
+            }
         }
     }
     # add hidden typemap (for function pointer and enum)
@@ -264,10 +312,13 @@ sub main {
             #print STDERR "return type in $name: ", $i->{return}, "\n";
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
-            if ($i->{return} =~ /(?<!QFlags)</io) {
+            #if ($i->{return} =~ /(?<!QFlags)</io) {
+            unless (exists $typemap->{$i->{return}} and exists $known_primitive_type{$typemap->{$i->{return}}}) {
                 # FIXME: skip template class for now
-                print STDERR "skip template class method: $name, $i->{return}\n";
-                next METHOD_LOOP;
+                unless ($i->{return} eq 'void') {
+                    print STDERR "skip method: $name, $i->{return}\n";
+                    next METHOD_LOOP;
+                }
             }
         }
         my $param_num = @{$i->{parameters}};
@@ -347,9 +398,10 @@ sub main {
                     $p->{default} = $cname. '('. $cvalue .')';
                 }
             }
-            if ($p->{type} =~ /(?<!QFlags)</io) {
+            #if ($p->{type} =~ /(?<!QFlags)</io) {
+            unless (exists $typemap->{$p->{type}} and exists $known_primitive_type{$typemap->{$p->{type}}}) {
                 # FIXME: skip template class for now
-                print STDERR "skip template class method: $name, $p->{type}\n";
+                print STDERR "skip method: $name, $p->{type}\n";
                 next METHOD_LOOP;
             }
             elsif ($p->{type} eq '...') {
@@ -468,6 +520,7 @@ sub main {
         my_methods_by_name  => $pub_methods_by_name,
         my_enums            => $enums,
         my_typemap          => $typemap,
+        my_typemap_template => $typemap_template,
         my_packagemap       => $packagemap,
         my_enummap          => $enummap,
         my_abstract         => $abstract_class,
