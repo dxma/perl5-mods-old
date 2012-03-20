@@ -314,7 +314,7 @@ sub main {
             $i->{return} =~ s/^\s*static\b//o;
             #if ($i->{return} =~ /(?<!QFlags)</io) {
             unless (exists $typemap->{$i->{return}} and exists $known_primitive_type{$typemap->{$i->{return}}}) {
-                # FIXME: skip template class for now
+                # skip class not in typemap
                 unless ($i->{return} eq 'void') {
                     print STDERR "skip method: $name, $i->{return}\n";
                     next METHOD_LOOP;
@@ -400,7 +400,7 @@ sub main {
             }
             #if ($p->{type} =~ /(?<!QFlags)</io) {
             unless (exists $typemap->{$p->{type}} and exists $known_primitive_type{$typemap->{$p->{type}}}) {
-                # FIXME: skip template class for now
+                # skip class not in typemap
                 print STDERR "skip method: $name, $p->{type}\n";
                 next METHOD_LOOP;
             }
