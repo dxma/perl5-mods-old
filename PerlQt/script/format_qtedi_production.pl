@@ -180,7 +180,7 @@ sub __format_class_or_struct {
     delete $entry->{property};
     # format inheritance line
     if (exists $entry->{inheritance} and $entry->{inheritance}) {
-        foreach my $s (split /\s*,\s*/, $entry->{inheritance}) {
+        foreach my $s (split /\s*,\s*(?=public|private|protected)/, $entry->{inheritance}) {
             next if !$s;
             if ($s =~ /^(public|private|protected) (.+)\s*$/o) {
                 my $name = $2;
