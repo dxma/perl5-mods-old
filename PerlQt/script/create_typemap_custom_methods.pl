@@ -569,6 +569,62 @@ sub QGenericMatrix {
     return $entry;
 }
 
+sub QTestCoreList {
+    my @sub_entry = @_;
+
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QTestCoreList<type>
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'T_QTESTCORELIST',
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QTestCoreList<'. $sub_c_type. '>';
+    $entry->{t_type} = 'T_QTESTCORELIST';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{c_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QTestCoreList';
+        $new_entry->{ctype}     = $entry->{c_type};
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
+        $new_entry->{arg0_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{c_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
+sub QTestCoreElement {
+    my @sub_entry = @_;
+
+    our ( %TYPE_KNOWN, @TYPE_TEMPLATE, );
+    # QTestCoreElement<type>
+    my $entry     = {};
+    $entry->{IS_TEMPLATE} = 1;
+    $entry->{type}   = join('__', 'T_QTESTCOREELEMENT',
+                            map { $_->{t_type} } @sub_entry);
+    my $sub_c_type = join(' ', map { $_->{c_type} } @sub_entry);
+    $entry->{c_type} = 'QTestCoreElement<'. $sub_c_type. '>';
+    $entry->{t_type} = 'T_QTESTCOREELEMENT';
+    # record type info in @TYPE_TEMPLATE
+    unless (exists $_TYPE_TEMPLATE{$entry->{c_type}}) {
+        my $new_entry = {};
+        $new_entry->{name}      = 'QTestCoreElement';
+        $new_entry->{ctype}     = $entry->{c_type};
+        $new_entry->{type}      = $new_entry->{name};
+        $new_entry->{ntype}     = $entry->{type};
+        $new_entry->{argc}      = 1;
+        $new_entry->{arg0_type} = $sub_c_type;
+        push @TYPE_TEMPLATE, $new_entry;
+        $_TYPE_TEMPLATE{$entry->{c_type}} = 1;
+    }
+    $TYPE_KNOWN{$entry->{c_type}} = $entry->{type};
+    return $entry;
+}
+
 sub std_less {
     my @sub_entry = @_;
 
