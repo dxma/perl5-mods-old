@@ -18,5 +18,6 @@ QTextStream::T_FPOINTER_QTSMFI_QTEXTSTREAM	T_QTEXTSTREAM_QTSMFI
 # Qt 4.3
 #isc_db_handle				T_PTR
 # Qt 4.4
-QMap<int,ResultItem>::const_iterator	T_CLASS
+# FIXME: disable for now
+QMap<int,ResultItem>::const_iterator	T_SKIP
 

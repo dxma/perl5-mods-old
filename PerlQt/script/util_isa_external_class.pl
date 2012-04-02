@@ -44,6 +44,13 @@ sub main {
     usage() if $opt{h};
     #usage() unless @ARGV;
 
+    my $packagemap = {};
+    foreach my $f ("05typemap/packagemap", glob("packagemap.*")) {
+        my $map = load_yaml($f);
+        foreach my $k (keys %$map) {
+            $packagemap->{$k} = $map->{$k};
+        }
+    }
     foreach my $f (glob("04group/*.meta")) {
         my $meta = load_yaml($f);
         next if !exists $meta->{ISA};
@@ -54,9 +61,10 @@ sub main {
             next if $isa->{RELATIONSHIP} ne 'public';
             my $parent = $isa->{NAME};
             $parent = $typedef->{$parent} if exists $typedef->{$parent};
-            ( my $f3 = $parent ) =~ s/::/__/go;
-            $f3 = "04group/$f3.meta";
-            print "$meta->{NAME}: $parent\n" if !-f $f3;
+            # ( my $f3 = $parent ) =~ s/::/__/go;
+            # $f3 = "04group/$f3.meta";
+            # print "$meta->{NAME}: $parent\n" if !-f $f3;
+            print "$meta->{NAME}: $parent\n" if !exists $packagemap->{$parent};
         }
     }
     exit 0;

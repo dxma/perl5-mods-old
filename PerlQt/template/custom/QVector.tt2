@@ -1,0 +1,207 @@
+---
+-
+  NAME: size
+  RETURN: int
+  operator: 0
+-
+  NAME: isEmpty
+  RETURN: bool
+  operator: 0
+-
+  NAME: resize
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+  operator: 0
+-
+  NAME: capacity
+  RETURN: int
+  operator: 0
+-
+  NAME: reserve
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+  operator: 0
+-
+  NAME: squeeze
+  RETURN: void
+  operator: 0
+-
+  NAME: detach
+  RETURN: void
+  operator: 0
+- 
+  NAME: isDetached
+  RETURN: bool
+  operator: 0
+-
+  NAME: setSharable
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: shrable
+      TYPE: bool
+  operator: 0
+-
+  NAME: isSharedWith
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: const QVector<[% arg0_type %]>
+  operator: 0
+-
+  NAME: data
+  RETURN: const [% arg0_type %] *
+  operator: 0
+-
+  NAME: constData
+  RETURN: const [% arg0_type %] *
+  operator: 0
+-
+  NAME: clear
+  RETURN: void
+  operator: 0
+-
+  NAME: at
+  RETURN: const [% arg0_type %] &
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 0
+-
+  NAME: operator[]
+  RETURN: const [% arg0_type %] &
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 1
+-
+  NAME: append
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: prepend
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: insert
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: insert
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: n
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: replace
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: remove
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 0
+-
+  NAME: remove
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: n
+      TYPE: int
+  operator: 0
+-
+  NAME: fill
+  RETURN: QVector<[% arg0_type %]> &
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: size
+      TYPE: int
+      DEFAULT_VALUE: -1
+  operator: 0
+-
+  NAME: indexOf
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: from
+      TYPE: int
+      DEFAULT_VALUE: 0
+  operator: 0
+-
+  NAME: lastIndexOf
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: from
+      TYPE: int
+      DEFAULT_VALUE: -1
+  operator: 0
+-
+  NAME: contains
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: count
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
