@@ -1,0 +1,212 @@
+---
+-
+  NAME: size
+  RETURN: int
+  operator: 0
+-
+  NAME: detach
+  RETURN: void
+  operator: 0
+-
+  NAME: detachShared
+  RETURN: void
+  operator: 0
+- 
+  NAME: isDetached
+  RETURN: bool
+  operator: 0
+-
+  NAME: setSharable
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: shrable
+      TYPE: bool
+  operator: 0
+-
+  NAME: isSharedWith
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: const QList<[% arg0_type %]>
+  operator: 0
+-
+  NAME: isEmpty
+  RETURN: bool
+  operator: 0
+-
+  NAME: clear
+  RETURN: void
+  operator: 0
+-
+  NAME: at
+  RETURN: const [% arg0_type %] &
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 0
+-
+  NAME: operator[]
+  RETURN: const [% arg0_type %] &
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 1
+-
+  NAME: reserve
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+  operator: 0
+-
+  NAME: append
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: append
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const QList<[% arg0_type %]> &
+  operator: 0
+-
+  NAME: prepend
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: insert
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: replace
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: removeAt
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 0
+-
+  NAME: removeAll
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: removeOne
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: takeAt
+  RETURN: [% arg0_type +%]
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+  operator: 0
+-
+  NAME: takeFirst
+  RETURN: [% arg0_type +%]
+  operator: 0
+-
+  NAME: takeLast
+  RETURN: [% arg0_type +%]
+  operator: 0
+-
+  NAME: move
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: from
+      TYPE: int
+    -
+      NAME: to
+      TYPE: int
+  operator: 0
+-
+  NAME: swap
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: i
+      TYPE: int
+    -
+      NAME: j
+      TYPE: int
+  operator: 0
+-
+  NAME: indexOf
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: from
+      TYPE: int
+      DEFAULT_VALUE: 0
+  operator: 0
+-
+  NAME: lastIndexOf
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: from
+      TYPE: int
+      DEFAULT_VALUE: -1
+  operator: 0
+-
+  NAME: contains
+  RETURN: QBool
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: count
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &

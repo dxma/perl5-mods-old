@@ -122,6 +122,274 @@ sub get_known_primitive_types {
     return $primitive_type_map;
 }
 
+sub create_xs_code {
+    my %opt = @_;
+    my $mod_conf             = $opt{mod_conf};
+    my $meta                 = $opt{meta};
+    my $publics              = $opt{publics};
+    my $typemap              = $opt{typemap};
+    my $typemap_template     = $opt{typemap_template};
+    my $packagemap           = $opt{packagemap};
+    my $enums                = $opt{enums};
+    my $enummap              = $opt{enummap};
+    my $known_primitive_type = $opt{known_primitive_type};
+    my $abstract_class       = $opt{abstract_class};
+    my $localtype            = $opt{localtype};
+    my $def_typedef          = $opt{def_typedef};
+    my $template             = $opt{template};
+
+    my $subst_with_fullname = sub {
+        my ( $type, ) = @_;
+
+        # translate local typedef to full class name
+        if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
+            $type = $localtype->{$type};
+        }
+        foreach my $t (keys %$def_typedef) {
+            if ($def_typedef->{$t} =~ /^T_(?:FPOINTER|ARRAY)_/o) {
+                $type =~ s/(?<!\:)\b\Q$t\E\b/$def_typedef->{$t}/ge;
+            }
+        }
+        return $type;
+    };
+
+    my $out = '';
+    my $has_operator_new = 0;
+    # loop into each public method, group by name
+    my $pub_methods_by_name = {};
+    my $skip_methods = exists $mod_conf->{skip_methods} ?
+      $mod_conf->{skip_methods} : [];
+    METHOD_LOOP:
+    foreach my $i (@$publics) {
+        # convert relevant field key to lowcase
+        # no conflict with template commands
+        my $name         = delete $i->{NAME};
+        $has_operator_new = 1 if $name eq 'operator new';
+        next METHOD_LOOP if grep { $name eq $_ } @$skip_methods;
+        next METHOD_LOOP if grep { $meta->{NAME}. '::'. $name eq $_ } @$skip_methods;
+        if ($i->{operator}) {
+            my $name2 = $name;
+            if ($name2 =~ /^operator\s(.+)$/) {
+                # operator int => operator_int
+                $i->{return} = $1;
+                $name2 =~ s/\s+/_/go;
+                $name2 =~ s/\*/ptr/go;
+                $name2 =~ s/\&/ref/go;
+            }
+            else {
+                my ( $op ) = $name2 =~ /^operator(.+)$/o;
+                if (exists $OPERATOR_MAP{$op}) {
+                    $name2 = 'operator_'. $OPERATOR_MAP{$op};
+                }
+                else {
+                    print STDERR "no operator op match: operator$op\n";
+                }
+            }
+            $i->{name2} = $name2;
+        }
+        $i->{parameters} = exists $i->{PARAMETER} ?
+          delete $i->{PARAMETER} : [];
+        $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
+        # substitude with full typename for entries in typemap
+        if (exists $i->{return}) {
+            #print STDERR "return type in $name: ", $i->{return}, "\n";
+            $i->{return} = $subst_with_fullname->($i->{return});
+            $i->{return} =~ s/^\s*static\b//o;
+            #if ($i->{return} =~ /(?<!QFlags)</io) {
+            unless (exists $typemap->{$i->{return}} and exists $known_primitive_type->{$typemap->{$i->{return}}}) {
+                # skip class not in typemap
+                unless ($i->{return} eq 'void') {
+                    print STDERR "skip method: $name, $i->{return}\n";
+                    next METHOD_LOOP;
+                }
+            }
+        }
+        my $param_num = @{$i->{parameters}};
+        # handle foo(void)
+        if ($param_num == 1 and $i->{parameters}->[0]->{TYPE} eq 'void') {
+            splice @{$i->{parameters}}, 0, 1;
+            $param_num = 0;
+        }
+        PARAM_LOOP:
+        for (my $j = 0; $j < $param_num; $j++) {
+            my $p = $i->{parameters}->[$j];
+            $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
+            $p->{type} = delete $p->{TYPE};
+            #print STDERR "param type in $name: ", $p->{type}, "\n";
+            $p->{type} = $subst_with_fullname->($p->{type});
+            if (exists $p->{DEFAULT_VALUE}) {
+                $p->{default} = delete $p->{DEFAULT_VALUE};
+                my $is_qflags = 0;
+                $is_qflags = 1 if exists $typemap->{$p->{type}} and
+                  $typemap->{$p->{type}} eq 'T_QFLAGS';
+                if ($typemap->{$p->{type}} =~ /OBJ$/o) {
+                    my $type2 = $p->{type};
+                    $type2 =~ s/^const\s+//o;
+                    $type2 =~ s/\s+const$//o;
+                    $type2 =~ s/\s*(?:\*|\&)+\s*$//o;
+                    $is_qflags = 1 if exists $typemap->{$type2} and
+                      $typemap->{$type2} eq 'T_QFLAGS';
+                }
+                if ($p->{type} eq 'int' and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    # non-num enum item
+                    if ($p->{default} !~ /\:\:/o) {
+                        $p->{default} = $meta->{PERL_NAME}. '::'. $p->{default};
+                    }
+                }
+                elsif (exists $typemap->{$p->{type}} and
+                      $typemap->{$p->{type}} eq 'T_ENUM' and
+                        $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    if ($p->{default} !~ /\:\:/o) {
+                        # stamp with class name
+                        my @type = split /\:\:/, $p->{type};
+                        if (@type > 1) {
+                            pop @type;
+                            $p->{default} = join('::', @type, $p->{default});
+                        }
+                    }
+                }
+                elsif ($is_qflags and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
+                    ( my $class ) = $p->{type} =~ /QFlags<([^>]+)>/o;
+                    $class =~ s/^(.+)\:\:.+$/$1/io;
+                    if ($p->{default} =~ /^([^(]+)\((.+)\)$/) {
+                        my ( $func, $enums ) = ( $1, $2 );
+                        $func = $meta->{PERL_NAME}. '::'. $func if $func !~ /\:\:/io;
+                        my @enum = split /\s*\|\s*/, $enums;
+                        $enums = join(' | ', map { $class. '::'. $_ } @enum) if @enum and $enum[0] !~ /\:\:/io;
+                        $p->{default} = $func. '('. $enums. ')';
+                    }
+                    elsif ($p->{default} !~ /\:\:/o) {
+                        # stamp with class name
+                        $p->{default} = join('::', $class, $p->{default});
+                    }
+                }
+                elsif ($p->{default} =~ /^(\w+)\(\)$/o) {
+                    # maybe subclass
+                    # substitude with full class name
+                    my $cname = $1;
+                    $cname = $subst_with_fullname->($cname);
+                    $p->{default} = $cname. '()';
+                }
+                elsif ($p->{default} =~ /^(\w+)\((\w+)\)$/o) {
+                    my $cname = $1;
+                    my $cvalue= $2;
+                    $cname = $subst_with_fullname->($cname);
+                    # ugly patch to workaround local variable
+                    $cvalue= $subst_with_fullname->($cvalue);
+                    $cvalue= $meta->{PERL_NAME}. '::'. $cvalue if
+                      $cvalue !~ /\:\:/o and $cvalue !~ /^(?:-|0x)?\d+$/o;
+                    $p->{default} = $cname. '('. $cvalue .')';
+                }
+            }
+            #if ($p->{type} =~ /(?<!QFlags)</io) {
+            unless (exists $typemap->{$p->{type}} and exists $known_primitive_type->{$typemap->{$p->{type}}}) {
+                # skip class not in typemap
+                print STDERR "skip method: $name, $p->{type}\n";
+                next METHOD_LOOP;
+            }
+            elsif ($p->{type} eq '...') {
+                # FIXME: skip va_list
+                print STDERR "skip va_list method: $name, $p->{type}\n";
+                next METHOD_LOOP;
+            }
+            # workaround class without default constructor
+            # patch QBool to QBool &
+            if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {
+                $p->{type} = $p->{type}. ' &';
+            }
+        }
+        push @{$pub_methods_by_name->{$name}}, $i;
+    }
+    # map method with default param value
+    # foo(int, int = 0, int = 0)
+    # into:
+    # foo(int, int, 0  )
+    # foo(int, int, int)
+    # foo(int, 0  , 0)
+    # foo(int, int, 0)
+    my $cb_clone_method = sub {
+        my ( $method, ) = @_;
+
+        my $clone = {};
+        $clone->{parameters} = [];
+        foreach my $k (keys %$method) {
+            if ($k eq 'parameters') {
+                for (my $i = 0; $i < @{$method->{parameters}}; $i++) {
+                    foreach my $p (keys %{$method->{parameters}->[$i]}) {
+                        $clone->{parameters}->[$i]->{$p} =
+                          $method->{parameters}->[$i]->{$p};
+    }
+                }
+            }
+            else {
+                $clone->{$k} = $method->{$k};
+            }
+        }
+        return $clone;
+    };
+    foreach my $name (keys %$pub_methods_by_name) {
+        my $new_methods = [];
+
+        foreach my $method (@{$pub_methods_by_name->{$name}}) {
+            for (my $i = $#{$method->{parameters}}; $i >= 0; $i--) {
+                my $p = $method->{parameters}->[$i];
+                if (exists $p->{default}) {
+                    my $clone = $cb_clone_method->($method);
+                    for (my $j = $i; $j >= 0; $j--) {
+                        delete $clone->{parameters}->[$j]->{default} if
+                          exists $clone->{parameters}->[$j]->{default};
+                    }
+                    push @$new_methods, $clone;
+                }
+            }
+            push @$new_methods, $method;
+        }
+        $pub_methods_by_name->{$name} = [ sort {
+            scalar(@{$a->{parameters}}) <=> scalar(@{$b->{parameters}})
+        } @$new_methods ];
+    }
+
+    # generate xs file from template
+    # workaround a bug in ttk when a key of hash is 'keys'
+    # it gets wrong
+    my $mem_methods = [];
+    my $cname = (split /\:\:/, $meta->{NAME})[-1];
+    foreach my $m (sort keys %$pub_methods_by_name) {
+        next if $m eq $cname;
+        next if $m eq '~'. $cname;
+        push @$mem_methods, $m;
+    }
+    my $abstract = 0;
+    # check abstract property
+    if (exists $meta->{PROPERTY} and grep { $_ eq 'abstract' } @{$meta->{PROPERTY}}) {
+        $abstract = 1;
+    }
+    $abstract = 1 if exists $abstract_class->{$meta->{NAME}};
+
+    #use Data::Dumper;
+    #print Data::Dumper::Dumper($pub_methods_by_name);
+    my $var = {
+        my_cclass           => $meta->{NAME},
+        my_type             => $meta->{type},
+        my_module           => $meta->{MODULE},
+        my_package          => $packagemap->{$meta->{NAME}},
+        my_file             => $meta->{FILE},
+        my_methods          => $mem_methods,
+        my_methods_by_name  => $pub_methods_by_name,
+        my_enums            => $enums,
+        my_typemap          => $typemap,
+        my_typemap_template => $typemap_template,
+        my_packagemap       => $packagemap,
+        my_enummap          => $enummap,
+        my_abstract         => $abstract,
+        my_has_operator_new => $has_operator_new,
+    };
+    $template->process('xscode.tt2', $var, \$out) or
+      croak $template->error;
+    $out .= "\n";
+    return $out;
+}
+
 sub main {
     my $mod_conf_file   = '';
     my $template_dir    = '';
@@ -256,217 +524,11 @@ sub main {
     }
     # enum map
     my $enummap    = load_yaml($enummap_file);
-    my $subst_with_fullname = sub {
-        my ( $type, ) = @_;
 
-        # translate local typedef to full class name
-        if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
-            $type = $localtype->{$type};
-        }
-        foreach my $t (keys %$def_typedef) {
-            if ($def_typedef->{$t} =~ /^T_(?:FPOINTER|ARRAY)_/o) {
-                $type =~ s/(?<!\:)\b\Q$t\E\b/$def_typedef->{$t}/ge;
-            }
-        }
-        return $type;
-    };
-
-    my $has_operator_new = 0;
-    # loop into each public method, group by name
-    my $pub_methods_by_name = {};
-    my $skip_methods = exists $mod_conf->{skip_methods} ?
-      $mod_conf->{skip_methods} : [];
-    METHOD_LOOP:
+    my %public_by_name = ();
     foreach my $i (@$publics) {
-        # convert relevant field key to lowcase
-        # no conflict with template commands
-        my $name         = delete $i->{NAME};
-        $has_operator_new = 1 if $name eq 'operator new';
-        next METHOD_LOOP if grep { $name eq $_ } @$skip_methods;
-        next METHOD_LOOP if grep { $meta->{NAME}. '::'. $name eq $_ } @$skip_methods;
-        if ($i->{operator}) {
-            my $name2 = $name;
-            if ($name2 =~ /^operator\s(.+)$/) {
-                # operator int => operator_int
-                $i->{return} = $1;
-                $name2 =~ s/\s+/_/go;
-                $name2 =~ s/\*/ptr/go;
-                $name2 =~ s/\&/ref/go;
-            }
-            else {
-                my ( $op ) = $name2 =~ /^operator(.+)$/o;
-                if (exists $OPERATOR_MAP{$op}) {
-                    $name2 = 'operator_'. $OPERATOR_MAP{$op};
-                }
-                else {
-                    print STDERR "no operator op match: operator$op\n";
-                }
-            }
-            $i->{name2} = $name2;
-        }
-        $i->{parameters} = exists $i->{PARAMETER} ?
-          delete $i->{PARAMETER} : [];
-        $i->{return}     = delete $i->{RETURN} if exists $i->{RETURN};
-        # substitude with full typename for entries in typemap
-        if (exists $i->{return}) {
-            #print STDERR "return type in $name: ", $i->{return}, "\n";
-            $i->{return} = $subst_with_fullname->($i->{return});
-            $i->{return} =~ s/^\s*static\b//o;
-            #if ($i->{return} =~ /(?<!QFlags)</io) {
-            unless (exists $typemap->{$i->{return}} and exists $known_primitive_type{$typemap->{$i->{return}}}) {
-                # skip class not in typemap
-                unless ($i->{return} eq 'void') {
-                    print STDERR "skip method: $name, $i->{return}\n";
-                    next METHOD_LOOP;
-                }
-            }
-        }
-        my $param_num = @{$i->{parameters}};
-        # handle foo(void)
-        if ($param_num == 1 and $i->{parameters}->[0]->{TYPE} eq 'void') {
-            splice @{$i->{parameters}}, 0, 1;
-            $param_num = 0;
-        }
-        PARAM_LOOP:
-        for (my $j = 0; $j < $param_num; $j++) {
-            my $p = $i->{parameters}->[$j];
-            $p->{name} = exists $p->{NAME} ? delete $p->{NAME} : "arg$j";
-            $p->{type} = delete $p->{TYPE};
-            #print STDERR "param type in $name: ", $p->{type}, "\n";
-            $p->{type} = $subst_with_fullname->($p->{type});
-            if (exists $p->{DEFAULT_VALUE}) {
-                $p->{default} = delete $p->{DEFAULT_VALUE};
-                my $is_qflags = 0;
-                $is_qflags = 1 if exists $typemap->{$p->{type}} and
-                  $typemap->{$p->{type}} eq 'T_QFLAGS';
-                if ($typemap->{$p->{type}} =~ /OBJ$/o) {
-                    my $type2 = $p->{type};
-                    $type2 =~ s/^const\s+//o;
-                    $type2 =~ s/\s+const$//o;
-                    $type2 =~ s/\s*(?:\*|\&)+\s*$//o;
-                    $is_qflags = 1 if exists $typemap->{$type2} and
-                      $typemap->{$type2} eq 'T_QFLAGS';
-                }
-                if ($p->{type} eq 'int' and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
-                    # non-num enum item
-                    if ($p->{default} !~ /\:\:/o) {
-                        $p->{default} = $meta->{PERL_NAME}. '::'. $p->{default};
-                    }
-                }
-                elsif (exists $typemap->{$p->{type}} and
-                      $typemap->{$p->{type}} eq 'T_ENUM' and
-                        $p->{default} !~ /^(?:-|0x)?\d+$/io) {
-                    if ($p->{default} !~ /\:\:/o) {
-                        # stamp with class name
-                        my @type = split /\:\:/, $p->{type};
-                        if (@type > 1) {
-                            pop @type;
-                            $p->{default} = join('::', @type, $p->{default});
-                        }
-                    }
-                }
-                elsif ($is_qflags and $p->{default} !~ /^(?:-|0x)?\d+$/io) {
-                    ( my $class ) = $p->{type} =~ /QFlags<([^>]+)>/o;
-                    $class =~ s/^(.+)\:\:.+$/$1/io;
-                    if ($p->{default} =~ /^([^(]+)\((.+)\)$/) {
-                        my ( $func, $enums ) = ( $1, $2 );
-                        $func = $meta->{PERL_NAME}. '::'. $func if $func !~ /\:\:/io;
-                        my @enum = split /\s*\|\s*/, $enums;
-                        $enums = join(' | ', map { $class. '::'. $_ } @enum) if @enum and $enum[0] !~ /\:\:/io;
-                        $p->{default} = $func. '('. $enums. ')';
-                    }
-                    elsif ($p->{default} !~ /\:\:/o) {
-                        # stamp with class name
-                        $p->{default} = join('::', $class, $p->{default});
-                    }
-                }
-                elsif ($p->{default} =~ /^(\w+)\(\)$/o) {
-                    # maybe subclass
-                    # substitude with full class name
-                    my $cname = $1;
-                    $cname = $subst_with_fullname->($cname);
-                    $p->{default} = $cname. '()';
-                }
-                elsif ($p->{default} =~ /^(\w+)\((\w+)\)$/o) {
-                    my $cname = $1;
-                    my $cvalue= $2;
-                    $cname = $subst_with_fullname->($cname);
-                    # ugly patch to workaround local variable
-                    $cvalue= $subst_with_fullname->($cvalue);
-                    $cvalue= $meta->{PERL_NAME}. '::'. $cvalue if
-                      $cvalue !~ /\:\:/o and $cvalue !~ /^(?:-|0x)?\d+$/o;
-                    $p->{default} = $cname. '('. $cvalue .')';
-                }
-            }
-            #if ($p->{type} =~ /(?<!QFlags)</io) {
-            unless (exists $typemap->{$p->{type}} and exists $known_primitive_type{$typemap->{$p->{type}}}) {
-                # skip class not in typemap
-                print STDERR "skip method: $name, $p->{type}\n";
-                next METHOD_LOOP;
-            }
-            elsif ($p->{type} eq '...') {
-                # FIXME: skip va_list
-                print STDERR "skip va_list method: $name, $p->{type}\n";
-                next METHOD_LOOP;
-            }
-            # workaround class without default constructor
-            # patch QBool to QBool &
-            if (grep { $p->{type} eq $_ } @{$mod_conf->{t_object_to_t_refobj}}) {
-                $p->{type} = $p->{type}. ' &';
-            }
-        }
-        push @{$pub_methods_by_name->{$name}}, $i;
+        $public_by_name{$i->{NAME}}++;
     }
-    # map method with default param value
-    # foo(int, int = 0, int = 0)
-    # into:
-    # foo(int, int, 0  )
-    # foo(int, int, int)
-    # foo(int, 0  , 0)
-    # foo(int, int, 0)
-    my $cb_clone_method = sub {
-        my ( $method, ) = @_;
-
-        my $clone = {};
-        $clone->{parameters} = [];
-        foreach my $k (keys %$method) {
-            if ($k eq 'parameters') {
-                for (my $i = 0; $i < @{$method->{parameters}}; $i++) {
-                    foreach my $p (keys %{$method->{parameters}->[$i]}) {
-                        $clone->{parameters}->[$i]->{$p} =
-                          $method->{parameters}->[$i]->{$p};
-    }
-                }
-            }
-            else {
-                $clone->{$k} = $method->{$k};
-            }
-        }
-        return $clone;
-    };
-    foreach my $name (keys %$pub_methods_by_name) {
-        my $new_methods = [];
-
-        foreach my $method (@{$pub_methods_by_name->{$name}}) {
-            for (my $i = $#{$method->{parameters}}; $i >= 0; $i--) {
-                my $p = $method->{parameters}->[$i];
-                if (exists $p->{default}) {
-                    my $clone = $cb_clone_method->($method);
-                    for (my $j = $i; $j >= 0; $j--) {
-                        delete $clone->{parameters}->[$j]->{default} if
-                          exists $clone->{parameters}->[$j]->{default};
-                    }
-                    push @$new_methods, $clone;
-                }
-            }
-            push @$new_methods, $method;
-        }
-        $pub_methods_by_name->{$name} = [ sort {
-            scalar(@{$a->{parameters}}) <=> scalar(@{$b->{parameters}})
-        } @$new_methods ];
-    }
-
-    # generate xs file from template
     my $template = Template::->new({
         INCLUDE_PATH => $template_dir,
         INTERPOLATE  => 0,
@@ -476,59 +538,70 @@ sub main {
         EVAL_PERL    => 1,
         #STRICT       => 1,
     });
-    # workaround a bug in ttk when a key of hash is 'keys'
-    # it gets wrong
-    my $mem_methods = [];
-    my $cname = (split /\:\:/, $meta->{NAME})[-1];
-    foreach my $m (sort keys %$pub_methods_by_name) {
-        next if $m eq $cname;
-        next if $m eq '~'. $cname;
-        push @$mem_methods, $m;
-    }
-    my $abstract_class = 0;
-    # walk thru class inheritence tree for abstract property
+    $out .= create_xs_code(
+        mod_conf             => $mod_conf,
+        meta                 => $meta,
+        publics              => $publics,
+        typemap              => $typemap,
+        typemap_template     => $typemap_template,
+        packagemap           => $packagemap,
+        enums                => $enums,
+        enummap              => $enummap,
+        known_primitive_type => \%known_primitive_type,
+        abstract_class       => \%abstract_class,
+        template             => $template,
+        localtype            => $localtype,
+        def_typedef          => $def_typedef,
+    );
+
+    # inline parent (template) class methods
     my @dir = File::Spec::->splitpath($f{meta});
     pop @dir;
-    my @parent = ( $meta, );
+    my @parent = exists $meta->{ISA} ? @{$meta->{ISA}} : ();
     while (@parent) {
-        my $m = pop @parent;
-        if (exists $m->{PROPERTY} and grep { $_ eq 'abstract' }
-              @{$m->{PROPERTY}}) {
-            $abstract_class = 1;
-            last;
+        my $i = pop @parent;
+        next if $i->{RELATIONSHIP} ne 'public';
+        my $name = $i->{NAME};
+        ( my $n = $name ) =~ s/\:\:/__/go;
+        if (exists $typemap_template->{$i->{NAME}}) {
+            $name = $typemap_template->{$i->{NAME}}->{name};
+            ( $n = $name ) =~ s/\:\:/__/go;
+            if (-f "$template_dir/custom/$n.tt2") {
+                my $out2 = '';
+                $template->process("custom/$n.tt2", $typemap_template->{$i->{NAME}}, \$out2) or
+                  croak $template->error;
+                my $publics2 = Load($out2);
+                $out .= create_xs_code(
+                    mod_conf             => $mod_conf,
+                    meta                 => $meta,
+                    # skip method implemented by child class
+                    publics              => [ grep { !exists $public_by_name{$_->{NAME}} } @$publics2 ],
+                    typemap              => $typemap,
+                    typemap_template     => $typemap_template,
+                    packagemap           => $packagemap,
+                    enums                => $enums,
+                    enummap              => $enummap,
+                    known_primitive_type => \%known_primitive_type,
+                    abstract_class       => \%abstract_class,
+                    template             => $template,
+                    localtype            => $localtype,
+                    def_typedef          => $def_typedef,
+                );
+            }
         }
-        # if (exists $m->{ISA}) {
-        #     foreach my $c (@{$m->{ISA}}) {
-        #         next if $c->{RELATIONSHIP} ne 'public';
-        #         ( my $n = $c->{NAME} ) =~ s/\:\:/__/go;
-        #         my $mf = File::Spec::->catpath(@dir, $n. '.meta');
-        #         push @parent, load_yaml($mf) if -f $mf;
-        #     }
-        # }
+        else {
+            # FIXME: load custom function.public file
+        }
+        next;
+        # skip template
+        next if $n =~ /</io;
+        my $f = File::Spec::->catpath(@dir, $n. '.meta');
+        if (-f $f) {
+            my $j = load_yaml($f);
+            push @parent, @{$j->{ISA}} if exists $j->{ISA};
+        }
     }
-    $abstract_class = 1 if exists $abstract_class{$meta->{NAME}};
 
-    #use Data::Dumper;
-    #print Data::Dumper::Dumper($pub_methods_by_name);
-    my $var = {
-        my_cclass           => $meta->{NAME},
-        my_type             => $meta->{type},
-        my_module           => $meta->{MODULE},
-        my_package          => $packagemap->{$meta->{NAME}},
-        my_file             => $meta->{FILE},
-        my_methods          => $mem_methods,
-        my_methods_by_name  => $pub_methods_by_name,
-        my_enums            => $enums,
-        my_typemap          => $typemap,
-        my_typemap_template => $typemap_template,
-        my_packagemap       => $packagemap,
-        my_enummap          => $enummap,
-        my_abstract         => $abstract_class,
-        my_has_operator_new => $has_operator_new,
-    };
-    $template->process('xscode.tt2', $var, \$out) or
-      croak $template->error. "\n";
-    $out .= "\n";
 WRITE_FILE:
     if ($xs_file) {
         open my $F, '>', $xs_file or
@@ -547,7 +620,7 @@ WRITE_FILE:
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2012 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
