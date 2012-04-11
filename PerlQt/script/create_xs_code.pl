@@ -137,21 +137,7 @@ sub create_xs_code {
     my $localtype            = $opt{localtype};
     my $def_typedef          = $opt{def_typedef};
     my $template             = $opt{template};
-
-    my $subst_with_fullname = sub {
-        my ( $type, ) = @_;
-
-        # translate local typedef to full class name
-        if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
-            $type = $localtype->{$type};
-        }
-        foreach my $t (keys %$def_typedef) {
-            if ($def_typedef->{$t} =~ /^T_(?:FPOINTER|ARRAY)_/o) {
-                $type =~ s/(?<!\:)\b\Q$t\E\b/$def_typedef->{$t}/ge;
-            }
-        }
-        return $type;
-    };
+    my $subst_with_fullname  = $opt{subst_with_fullname};
 
     my $out = '';
     my $has_operator_new = 0;
@@ -195,7 +181,6 @@ sub create_xs_code {
             #print STDERR "return type in $name: ", $i->{return}, "\n";
             $i->{return} = $subst_with_fullname->($i->{return});
             $i->{return} =~ s/^\s*static\b//o;
-            #if ($i->{return} =~ /(?<!QFlags)</io) {
             unless (exists $typemap->{$i->{return}} and exists $known_primitive_type->{$typemap->{$i->{return}}}) {
                 # skip class not in typemap
                 unless ($i->{return} eq 'void') {
@@ -281,7 +266,6 @@ sub create_xs_code {
                     $p->{default} = $cname. '('. $cvalue .')';
                 }
             }
-            #if ($p->{type} =~ /(?<!QFlags)</io) {
             unless (exists $typemap->{$p->{type}} and exists $known_primitive_type->{$typemap->{$p->{type}}}) {
                 # skip class not in typemap
                 print STDERR "skip method: $name, $p->{type}\n";
@@ -538,6 +522,21 @@ sub main {
         EVAL_PERL    => 1,
         #STRICT       => 1,
     });
+    my $subst_with_fullname = sub {
+        my ( $type, ) = @_;
+
+        # translate local typedef to full class name
+        if (exists $localtype->{$type} and $type !~ /^T_(?:FPOINTER|ARRAY)_/o) {
+            $type = $localtype->{$type};
+        }
+        foreach my $t (keys %$def_typedef) {
+            if ($def_typedef->{$t} =~ /^T_(?:FPOINTER|ARRAY)_/o) {
+                $type =~ s/(?<!\:)\b\Q$t\E\b/$def_typedef->{$t}/ge;
+            }
+        }
+        return $type;
+    };
+
     $out .= create_xs_code(
         mod_conf             => $mod_conf,
         meta                 => $meta,
@@ -550,8 +549,9 @@ sub main {
         known_primitive_type => \%known_primitive_type,
         abstract_class       => \%abstract_class,
         template             => $template,
-        localtype            => $localtype,
-        def_typedef          => $def_typedef,
+        #localtype            => $localtype,
+        #def_typedef          => $def_typedef,
+        subst_with_fullname  => $subst_with_fullname,
     );
 
     # inline parent (template) class methods
@@ -562,9 +562,10 @@ sub main {
         my $i = pop @parent;
         next if $i->{RELATIONSHIP} ne 'public';
         my $name = $i->{NAME};
+        $name = $subst_with_fullname->($name);
         ( my $n = $name ) =~ s/\:\:/__/go;
-        if (exists $typemap_template->{$i->{NAME}}) {
-            $name = $typemap_template->{$i->{NAME}}->{name};
+        if (exists $typemap_template->{$name}) {
+            $name = $typemap_template->{$name}->{name};
             ( $n = $name ) =~ s/\:\:/__/go;
             if (-f "$template_dir/custom/$n.tt2") {
                 my $out2 = '';
@@ -584,14 +585,16 @@ sub main {
                     known_primitive_type => \%known_primitive_type,
                     abstract_class       => \%abstract_class,
                     template             => $template,
-                    localtype            => $localtype,
-                    def_typedef          => $def_typedef,
+                    #localtype            => $localtype,
+                    #def_typedef          => $def_typedef,
+                    subst_with_fullname  => $subst_with_fullname,
                 );
             }
         }
         else {
             # FIXME: load custom function.public file
         }
+        # FIXME: only process direct parent
         next;
         # skip template
         next if $n =~ /</io;
