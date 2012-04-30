@@ -1,0 +1,196 @@
+---
+-
+  NAME: QHash<[% arg0_type %],[% arg1_type %]>
+  operator: 0
+-
+  NAME: QHash<[% arg0_type %],[% arg1_type %]>
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: QHash<[% arg0_type %],[% arg1_type %]> &
+  operator: 0
+- NAME: ~QHash<[% arg0_type %],[% arg1_type %]>
+  operator: 0
+-
+  NAME: operator=
+  RETURN: QHash<[% arg0_type %],[% arg1_type %]> &
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: const QHash<[% arg0_type %],[% arg1_type %]> &
+  operator: 1
+-
+  NAME: operator==
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: QHash<[% arg0_type %],[% arg1_type %]> &
+  operator: 1
+-
+  NAME: operator!=
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: QHash<[% arg0_type %],[% arg1_type %]> &
+  operator: 1
+-
+  NAME: size
+  RETURN: int
+  operator: 0
+-
+  NAME: isEmpty
+  RETURN: bool
+  operator: 0
+-
+  NAME: capacity
+  RETURN: int
+  operator: 0
+-
+  NAME: reserve
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+  operator: 0
+-
+  NAME: squeeze
+  RETURN: void
+  operator: 0
+-
+  NAME: detach
+  RETURN: void
+  operator: 0
+-
+  NAME: isDetached
+  RETURN: bool
+  operator: 0
+-
+  NAME: setSharable
+  RETURN: void
+  PARAMETER:
+    -
+      NAME: sharable
+      TYPE: bool
+  operator: 0
+-
+  NAME: isSharedWith
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: const QHash<[% arg0_type %],[% arg1_type %]> &
+  operator: 0
+-
+  NAME: clear
+  RETURN: void
+  operator: 0
+-
+  NAME: remove
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: take
+  RETURN: [% arg1_type +%]
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: contains
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: key
+  RETURN: const [% arg0_type +%]
+  PARAMETER:
+    -
+      NAME: value
+      TYPE: const [% arg1_type %] &
+  operator: 0
+-
+  NAME: key
+  RETURN: const [% arg0_type +%]
+  PARAMETER:
+    -
+      NAME: value
+      TYPE: const [% arg1_type %] &
+    -
+      NAME: defaultKey
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: value
+  RETURN: const [% arg1_type +%]
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: value
+  RETURN: const [% arg1_type +%]
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: defaultValue
+      TYPE: const [% arg1_type %] &
+  operator: 0
+-
+  NAME: operator[]
+  RETURN: const [% arg1_type +%]
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 1
+-
+  NAME: uniqueKeys
+  RETURN: QList<[% arg0_type %]>
+  operator: 0
+-
+  NAME: keys
+  RETURN: QList<[% arg0_type %]>
+  operator: 0
+-
+  NAME: keys
+  RETURN: QList<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: value
+      TYPE: const [% arg1_type %] &
+  operator: 0
+-
+  NAME: values
+  RETURN: QList<[% arg1_type %]>
+  operator: 0
+-
+  NAME: values
+  RETURN: QList<[% arg1_type %]>
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: count
+  RETURN: int
+  PARAMETER:
+    -
+      NAME: key
+      TYPE: const [% arg0_type %] &
+  operator: 0
+

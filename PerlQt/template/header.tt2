@@ -1,6 +1,6 @@
 [% INCLUDE include.tt2 %]
 
-MODULE = [% my_module %]			PACKAGE = [% my_package %]
+MODULE = [% my_module.remove('::Template$') %]			PACKAGE = [% my_package %]
 PROTOTYPES: DISABLE
 
 # classname: [% my_cclass %]

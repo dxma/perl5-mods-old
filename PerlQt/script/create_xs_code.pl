@@ -184,7 +184,7 @@ sub create_xs_code {
             unless (exists $typemap->{$i->{return}} and exists $known_primitive_type->{$typemap->{$i->{return}}}) {
                 # skip class not in typemap
                 unless ($i->{return} eq 'void') {
-                    print STDERR "skip method: $name, $i->{return}\n";
+                    print STDERR "skip method in $meta->{NAME}: $name, $i->{return}\n";
                     next METHOD_LOOP;
                 }
             }
@@ -248,14 +248,14 @@ sub create_xs_code {
                         $p->{default} = join('::', $class, $p->{default});
                     }
                 }
-                elsif ($p->{default} =~ /^(\w+)\(\)$/o) {
+                elsif ($p->{default} =~ /^(.+)\(\)$/o) {
                     # maybe subclass
                     # substitude with full class name
                     my $cname = $1;
                     $cname = $subst_with_fullname->($cname);
                     $p->{default} = $cname. '()';
                 }
-                elsif ($p->{default} =~ /^(\w+)\((\w+)\)$/o) {
+                elsif ($p->{default} =~ /^(.+)\((.+)\)$/o) {
                     my $cname = $1;
                     my $cvalue= $2;
                     $cname = $subst_with_fullname->($cname);
@@ -268,7 +268,7 @@ sub create_xs_code {
             }
             unless (exists $typemap->{$p->{type}} and exists $known_primitive_type->{$typemap->{$p->{type}}}) {
                 # skip class not in typemap
-                print STDERR "skip method: $name, $p->{type}\n";
+                print STDERR "skip method in $meta->{NAME}: $name, $p->{type}\n";
                 next METHOD_LOOP;
             }
             elsif ($p->{type} eq '...') {
@@ -337,7 +337,7 @@ sub create_xs_code {
     # workaround a bug in ttk when a key of hash is 'keys'
     # it gets wrong
     my $mem_methods = [];
-    my $cname = (split /\:\:/, $meta->{NAME})[-1];
+    ( my $cname = $meta->{NAME} ) =~ s/^[^<]+:://gio;
     foreach my $m (sort keys %$pub_methods_by_name) {
         next if $m eq $cname;
         next if $m eq '~'. $cname;
@@ -353,6 +353,7 @@ sub create_xs_code {
     #use Data::Dumper;
     #print Data::Dumper::Dumper($pub_methods_by_name);
     my $var = {
+        my_name             => $meta->{PERL_NAME},
         my_cclass           => $meta->{NAME},
         my_type             => $meta->{type},
         my_module           => $meta->{MODULE},
@@ -453,6 +454,34 @@ sub main {
     }
     # class localtype
     my $localtype = exists $f{typemap} ? load_yaml($f{typemap}) : {};
+    # draw simple equivalents
+    foreach my $k (keys %$localtype) {
+        my $v = $localtype->{$k};
+        if ($k =~ /^const\s+/o) {
+            $k =~ s///o;
+            $v =~ s///o;
+            $localtype->{$k} = $v;
+        }
+        else {
+            $localtype->{'const '. $k} = 'const '. $v;
+            if ($k =~ /\s+&$/o) {
+                $k =~ s///o;
+                $v =~ s///o;
+                $localtype->{$k} = $v;
+            }
+            else {
+                $localtype->{$k. ' &'} = $v. ' &';
+            }
+        }
+        if ($k =~ /\s+&$/o) {
+            $k =~ s///o;
+            $v =~ s///o;
+            $localtype->{$k} = $v;
+        }
+        else {
+            $localtype->{$k. ' &'} = $v. ' &';
+        }
+    }
     # typedef info
     my $typedef = exists $f{typedef} ? load_yaml($f{typedef}) : {};
     # global typemap
@@ -472,7 +501,7 @@ sub main {
         foreach my $k (keys %$map) {
             $typemap->{$k} = $map->{$k};
         }
-        my $f2 = $f. '_template_draft';
+        my $f2 = $f. '_template';
         if (-f $f2) {
             $map = load_yaml($f2);
             foreach my $i (@$map) {
@@ -563,6 +592,7 @@ sub main {
         next if $i->{RELATIONSHIP} ne 'public';
         my $name = $i->{NAME};
         $name = $subst_with_fullname->($name);
+        my $cname = $name;
         ( my $n = $name ) =~ s/\:\:/__/go;
         if (exists $typemap_template->{$name}) {
             $name = $typemap_template->{$name}->{name};
@@ -572,7 +602,9 @@ sub main {
                 $template->process("custom/$n.tt2", $typemap_template->{$i->{NAME}}, \$out2) or
                   croak $template->error;
                 my $publics2 = Load($out2);
-                $out .= create_xs_code(
+                # skip constructor/destructor
+                $publics2 = [ grep { $_->{NAME} !~ /^(?:~)?\Q$name\E</o } @$publics2 ];
+                $out2 = create_xs_code(
                     mod_conf             => $mod_conf,
                     meta                 => $meta,
                     # skip method implemented by child class
@@ -589,6 +621,9 @@ sub main {
                     #def_typedef          => $def_typedef,
                     subst_with_fullname  => $subst_with_fullname,
                 );
+                # replace parent template class name with class own name
+                #$out2 =~ s/\Q$cname\E/$meta->{NAME}/ge if $cname =~ /</io;
+                $out .= $out2;
             }
         }
         else {
@@ -604,6 +639,11 @@ sub main {
             push @parent, @{$j->{ISA}} if exists $j->{ISA};
         }
     }
+    # work around compiler problem on nested template class
+    # '>>' to '> >'
+    # given the cpp cout '>>' operator never used anywhere in the
+    # code
+    $out =~ s/(?<!operator)>>/> >/go;
 
 WRITE_FILE:
     if ($xs_file) {

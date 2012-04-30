@@ -44,7 +44,7 @@ sub load_yaml {
 sub main {
     GetOptions(
         \%opt,
-        'manifest=s',
+        'manifest=s@',
         'conf=s',
         'mk=s',
         'o|output=s',
@@ -52,48 +52,66 @@ sub main {
     );
     usage() if $opt{h};
     #usage() if !@ARGV;
-    croak ".typemap.dep not found: $opt{manifest}" if !-f $opt{manifest};
+    $opt{manifest} = [] if !$opt{manifest};
+    foreach my $f (@{$opt{manifest}}) {
+        croak ".typemap.dep not found: $f" if !-f $f;
+    }
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
     croak "xscode.mk not found: $opt{mk}" if !-f $opt{mk};
-    
+
     my $mod_conf= load_yaml($opt{conf});
     my %header  = ();
     my @typedef = ();
     my @xscode  = ();
-    open my $F, $opt{manifest} or croak "cannot open file to read: $!";
-    while (<$F>) {
-        chomp;
-        if (/\.meta$/o) {
-            my $meta = load_yaml($_);
-            $header{$meta->{FILE}}++ if exists $meta->{FILE};
-        }
-        elsif (/\.typedef$/o) {
-            ( my $m = $_ ) =~ s/\.typedef$/.meta/o;
-            next if !-f $m;
-            my $meta    = load_yaml($m);
-            my $class = $meta->{NAME};
-            my @class = split /\:\:/, $class;
-            my @path  = File::Spec::->splitdir($_);
-            pop @path;
-            my $path  = File::Spec::->catdir(@path);
-            my $typedef = load_yaml($_);
-            foreach my $k (keys %$typedef) {
-                if ($k =~ /^T_(?:ARRAY|FPOINTER)_/o) {
-                    my $v = $typedef->{$k};
-                    if ($class ne $mod_conf->{default_namespace}) {
-                        # subst with full name
-                        for (my $i = $#class; $i >= 0; $i--) {
-                            my $file = File::Spec::->catdir($path, join('__', @class[0..$i]). '.typedef');
-                            next if !-f $file;
-                            my $typedef2 = load_yaml($file);
-                            foreach my $j (keys %$typedef2) {
-                                next if $j eq $k;
-                                $v =~ s/(?<!\:\:)\b\Q$j\E\b/$class. '::'. $j/ge;
+    my ( $F, );
+    foreach my $f (@{$opt{manifest}}) {
+        open $F, $f or croak "cannot open file to read: $!";
+        while (<$F>) {
+            chomp;
+            if (/\.meta$/o) {
+                my $meta = load_yaml($_);
+                if (exists $meta->{FILE}) {
+                    if ($meta->{FILE} ne 'typemap_template') {
+                        $header{$meta->{FILE}}++;
+                    }
+                    else {
+                        # template class
+                        # work around compiler problem on nested
+                        #   template class
+                        ( my $from = $meta->{NAME} ) =~ s/>>/> >/go;
+                        my $to = $meta->{PERL_NAME};
+                        push @typedef, "$from $to";
+                    }
+                }
+            }
+            elsif (/\.typedef$/o) {
+                ( my $m = $_ ) =~ s/\.typedef$/.meta/o;
+                next if !-f $m;
+                my $meta    = load_yaml($m);
+                my $class = $meta->{NAME};
+                my @class = split /\:\:/, $class;
+                my @path  = File::Spec::->splitdir($_);
+                pop @path;
+                my $path  = File::Spec::->catdir(@path);
+                my $typedef = load_yaml($_);
+                foreach my $k (keys %$typedef) {
+                    if ($k =~ /^T_(?:ARRAY|FPOINTER)_/o) {
+                        my $v = $typedef->{$k};
+                        if ($class ne $mod_conf->{default_namespace}) {
+                            # subst with full name
+                            for (my $i = $#class; $i >= 0; $i--) {
+                                my $file = File::Spec::->catdir($path, join('__', @class[0..$i]). '.typedef');
+                                next if !-f $file;
+                                my $typedef2 = load_yaml($file);
+                                foreach my $j (keys %$typedef2) {
+                                    next if $j eq $k;
+                                    $v =~ s/(?<!\:\:)\b\Q$j\E\b/$class. '::'. $j/ge;
+                                }
                             }
                         }
+                        $v =~ s/^const //o if $k =~ /^T_ARRAY_/o;
+                        push @typedef, $v;
                     }
-		    $v =~ s/^const //o if $k =~ /^T_ARRAY_/o;
-                    push @typedef, $v;
                 }
             }
         }
@@ -106,7 +124,7 @@ sub main {
             push @xscode, $f;
         }
     }
-    
+
     my $OUT;
     if ($opt{o}) {
         open $OUT, '>', $opt{o} or croak "cannot open file to write: $!";
@@ -125,7 +143,7 @@ EOL
             print $OUT "#include \"", $f, "\"\n";
         }
     }
-    my %skip_include = map { $_ => 1 } 
+    my %skip_include = map { $_ => 1 }
       exists $mod_conf->{skip_includes} ?
         @{$mod_conf->{skip_includes}} : ();
     foreach my $f (sort keys %header) {
@@ -157,7 +175,7 @@ EOL
     for (my $i = 0; $i < @xscode; $i++) {
         print $OUT "INCLUDE:\t\t", $xscode[$i], "\n";
     }
-    
+
     if ($opt{o}) {
         close($OUT) or croak "cannot save to file: $!";
     }

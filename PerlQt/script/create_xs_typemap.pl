@@ -40,39 +40,55 @@ sub load_yaml {
 sub main {
     GetOptions(
         \%opt,
-        'manifest=s',
-        'packagemap=s',
+        'manifest=s@',
+        'packagemap=s@',
         'conf=s',
         'o|output:s',
         'h|help',
     );
     usage() if $opt{h};
     #usage() if !@ARGV;
-    croak ".typemap.dep not found: $opt{manifest}" if !-f $opt{manifest};
-    croak "package map not found: $opt{packagemap}" if !-f $opt{packagemap};
+    $opt{manifest} = [] if !$opt{manifest};
+    $opt{packagemap} = [] if !$opt{packagemap};
+    foreach my $f (@{$opt{manifest}}) {
+        croak ".typemap.dep not found: $f" if !-f $f;
+    }
+    foreach my $f (@{$opt{packagemap}}) {
+        croak "package map not found: $f" if !-f $f;
+    }
     croak "module.conf not found: $opt{conf}" if !-f $opt{conf};
 
     my $mod_conf   = load_yaml($opt{conf});
-    my $packagemap = load_yaml($opt{packagemap});
-    my @class = ();
-    open my $F, $opt{manifest} or croak "cannot open file to read: $!";
-    while (<$F>) {
-        chomp;
-        next if !/\.meta$/o;
-        my $meta = load_yaml($_);
-        if ($meta->{TYPE} =~ /^(?:class|struct)/o) {
-            push @class, $meta->{NAME};
+    my $packagemap = {};
+    foreach my $f (@{$opt{packagemap}}) {
+        my $p = load_yaml($f);
+        foreach my $k (keys %$p) {
+            $packagemap->{$k} = $p->{$k};
         }
-        else {
-            # namespace
-            if ($meta->{NAME} eq $mod_conf->{root_namespace}) {
+    }
+    my @class = ();
+    my @name  = ();
+    foreach my $f (@{$opt{manifest}}) {
+        open my $F, $f or croak "cannot open file to read: $!";
+        while (<$F>) {
+            chomp;
+            next if !/\.meta$/o;
+            my $meta = load_yaml($_);
+            if ($meta->{TYPE} =~ /^(?:class|struct)/o) {
                 push @class, $meta->{NAME};
-                # make package for root namespace
-                $packagemap->{$meta->{NAME}} = $meta->{MODULE};
+                push @name,  $meta->{PERL_NAME};
+            } else {
+                # namespace
+                if ($meta->{NAME} eq $mod_conf->{root_namespace}) {
+                    push @class, $meta->{NAME};
+                    push @name,  $meta->{NAME};
+                    # make package for root namespace
+                    $packagemap->{$meta->{NAME}} = $meta->{MODULE};
+                }
             }
         }
     }
-    
+
     my $OUT;
     if ($opt{o}) {
         open $OUT, '>', $opt{o} or croak "cannot open file to write: $!";
@@ -85,8 +101,8 @@ sub main {
 # to marshal THIS in xs code
 EOL
     for (my $i = 0 ; $i < @class; $i++) {
-        my $type = $class[$i];
-        print $OUT sprintf("%-40s\t\tT_PTROBJ_%04d", $type. ' *', $i), "\n";
+        my $name = $name[$i];
+        print $OUT sprintf("%-40s\t\tT_PTROBJ_%04d", $name. ' *', $i), "\n";
     }
     print $OUT <<EOL;
 
@@ -95,8 +111,7 @@ INPUT
 EOL
     for (my $i = 0; $i < @class; $i++) {
         my $type    = $class[$i];
-        croak "no package found for type: $type" if 
-          !exists $packagemap->{$type};
+        croak "no package found for type: $type" if !exists $packagemap->{$type};
         my $package = $packagemap->{$type};
         my $index   = sprintf("%04d", $i);
         print $OUT <<EOL;
@@ -115,7 +130,7 @@ OUTPUT
 EOL
     for (my $i = 0; $i < @class; $i++) {
         my $type    = $class[$i];
-        croak "no package found for type: $type" if 
+        croak "no package found for type: $type" if
           !exists $packagemap->{$type};
         my $package = $packagemap->{$type};
         my $index   = sprintf("%04d", $i);
@@ -135,7 +150,7 @@ EOL
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2011 - 2011 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2011 - 2012 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

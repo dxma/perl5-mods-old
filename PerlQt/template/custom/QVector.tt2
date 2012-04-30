@@ -1,5 +1,59 @@
 ---
 -
+  NAME: QVector<[% arg0_type %]>
+  operator: 0
+-
+  NAME: QVector<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+  operator: 0
+-
+  NAME: QVector<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: size
+      TYPE: int
+    -
+      NAME: t
+      TYPE: const [% arg0_type %] &
+  operator: 0
+-
+  NAME: QVector<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: v
+      TYPE: const QVector<[% arg0_type %]> &
+  operator: 0
+-
+  NAME: ~QVector<[% arg0_type %]>
+  operator: 0
+-
+  NAME: operator=
+  RETURN: QVector<[% arg0_type %]> &
+  PARAMETER:
+    -
+      NAME: v
+      TYPE: const QVector<[% arg0_type %]> &
+  operator: 1
+-
+  NAME: operator==
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: v
+      TYPE: const QVector<[% arg0_type %]> &
+  operator: 1
+-
+  NAME: operator!=
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: v
+      TYPE: const QVector<[% arg0_type %]> &
+  operator: 1
+-
   NAME: size
   RETURN: int
   operator: 0
@@ -53,7 +107,7 @@
   PARAMETER:
     -
       NAME: other
-      TYPE: const QVector<[% arg0_type %]>
+      TYPE: const QVector<[% arg0_type %]> &
   operator: 0
 -
   NAME: data
