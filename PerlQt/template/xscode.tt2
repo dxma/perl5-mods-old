@@ -14,7 +14,7 @@
 [% PROCESS funcmap2.tt2 %]
 [% PROCESS function.tt2 %]
 
-[% my_cclass2 = my_cclass.remove('.+\:\:') %]
+[% my_cclass2 = my_cclass.remove('^[^<]+\:\:') %]
 [% IF my_methods_by_name.exists(my_cclass2) %]
   [% constructors = my_methods_by_name.$my_cclass2 %]
   [% my_methods_by_name.delete(my_cclass2) %]
@@ -37,7 +37,7 @@
     methods     = [ {} ]
   %]
 void
-[%+ my_cclass %]::DESTROY()
+[%+ my_name %]::DESTROY()
 CODE:
     if(THIS != 0 && !SvREADONLY(SvRV(ST(0))))
         delete THIS;

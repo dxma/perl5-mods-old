@@ -1,5 +1,42 @@
 ---
 -
+  NAME: QList<[% arg0_type %]>
+  operator: 0
+-
+  NAME: QList<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: l
+      TYPE: const QList<[% arg0_type %]> &
+  operator: 0
+-
+  NAME: ~QList<[% arg0_type %]>
+  operator: 0
+-
+  NAME: operator=
+  RETURN: QList<[% arg0_type %]>
+  PARAMETER:
+    -
+      NAME: l
+      TYPE: const QList<[% arg0_type %]> &
+  operator: 1
+-
+  NAME: operator==
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: l
+      TYPE: const QList<[% arg0_type %]> &
+  operator: 1
+-
+  NAME: operator!=
+  RETURN: bool
+  PARAMETER:
+    -
+      NAME: l
+      TYPE: const QList<[% arg0_type %]> &
+  operator: 1
+-
   NAME: size
   RETURN: int
   operator: 0
@@ -29,7 +66,7 @@
   PARAMETER:
     -
       NAME: other
-      TYPE: const QList<[% arg0_type %]>
+      TYPE: const QList<[% arg0_type %]> &
   operator: 0
 -
   NAME: isEmpty
@@ -49,7 +86,7 @@
   operator: 0
 -
   NAME: operator[]
-  RETURN: const [% arg0_type %] &
+  RETURN: [% arg0_type %] &
   PARAMETER:
     -
       NAME: i

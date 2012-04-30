@@ -5,10 +5,13 @@ use warnings;
 no warnings 'once';
 use strict;
 #use English qw( -no_match_vars );
+use Getopt::Long qw/GetOptions/;
+use FindBin;
+use Carp;
+
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
 use File::Spec ();
 use Config qw/%Config/;
-use FindBin      ();
 use Data::Dumper ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
@@ -418,13 +421,15 @@ sub __analyse_type {
 
 sub main {
     __usage() if @ARGV < 7;
-    # FIXME: GetOpt::Long
-    #        see script/gen_xscode_mk.pl
     my ( $module_dot_conf,
          $typemap_dot_ignore, $typemap_dot_simple,
          $typemap_dot_manual, $typemap_dot_dep,
          $out_typemap_dir,
          $out_template, $out_list ) = @ARGV;
+    my $typemap_all;
+    GetOptions(
+        'typemap=s', \$typemap_all,
+    ) or __usage();
     my $rc = 0;
 
     die "file $module_dot_conf not found" unless
@@ -583,6 +588,13 @@ sub main {
             }
         }
     }
+    # add known typemap info
+    if (-f $typemap_all) {
+        my $typemap = __load_yaml($typemap_all);
+        foreach my $k (keys %$typemap) {
+            $MANUAL_TYPEMAP{$k} = $typemap->{$k};
+        }
+    }
 
     my $post_patch_type = sub {
         my ( $result, ) = @_;
@@ -678,14 +690,14 @@ sub main {
         }
     }
     # write @TYPE_TEMPLATE
-    if (@TYPE_TEMPLATE) {
+    #if (@TYPE_TEMPLATE) {
         local ( *TEMPLATE, );
         sysopen TEMPLATE, $out_template, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file to write: $!";
         my ( $hcont ) = Dump(\@TYPE_TEMPLATE);
         print TEMPLATE $hcont;
         close TEMPLATE or die "cannot save to file: $!";
-    }
+    #}
     # write %TYPE_LOCALMAP
     if (keys %TYPE_LOCALMAP) {
         local ( *LOCALMAP, );

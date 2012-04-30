@@ -31,6 +31,7 @@ sub study_type {
     # patch known pattern
     $type =~ s/^CONST_//o;
     $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/o;
+    $type =~ s/(?:CONST_)?T_(?:GENERIC)_REF/T_PTR/o;
     # rogue wave
     $type =~ s/\bT_RW_[^_]+_CLASS/T_CLASS/o;
 
@@ -38,10 +39,10 @@ sub study_type {
         $type_primitive = $type;
     }
     # class/struct
-    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)_PTR$/o) {
+    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT|OBJECT)_PTR$/o) {
         $type_primitive = 'T_PTROBJ';
     }
-    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)_PTR(?:_REF)?$/o) {
+    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT|OBJECT)_PTR(?:_REF)?$/o) {
         $type_primitive = 'T_PTROBJ';
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
@@ -50,7 +51,7 @@ sub study_type {
               exists $typemap->{$noref_ntype};
         }
     }
-    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)_REF$/o) {
+    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT|OBJECT)_REF$/o) {
         # FIXME: maybe need to marshal by new
         # TODO:  switch to 'T_OBJECT'
         $type_primitive = 'T_REFOBJ';
@@ -59,7 +60,7 @@ sub study_type {
         $typemap->{$noref_ntype} = 'T_OBJECT' unless
           exists $typemap->{$noref_ntype};
     }
-    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)$/o) {
+    elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT|OBJECT)$/o) {
         $type_primitive = 'T_OBJECT';
     }
     # template class
@@ -316,6 +317,16 @@ sub main {
         }
     }
     dump_typemap($typemap, $fout);
+    foreach my $tt_entry (@$typemap_template) {
+        foreach my $k (keys %$tt_entry) {
+            if ($k =~ m/^(.+)_type$/o) {
+                my $ntype_key = $1. '_ntype';
+                $tt_entry->{$ntype_key} = $typemap->{$tt_entry->{$k}}
+                  if exists $typemap->{$tt_entry->{$k}};
+            }
+        }
+    }
+    dump_typemap($typemap_template, $fout. '_template');
     return $rc;
 }
 
@@ -323,7 +334,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 - 2011 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2008 - 2012 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

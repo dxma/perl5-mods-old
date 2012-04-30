@@ -1,0 +1,26 @@
+---
+-
+  NAME: QPair<[% arg0_type %],[% arg1_type %]>
+  operator: 0
+-
+  NAME: QPair<[% arg0_type %],[% arg1_type %]>
+  PARAMETER:
+    -
+      NAME: t1
+      TYPE: const [% arg0_type %] &
+    -
+      NAME: t2
+      TYPE: const [% arg1_type %] &
+  operator: 0
+-
+  NAME: ~QPair<[% arg0_type %],[% arg1_type %]>
+  operator: 0
+-
+  NAME: operator=
+  RETURN: QPair<[% arg0_type %],[% arg1_type %]> &
+  PARAMETER:
+    -
+      NAME: other
+      TYPE: const QPair<[% arg0_type %],[% arg1_type %]> &
+  operator: 1
+
