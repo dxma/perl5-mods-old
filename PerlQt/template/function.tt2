@@ -120,7 +120,7 @@
 
 [% BLOCK make_func_xscode %]
 void
-[%+ my_name %]::[% methods.last.operator ? methods.last.name2 : method_name %](...)
+[%+ my_module.search('::Template$') ? my_name : my_cclass %]::[% methods.last.operator ? methods.last.name2 : method_name %](...)
 PREINIT:
 [% IF method_name == 'new' %]
 [%+ my_cclass %] *ret;

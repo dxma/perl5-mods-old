@@ -76,7 +76,7 @@ sub main {
             my $meta = load_yaml($_);
             if ($meta->{TYPE} =~ /^(?:class|struct)/o) {
                 push @class, $meta->{NAME};
-                push @name,  $meta->{PERL_NAME};
+                push @name,  $meta->{MODULE} =~ /::Template$/ ? $meta->{PERL_NAME} : $meta->{NAME};
             } else {
                 # namespace
                 if ($meta->{NAME} eq $mod_conf->{root_namespace}) {
