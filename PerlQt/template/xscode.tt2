@@ -37,7 +37,7 @@
     methods     = [ {} ]
   %]
 void
-[%+ my_name %]::DESTROY()
+[%+ my_module.search('::Template$') ? my_name : my_cclass %]::DESTROY()
 CODE:
     if(THIS != 0 && !SvREADONLY(SvRV(ST(0))))
         delete THIS;
