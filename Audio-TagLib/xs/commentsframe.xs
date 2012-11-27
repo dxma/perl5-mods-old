@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::CommentsFrame
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::CommentsFrame * 
+TagLib::ID3v2::CommentsFrame *
 TagLib::ID3v2::CommentsFrame::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -23,7 +23,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector")) {
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 			RETVAL = new TagLib::ID3v2::CommentsFrame(*data);
@@ -52,77 +52,77 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::CommentsFrame::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::CommentsFrame::toString()
 CODE:
 	RETVAL = new TagLib::String(THIS->toString());
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ID3v2::CommentsFrame::language()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->language());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::CommentsFrame::description()
 CODE:
 	RETVAL = new TagLib::String(THIS->description());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::CommentsFrame::text()
 CODE:
 	RETVAL = new TagLib::String(THIS->text());
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::CommentsFrame::setLanguage(languageCode)
 	TagLib::ByteVector * languageCode
 CODE:
 	THIS->setLanguage(*languageCode);
 
-void 
+void
 TagLib::ID3v2::CommentsFrame::setDescription(s)
 	TagLib::String * s
 CODE:
 	THIS->setDescription(*s);
 
-void 
+void
 TagLib::ID3v2::CommentsFrame::setText(s)
 	TagLib::String * s
 CODE:
 	THIS->setText(*s);
 
-TagLib::String::Type 
+TagLib::String::Type
 TagLib::ID3v2::CommentsFrame::textEncoding()
 CODE:
 	RETVAL = THIS->textEncoding();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::CommentsFrame::setTextEncoding(encoding)
 	TagLib::String::Type encoding
 CODE:
 	THIS->setTextEncoding(encoding);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void parseFields(const ByteVector &data)
 # ByteVector renderFields()
 # not exported
-# 
+#
 ################################################################

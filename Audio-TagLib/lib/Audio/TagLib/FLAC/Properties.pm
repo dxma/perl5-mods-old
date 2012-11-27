@@ -19,19 +19,19 @@ __END__
 =head1 NAME
 
 Audio::TagLib::FLAC::Properties - An implementation of audio property reading
-for FLAC 
+for FLAC
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::FLAC::Properties;
-  
+
   my $i = Audio::TagLib::FLAC::Properties->new("sample file.flac");
   print $i->channels(); # should be 2 usually
 
 =head1 DESCRIPTION
 
 This reads the data from an FLAC stream found in the AudioProperties
-API. 
+API.
 
 =over
 
@@ -63,7 +63,7 @@ see L<AudioProperties|Audio::TagLib::AudioProperties>
 
 =item I<sampleWidth()>
 
-Returns the sample width as read from the FLAC identification header. 
+Returns the sample width as read from the FLAC identification header.
 
 =back
 

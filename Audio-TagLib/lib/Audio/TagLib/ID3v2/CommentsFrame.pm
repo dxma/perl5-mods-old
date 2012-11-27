@@ -23,7 +23,7 @@ Audio::TagLib::ID3v2::CommentsFrame - An implementation of ID3v2 comments
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::CommentsFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::CommentsFrame->new("Latin1");
   $i->setText(Audio::TagLib::String->new("blah blah blah"));
 
@@ -37,7 +37,7 @@ a language encoding, a description and a single text field.
 =item I<new(PV $encoding = "Latin1")>
 
 Construct an empty comment frame that will use the text encoding
-$encoding. 
+$encoding.
 
 =item I<new(L<ByteVector|Audio::TagLib::ByteVector> $data)>
 
@@ -100,7 +100,7 @@ see I<text()>
 
 Returns the text encoding that will be used in rendering this
   frame. This defaults to the type that was either specified in the
-  constructor or read from the frame when parsed. 
+  constructor or read from the frame when parsed.
 
 see I<setTextEncoding()>
 
@@ -109,7 +109,7 @@ see I<render()>
 =item I<void setTextEncoding(PV $encoding)>
 
 Sets the text encoding to be used when rendering this frame to
-$encoding. 
+$encoding.
 
 see I<textEncoding()>
 

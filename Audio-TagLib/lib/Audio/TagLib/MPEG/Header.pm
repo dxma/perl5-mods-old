@@ -34,7 +34,7 @@ Audio::TagLib::MPEG::Header - An implementation of MP3 frame headers
 =head1 SYNOPSIS
 
   use Audio::TagLib::MPEG::Header;
-  
+
   my $i = Audio::TagLib::MPEG::Header->new($data);
   print $i->layer(), "\n"; # normally got 3
 
@@ -42,7 +42,7 @@ Audio::TagLib::MPEG::Header - An implementation of MP3 frame headers
 
 This is an implementation of MPEG Layer III headers. The API follows
 more or less the binary format of these headers. Refer to
-F<http://www.mp3-tech.org/programmer/frame_header.html> 
+F<http://www.mp3-tech.org/programmer/frame_header.html>
 
 =over
 
@@ -74,7 +74,7 @@ Returns the MPEG Version of the header.
 
 =item I<IV layer()>
 
-Returns the layer version. This will be between the values 1-3. 
+Returns the layer version. This will be between the values 1-3.
 
 =item I<BOOL protectionEnabled()>
 

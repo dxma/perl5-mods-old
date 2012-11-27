@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::Header
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::Header * 
+TagLib::ID3v2::Header *
 TagLib::ID3v2::Header::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -21,7 +21,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector")) {
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 			RETVAL = new TagLib::ID3v2::Header(*data);
@@ -35,81 +35,81 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::Header::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::Header::majorVersion()
 CODE:
 	RETVAL = THIS->majorVersion();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::Header::revisionNumber()
 CODE:
 	RETVAL = THIS->revisionNumber();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::Header::unsynchronisation()
 CODE:
 	RETVAL = THIS->unsynchronisation();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::Header::extendedHeader()
 CODE:
 	RETVAL = THIS->extendedHeader();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::Header::experimentalIndicator()
 CODE:
 	RETVAL = THIS->experimentalIndicator();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::Header::footerPresent()
 CODE:
 	RETVAL = THIS->footerPresent();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::Header::tagSize()
 CODE:
 	RETVAL = THIS->tagSize();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::Header::completeTagSize()
 CODE:
 	RETVAL = THIS->completeTagSize();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::Header::setTagSize(s)
 	unsigned int s
 CODE:
 	THIS->setTagSize(s);
 
-void 
+void
 TagLib::ID3v2::Header::setData(data)
 	TagLib::ByteVector * data
 CODE:
 	THIS->setData(*data);
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ID3v2::Header::render()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->render());
@@ -117,19 +117,19 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static unsigned int 
+static unsigned int
 TagLib::ID3v2::Header::size()
 CODE:
 	RETVAL = TagLib::ID3v2::Header::size();
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ID3v2::Header::fileIdentifier()
 CODE:
 	RETVAL = new TagLib::ByteVector(
@@ -138,10 +138,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
 #
 # void parse(const ByteVector &data)
 # not exported
-# 
+#
 ################################################################

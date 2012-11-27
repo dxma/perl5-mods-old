@@ -17,15 +17,15 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Ogg::PageHeader - An implementation of the page headers
-associated with each Ogg::Page 
+associated with each Ogg::Page
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::PageHeader;
-  
+
   my $i = Audio::TagLib::Ogg::PageHeader->new();
   $i->setFirstPacketContinued(1);
-  print $i->firstPacketContinued() ? "true" : "false", "\n"; 
+  print $i->firstPacketContinued() ? "true" : "false", "\n";
   # got "true"
 
 =head1 DESCRIPTION
@@ -40,7 +40,7 @@ on to the codecs.
 
 Reads a PageHeader from $file starting at $pageOffset. The defaults
 create a page with no (and as such, invalid) data that must be set
-later. 
+later.
 
 =item I<DESTROY()>
 
@@ -69,7 +69,7 @@ see I<packetSizes()>
 
 Some packets can be I<coutinued> across multiple pages. If the first
 packet in the current page is a continuation this will return true. If
-this is page starts with a new packet this will return false. 
+this is page starts with a new packet this will return false.
 
 see I<lastPacketCompleted()>
 
@@ -101,20 +101,20 @@ see I<lastPacketCompleted()>
 =item I<BOOL firstPageOfStream()>
 
 This returns true if this is the first page of the Ogg (logical)
-stream. 
+stream.
 
 see I<setFirstPageOfStream()>
 
 =item I<void setFirstPageOfStream(BOOL $first)>
 
-Marks this page as the first page of the Ogg stream. 
+Marks this page as the first page of the Ogg stream.
 
 see I<firstPageOfStream()>
 
 =item I<BOOL lastPageOfStream()>
 
 This returns true if this is the last page of the Ogg (logical)
-stream. 
+stream.
 
 see I<lastPageOfStream()>
 

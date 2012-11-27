@@ -17,15 +17,15 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::SynchData - A few functions for ID3v2 synch safe
-integer conversion 
+integer conversion
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::SynchData;
-  
+
   print Audio::TagLib::ID3v2::SynchData->toUInt(
     Audio::TagLib::ByteVector->new("11")), "\n"; # got 6321
-  print Audio::TagLib::ID3v2::SynchData->fromUInt(6321)->data(), "\n"; 
+  print Audio::TagLib::ID3v2::SynchData->fromUInt(6321)->data(), "\n";
   # got "11"
 
 =head1 DESCRIPTION

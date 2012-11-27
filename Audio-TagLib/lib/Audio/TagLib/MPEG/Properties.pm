@@ -19,12 +19,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::MPEG::Properties - An implementation of audio property reading
-for MP3 
+for MP3
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::MPEG::Properties;
-  
+
   my $f = Audio::TagLib::MPEG::File->new("sample file.mp3");
   my $i = $f->audioProperties();
   print $i->layer(), "\n"; # got 3
@@ -32,7 +32,7 @@ for MP3
 =head1 DESCRIPTION
 
 This reads the data from an MPEG Layer III stream found in the
-AudioProperties API. 
+AudioProperties API.
 
 =over
 
@@ -73,7 +73,7 @@ Returns true if the MPEG protection bit is enabled.
 
 Returns the channel mode for this frame.
 
-see L<Audio::TagLib::MPEG::Header|Audio::TagLib::MPEG::Header> 
+see L<Audio::TagLib::MPEG::Header|Audio::TagLib::MPEG::Header>
 
 =item I<BOOL isCopyrighted()>
 

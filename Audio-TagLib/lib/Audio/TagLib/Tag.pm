@@ -17,7 +17,7 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Tag - A simple, generic interface to common audio meta data
-fields 
+fields
 
 =head1 DESCRIPTION
 
@@ -26,7 +26,7 @@ formats of various audio codecs and tagging schemes. As such it is
 generally a subset of what is available in the specific formats but
 should be suitable for most applications. This is meant to complient
 the generic APIs found in Audio::TagLib::AudioProperties, Audio::TagLib::File and
-Audio::TagLib::FileRef. 
+Audio::TagLib::FileRef.
 
 =over
 
@@ -47,12 +47,12 @@ Returns the artist name; if no artist name is present in the tag
 =item I<L<String|Audio::TagLib::String> album()> [pure virtual]
 
 Returns the album name; if no album name is present in the tag
- String::null will be returned. 
+ String::null will be returned.
 
 =item I<L<String|Audio::TagLib::String> comment()> [pure virtual]
 
 Returns the track comment; if no comment is present in the tag
-String::null will be returned. 
+String::null will be returned.
 
 =item I<L<String|Audio::TagLib::String> genre()> [pure virtual]
 
@@ -102,7 +102,7 @@ Sets the year to $i. If $i is 0 then this value will be cleared.
 
 =item I<void setTrack(UV $i)> [pure virtual]
 
-Sets the track to $i. If $i is 0 then this value will be cleared. 
+Sets the track to $i. If $i is 0 then this value will be cleared.
 
 =item I<void duplicate(Tag $source, Tag $target, BOOL $overwrite =
 TRUE)> [static]

@@ -5,12 +5,12 @@
 
 ################################################################
 #### MODULE VARS
-#### 
+####
 #### $t1.type      : T1 c type name
 #### $t1.package   : T1 perl package name
 #### $t1.ptype     : T1 primitive type
 #### $t1.is_object : T1 is object or not
-#### 
+####
 #### $t2.type      : T2 c type name
 #### $t2.package   : T2 perl package name
 #### $t2.ptype     : T2 primitive type
@@ -25,7 +25,7 @@
 [% END %]
 [% BLOCK marshal_t1_in %]
   [% IF t1.is_object %]
-    [% INCLUDE marshal_in 
+    [% INCLUDE marshal_in
       var   = my_var
       arg   = my_arg
       type  = t1.type
@@ -33,7 +33,7 @@
       ptype = 'T_PTROBJ'
     %]
   [% ELSE %]
-    [% INCLUDE marshal_in 
+    [% INCLUDE marshal_in
       var   = my_var
       arg   = my_arg
       type  = t1.type
@@ -43,7 +43,7 @@
 [% END %]
 [% BLOCK marshal_t2_in %]
   [% IF t2.is_object %]
-    [% INCLUDE marshal_in 
+    [% INCLUDE marshal_in
       var   = my_var
       arg   = my_arg
       type  = t2.type
@@ -51,7 +51,7 @@
       ptype = 'T_PTROBJ'
     %]
   [% ELSE %]
-    [% INCLUDE marshal_in 
+    [% INCLUDE marshal_in
       var   = my_var
       arg   = my_arg
       type  = t2.type
@@ -60,13 +60,13 @@
   [% END %]
 [% END %]
 
-[% my_type %] * 
+[% my_type %] *
 [% my_package %]::new(...)
 PROTOTYPE: ;$$
 PREINIT:
 [% PROCESS preinit %]
 CODE:
-    /* 
+    /*
      * [% my_name %]()
      * [% my_name %](const [% t1.type %] & arg1, const [% t2.type %] & arg2)
      */

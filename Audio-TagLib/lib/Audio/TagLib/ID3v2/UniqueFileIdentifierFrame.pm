@@ -19,12 +19,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::UniqueFileIdentifierFrame - An implementation of ID3v2
-unique identifier frames 
+unique identifier frames
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::UniqueFileIdentifierFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::UniqueFileIdentifierFrame->new(
     Audio::TagLib::ByteVector->new(""));
   $i->setOwner(Audio::TagLib::String->new("blah"));
@@ -61,7 +61,7 @@ see I<setOwner()>
 
 Returns the unique identifier. Though sometimes this is a text string
 it also may be binary data and as much should be assumed when handling
-it. 
+it.
 
 =item I<void setOwner(L<String|Audio::TagLib::String> $s)>
 

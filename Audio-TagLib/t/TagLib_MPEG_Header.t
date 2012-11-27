@@ -1,5 +1,5 @@
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as 
+# `make test'. After `make install' it should work as
 # `perl TagLib_MPEG_Header.t'
 
 #########################
@@ -18,7 +18,7 @@ BEGIN { use_ok('Audio::TagLib::MPEG::Header') };
 my @methods = qw(new DESTROY isValid version layer protectionEnabled
 bitrate sampleRate isPadded channelMode isCopyrighted isOriginal
 frameLength copy);
-can_ok("Audio::TagLib::MPEG::Header", @methods) 					or 
+can_ok("Audio::TagLib::MPEG::Header", @methods) 					or
 	diag("can_ok failed");
 
 SKIP: {

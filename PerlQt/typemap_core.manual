@@ -1,0 +1,21 @@
+# Manually maintained types, which might come from:
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+# NOTE: _FULL_ qualified name if possible
+std::string				T_STD_STRING_PV
+std::forward_iterator_tag		T_STRUCT
+
+# private struct
+QByteArray::Data			T_STRUCT
+QString::Data				T_STRUCT
+
+# special member function pointer
+QTextStream::T_FPOINTER_QTSMFC_QTEXTSTREAM	T_QTEXTSTREAM_QTSMFC
+QTextStream::T_FPOINTER_QTSMFI_QTEXTSTREAM	T_QTEXTSTREAM_QTSMFI
+
+# Qt 4.3
+#isc_db_handle				T_PTR
+# Qt 4.4
+QMap<int,ResultItem>::const_iterator	T_CLASS
+

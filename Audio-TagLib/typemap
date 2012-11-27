@@ -88,7 +88,7 @@ TL_PTRLIST
 	SV * refmemlist = newSV(0);
 	sv_setref_pv(refmemlist, Nullch, (void *)memlist);
 	AV * array = newAV();
-	if(av_store(array, 0, reflist) == NULL || 
+	if(av_store(array, 0, reflist) == NULL ||
 		av_store(array, 1, refmemlist) == NULL) {
 		delete $var;
 		delete memlist;
@@ -318,8 +318,8 @@ TL_MPC_FILE_TAGTYPES
 ################################################################
 INPUT
 TL_OBJECT
-	if (sv_isobject($arg) && sv_derived_from($arg, \"Audio::${subtype}\")) 
-		$var = INT2PTR($type, SvIV((SV *)SvRV($arg)));       
+	if (sv_isobject($arg) && sv_derived_from($arg, \"Audio::${subtype}\"))
+		$var = INT2PTR($type, SvIV((SV *)SvRV($arg)));
 	else
 		Perl_croak(aTHX_ \"$var is not of type Audio::${subtype}\")
 TL_PTRLIST

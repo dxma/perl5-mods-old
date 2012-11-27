@@ -16,12 +16,12 @@ __END__
 
 =head1 NAME
 
-Audio::TagLib::MPEG::XingHeader - An implementation of the Xing VBR headers 
+Audio::TagLib::MPEG::XingHeader - An implementation of the Xing VBR headers
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::MPEG::XingHeader;
-  
+
   my $i = Audio::TagLib::MPEG::XingHeader->new($data);
   print $i->isValid() ? "valid" : "invalid", "\n";
 
@@ -34,7 +34,7 @@ implementation is only concerned with the total size of the stream (so
 that we can calculate the total playing time and the average
 bitrate). It uses
 F<http://home.pcisys.net/~melanson/codecs/mp3extensions.txt> and the
-XMMS sources as references. 
+XMMS sources as references.
 
 =over
 

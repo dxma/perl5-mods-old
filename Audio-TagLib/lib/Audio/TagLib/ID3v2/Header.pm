@@ -21,7 +21,7 @@ Audio::TagLib::ID3v2::Header - An implementation of ID3v2 headers
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::Header;
-  
+
   my $i = Audio::TagLib::ID3v2::Header->new();
   print $i->majorVersion(), "\n"; # got 0
 
@@ -42,7 +42,7 @@ constructs an empty ID3v2 header.
 =item I<new(L<ByteVector|Audio::TagLib::ByteVector> $data)>
 
 Constructs an ID3v2 header based on $data. parse() is called
-immediately. 
+immediately.
 
 =item I<DESTROY()>
 
@@ -79,7 +79,7 @@ Returns true if a footer is present in the tag.
 Returns the tag size in bytes. This is the size of the frame
  content. The size of the entire tag will be this plus the header size
  (10 bytes) and, if present, the footer size (potentially another 10
- bytes). 
+ bytes).
 
 B<NOTE> This is the value as read from the header to which Audio::TagLib
  attempts to provide an API to; it was not a design decision on the
@@ -91,7 +91,7 @@ see I<completeTagSize()>
 =item I<UV completeTagSize()>
 
 Returns the tag size, including the header and, if present, the footer
-size. 
+size.
 
 see I<tagSize()>
 

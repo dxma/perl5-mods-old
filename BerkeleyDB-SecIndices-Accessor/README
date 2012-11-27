@@ -5,11 +5,11 @@ BerkeleyDB is one of the most famous flat/non-relational databases
 widely used. Depending on the very strong features offerred, one can
 implement fast cache, in-memory/embedded database, btree, queue and
 vice versa. Smart guys from both sleepycat and open-source world are
-working very hard to bring new wonderful stuff. 
+working very hard to bring new wonderful stuff.
 
 Here you are touching another great feature of BerkeleyDB - Secondary
 Indicies. One can create several secondary databases for index
-purpose. 
+purpose.
 
 Refer to pod in module itself for more detail.
 

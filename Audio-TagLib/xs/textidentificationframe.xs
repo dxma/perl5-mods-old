@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::TextIdentificationFrame
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::TextIdentificationFrame * 
+TagLib::ID3v2::TextIdentificationFrame *
 TagLib::ID3v2::TextIdentificationFrame::new(...)
 PROTOTYPE: $;$
 PREINIT:
@@ -17,20 +17,20 @@ PREINIT:
 	TagLib::String::Type encoding;
 	TagLib::ByteVector * data;
 CODE:
-	/*! 
-	 * TextIdentificationFrame(const ByteVector &type, String::Type 
+	/*!
+	 * TextIdentificationFrame(const ByteVector &type, String::Type
 	 * 	encoding)
 	 * TextIdentificationFrame(const ByteVector &data)
 	 */
 	if(items == 2) {
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector"))
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 		else
 			croak("ST(1) is not of type TagLib::ByteVector");
 		RETVAL = new TagLib::ID3v2::TextIdentificationFrame(*data);
 	} else {
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector"))
 			type = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 		else
@@ -56,13 +56,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::TextIdentificationFrame::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::ID3v2::TextIdentificationFrame::setText(...)
 PROTOTYPE: $
 PREINIT:
@@ -78,30 +78,30 @@ CODE:
 			THIS->setText(*s);
 		} else
 			croak("ST(1) is not of type TagLib::StringList/String");
-	} else 
+	} else
 		croak("ST(1) is not an object");
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::TextIdentificationFrame::toString()
 CODE:
 	RETVAL = new TagLib::String(THIS->toString());
 OUTPUT:
 	RETVAL
 
-TagLib::String::Type 
+TagLib::String::Type
 TagLib::ID3v2::TextIdentificationFrame::textEncoding()
 CODE:
 	RETVAL = THIS->textEncoding();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::TextIdentificationFrame::setTextEncoding(encoding)
 	TagLib::String::Type encoding
 CODE:
 	THIS->setTextEncoding(encoding);
 
-TagLib::StringList * 
+TagLib::StringList *
 TagLib::ID3v2::TextIdentificationFrame::fieldList()
 CODE:
 	RETVAL = new TagLib::StringList(THIS->fieldList());
@@ -109,14 +109,14 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void parseFields(const ByteVector &data)
 # ByteVector renderFields() const
 # TextIdentificationFrame(const ByteVector &data, Header *h)
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
@@ -126,12 +126,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::UserTextIdentificationFrame
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::UserTextIdentificationFrame * 
+TagLib::ID3v2::UserTextIdentificationFrame *
 TagLib::ID3v2::UserTextIdentificationFrame::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -146,10 +146,10 @@ CODE:
 	 * UserTextIdentificationFrame(const ByteVector &data)
 	 */
 	if(items == 2) {
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1),"Audio::TagLib::ByteVector")) {
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
-			RETVAL = new 
+			RETVAL = new
 				TagLib::ID3v2::UserTextIdentificationFrame(*data);
 		} else if(SvPOK(ST(1))) {
 			if(strncasecmp(SvPVX(ST(1)), "Latin1", 6) == 0)
@@ -164,7 +164,7 @@ CODE:
 				encoding = TagLib::String::UTF16LE;
 			else
 				croak("ST(1) is not of type TagLib::String::Type");
-			RETVAL = new 
+			RETVAL = new
 				TagLib::ID3v2::UserTextIdentificationFrame(encoding);
 		} else
 			croak("ST(1) is not of type ByteVector/String::Type");
@@ -173,34 +173,34 @@ CODE:
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::UserTextIdentificationFrame::toString()
 CODE:
 	RETVAL = new TagLib::String(THIS->toString());
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::UserTextIdentificationFrame::description()
 CODE:
 	RETVAL = new TagLib::String(THIS->description());
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::UserTextIdentificationFrame::setDescription(s)
 	TagLib::String * s
 CODE:
 	THIS->setDescription(*s);
 
-TagLib::StringList * 
+TagLib::StringList *
 TagLib::ID3v2::UserTextIdentificationFrame::fieldList()
 CODE:
 	RETVAL = new TagLib::StringList(THIS->fieldList());
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::UserTextIdentificationFrame::setText(...)
 PROTOTYPE: $
 PREINIT:
@@ -220,25 +220,25 @@ CODE:
 		croak("ST(1) is not an object");
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
 #ifdef FIXME
-static void 
+static void
 TagLib::ID3v2::UserTextIdentificationFrame::find(tag, description)
 	TagLib::ID3v2::Tag * tag
 	TagLib::String * description
 INIT:
-	TagLib::ID3v2::UserTextIdentificationFrame * ret = 
+	TagLib::ID3v2::UserTextIdentificationFrame * ret =
 		TagLib::ID3v2::UserTextIdentificationFrame::find(
 			tag, *description);
 PPCODE:
 	if(ret != NULL) {
 		ST(0) = sv_newmortal();
-		sv_setref_pv(ST(0), 
-			"Audio::TagLib::ID3v2::UserTextIdentificationFrame", 
+		sv_setref_pv(ST(0),
+			"Audio::TagLib::ID3v2::UserTextIdentificationFrame",
 			(void *)ret);
 		SvREADONLY_on(SvRV(ST(0)));
 		XSRETURN(1);

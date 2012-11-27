@@ -1,0 +1,14 @@
+# Manually maintained types, which might come from:
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+# NOTE: _FULL_ qualified name if possible
+
+QRgb				T_UV
+GLuint				T_UV
+GLint				T_IV
+GLfloat				T_FLOAT
+GLenum				T_UV
+GLbitfield			T_UV
+NativeWindowType		T_PTR
+NativePixmapType		T_IV

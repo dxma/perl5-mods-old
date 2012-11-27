@@ -20,7 +20,7 @@ Audio::TagLib::APE::Footer - An implementation of APE footers
 =head1 SYNOPSIS
 
   use Audio::TagLib::APE::Footer;
-  
+
   my $i = Audio::TagLib::APE::Footer->new();
   $i->setHeaderPresent(1) unless $i->headerPresent();
 
@@ -103,7 +103,7 @@ Returns the size of the footer.  Presently this is always 32 bytes.
 
 =item I<L<ByteVector|Audio::TagLib::ByteVector> fileIdentifier()> [static]
 
-Returns the string used to identify an APE tag inside of a file. 
+Returns the string used to identify an APE tag inside of a file.
 Presently this is always "APETAGEX".
 
 =item I<void setData(L<ByteVector|Audio::TagLib::ByteVector> $data>

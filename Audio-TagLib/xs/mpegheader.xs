@@ -4,12 +4,12 @@ MODULE = TagLib 		PACKAGE = TagLib::MPEG::Header
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::MPEG::Header * 
+TagLib::MPEG::Header *
 TagLib::MPEG::Header::new(...)
 PROTOTYPE: $
 PREINIT:
@@ -34,90 +34,90 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::MPEG::Header::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-bool 
+bool
 TagLib::MPEG::Header::isValid()
 CODE:
 	RETVAL = THIS->isValid();
 OUTPUT:
 	RETVAL
 
-TagLib::MPEG::Header::Version 
+TagLib::MPEG::Header::Version
 TagLib::MPEG::Header::version()
 CODE:
 	RETVAL = THIS->version();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPEG::Header::layer()
 CODE:
 	RETVAL = THIS->layer();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::MPEG::Header::protectionEnabled()
 CODE:
 	RETVAL = THIS->protectionEnabled();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPEG::Header::bitrate()
 CODE:
 	RETVAL = THIS->bitrate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPEG::Header::sampleRate()
 CODE:
 	RETVAL = THIS->sampleRate();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::MPEG::Header::isPadded()
 CODE:
 	RETVAL = THIS->isPadded();
 OUTPUT:
 	RETVAL
 
-TagLib::MPEG::Header::ChannelMode 
+TagLib::MPEG::Header::ChannelMode
 TagLib::MPEG::Header::channelMode()
 CODE:
 	RETVAL = THIS->channelMode();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::MPEG::Header::isCopyrighted()
 CODE:
 	RETVAL = THIS->isCopyrighted();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::MPEG::Header::isOriginal()
 CODE:
 	RETVAL = THIS->isOriginal();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::MPEG::Header::frameLength()
 CODE:
 	RETVAL = THIS->frameLength();
 OUTPUT:
 	RETVAL
 
-void  
+void
 TagLib::MPEG::Header::copy(h)
 	TagLib::MPEG::Header * h
 PPCODE:

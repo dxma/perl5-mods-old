@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -32,11 +26,14 @@ EOU
 
 sub study_type {
     my ( $ntype, $type, $known_primitive_type, $typemap, ) = @_;
-    
+
     my $type_primitive;
     # patch known pattern
-    $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/;
-    
+    $type =~ s/^CONST_//o;
+    $type =~ s/(?:CONST_)?T_(?:GENERIC|PTR|UNION)_PTR/T_PTR/o;
+    # rogue wave
+    $type =~ s/\bT_RW_[^_]+_CLASS/T_CLASS/o;
+
     if (exists $known_primitive_type->{$type}) {
         $type_primitive = $type;
     }
@@ -49,7 +46,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = 'T_PTROBJ' unless 
+            $typemap->{$noref_ntype} = 'T_PTROBJ' unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -59,7 +56,7 @@ sub study_type {
         $type_primitive = 'T_REFOBJ';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_OBJECT' unless 
+        $typemap->{$noref_ntype} = 'T_OBJECT' unless
           exists $typemap->{$noref_ntype};
     }
     elsif ($type =~ m/^(?:CONST_)?T_(?:CLASS|STRUCT)$/o) {
@@ -74,7 +71,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = 'T_PTROBJ' unless 
+            $typemap->{$noref_ntype} = 'T_PTROBJ' unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -84,11 +81,16 @@ sub study_type {
         $type_primitive = 'T_REFOBJ';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_OBJECT' unless 
+        $typemap->{$noref_ntype} = 'T_OBJECT' unless
           exists $typemap->{$noref_ntype};
     }
     elsif ($type =~ m/^(?:CONST_)?T_(?:[^\_]+)__.+$/o) {
-        $type_primitive = 'T_OBJECT';
+        if ($type =~ /^(?:CONST_)?T_QFLAGS__/o) {
+            $type_primitive = 'T_QFLAGS';
+        }
+        else {
+            $type_primitive = 'T_OBJECT';
+        }
     }
     # char
     elsif ($type =~ m/^(?:CONST_)?T_(?:U_)?CHAR_PTR$/o) {
@@ -106,12 +108,12 @@ sub study_type {
         $type_primitive = 'T_PTRREF';
         # add non-ref part as known type if it is missing
         ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-        $typemap->{$noref_ntype} = 'T_PTR' unless 
+        $typemap->{$noref_ntype} = 'T_PTR' unless
           exists $typemap->{$noref_ntype};
     }
     # array
     elsif ($type =~ m/^T_ARRAY_/o) {
-        $type_primitive = 'T_PTR';
+        $type_primitive = 'T_ARRAY';
     }
     # built-in type
     elsif ($type =~ m/^(?:CONST_)?((T_(?:I|U|N|P)V)_PTR)$/o) {
@@ -122,7 +124,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -134,7 +136,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -146,7 +148,7 @@ sub study_type {
         if ($type =~ m/_REF$/o) {
             # add non-ref part as known type if it is missing
             ( my $noref_ntype = $ntype ) =~ s/\s*&\s*$//o;
-            $typemap->{$noref_ntype} = $type_primitive unless 
+            $typemap->{$noref_ntype} = $type_primitive unless
               exists $typemap->{$noref_ntype};
         }
     }
@@ -161,14 +163,29 @@ sub study_type {
 
 sub get_known_primitive_types {
     my ( $type_template, ) = @_;
-    
+
     local ( *TEMPLATE, );
-    open TEMPLATE, '<', $type_template or 
+    open TEMPLATE, '<', $type_template or
       croak("cannot open file to read: $!");
     my $primitive_type_map = {};
     while (<TEMPLATE>) {
-        if (m/^\s*\[\%-?\s+CASE\s+'([^']+)'\s+-?\%\]\s*$/o) {
-            $primitive_type_map->{$1}++;
+        if (m/^\s*\[\%-?\s+CASE\s+(.+)\s+-?\%\]\s*$/o) {
+            next if $1 eq 'DEFAULT';
+            my $str = $1;
+            if ($str =~ /^'([^']+)'$/o) {
+                $primitive_type_map->{$1}++;
+            }
+            elsif ($str =~ /^\[\s*(.+)\s*\]$/o) {
+                my $str2 = $1;
+                foreach my $t (split /\s*,\s*/, $str2) {
+                    if ($t =~ /^'([^']+)'$/o) {
+                        $primitive_type_map->{$1}++;
+                    }
+                }
+            }
+            else {
+                carp("unknown CASE line in typemap: ". $_);
+            }
         }
     }
     close TEMPLATE;
@@ -177,9 +194,9 @@ sub get_known_primitive_types {
 
 sub load_typemap {
     my ( $ftypemap, ) = @_;
-    
+
     local ( *TYPEMAP, );
-    open TYPEMAP, '<', $ftypemap or 
+    open TYPEMAP, '<', $ftypemap or
       croak("cannot open file to read: $!");
     my $cont = do { local $/; <TYPEMAP> };
     close TYPEMAP;
@@ -188,15 +205,15 @@ sub load_typemap {
 
 sub dump_typemap {
     my ( $typemap, $fout, ) = @_;
-    
+
     my $write_typemap = sub {
         my ( $typemap, $output, ) = @_;
-        
+
         print $output Dump($typemap);
     };
     local ( *OUTPUT, );
     if ($fout) {
-        open OUTPUT, '>', $fout or 
+        open OUTPUT, '>', $fout or
           croak("cannot open file to write: $!");
         $write_typemap->($typemap, \*OUTPUT);
         close OUTPUT or croak("cannot write to file: $!");
@@ -206,24 +223,44 @@ sub dump_typemap {
     }
 }
 
+sub load_yaml {
+    my $path = shift;
+    local ( *YAML, );
+    open YAML, "<", $path or croak "cannot open file to read: $!";
+    my $cont = do { local $/; <YAML> };
+    close YAML;
+    return Load($cont);
+}
+
 sub main {
-    my $ftemplate   = '';
+    my @ftemplate   = ();
     my $fout        = '';
+    my $group_dir   = '';
     my $h           = '';
     GetOptions(
-        't=s'    => \$ftemplate,
-        'o=s'    => \$fout, 
-        'h|help' => \$h, 
+        't=s'    => \@ftemplate,
+        'o=s'    => \$fout,
+        'd=s'    => \$group_dir,
+        'h|help' => \$h,
     );
     usage() if $h;
     usage() unless @ARGV;
     my ( $ftypemap, $ftypemap_template, ) = @ARGV;
-    croak("template not found: $ftemplate") unless -f $ftemplate;
+    foreach my $ftemplate (@ftemplate) {
+        croak("template not found: $ftemplate") unless -f $ftemplate;
+    }
     croak("typemap not found: $ftypemap") unless -f $ftypemap;
-    croak("typemap_template not found: $ftypemap_template") unless 
+    croak("typemap_template not found: $ftypemap_template") unless
       -f $ftypemap_template;
-    
-    my $known_primitive_type = get_known_primitive_types($ftemplate);
+    croak("group dir not found: $group_dir") unless -d $group_dir;
+
+    my $known_primitive_type = {};
+    foreach my $ftemplate (@ftemplate) {
+        my $primitive_type = get_known_primitive_types($ftemplate);
+        foreach my $k (keys %$primitive_type) {
+            $known_primitive_type->{$k} = $primitive_type->{$k};
+        }
+    }
     my $typemap = load_typemap($ftypemap);
     my $typemap_template = load_typemap($ftypemap_template);
     # merge inner types in template
@@ -236,6 +273,20 @@ sub main {
             }
         }
     }
+    # load subtypes in .typedef
+    foreach my $f (glob("$group_dir/*.typedef")) {
+        my ( $class ) = $f =~ /.+\/([^\.]+)\.typedef$/o;
+        $class =~ s/__/::/go;
+        my $typedef = load_yaml($f);
+        foreach my $t (keys %$typedef) {
+            next if $t =~ /^T_/o;
+            if ($typedef->{$t} =~ /^T_/o) {
+                $typemap->{$class. '::'. $t} =
+                  $typedef->{$t} =~ /^T_FPOINTER_/ ? 'T_FPOINTER' : $typedef->{$t};
+            }
+        }
+    }
+
     my $rc = 0;
     foreach my $ntype (keys %$typemap) {
         my $type = $typemap->{$ntype};
@@ -249,6 +300,22 @@ sub main {
             $typemap->{$ntype} = $type_primitive;
         }
     }
+    # auto map class into class * and class &
+    foreach my $ntype (keys %$typemap) {
+        if ($typemap->{$ntype} eq 'T_OBJECT') {
+            $typemap->{$ntype. ' *'} = 'T_PTROBJ';
+            $typemap->{$ntype. ' &'} = 'T_REFOBJ';
+            if ($ntype =~ /^const /io) {
+                ( my $ntype2 = $ntype ) =~ s/^const //o;
+                $typemap->{$ntype2. ' *'} = 'T_PTROBJ';
+                $typemap->{$ntype2. ' &'} = 'T_REFOBJ';
+            }
+            else {
+                $typemap->{'const '. $ntype. ' *'} = 'T_PTROBJ';
+                $typemap->{'const '. $ntype. ' &'} = 'T_REFOBJ';
+            }
+        }
+    }
     dump_typemap($typemap, $fout);
     return $rc;
 }
@@ -257,7 +324,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2008 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

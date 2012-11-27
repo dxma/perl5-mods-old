@@ -1,4 +1,10 @@
-1. re-creation of deleted file(s) under 04grouped
-2. support of custom-inserted file(s) in each phase
-3. use GetOpt::Long to get cmdline params
-99.performance enhancement (cache parse module, etc.) 
+   * [FIXED] fix bug on skipping overload method with the same number of argument;
+   * template class support;
+   * fix QGenericMatrix<2, 2, qreal>
+   * va_list support - QPolygon::putPoints(int index, int nPoints, int firstx, int firsty, ...)
+   * static function support (in namespace);
+   * Qt signal/slot support;
+   * [FIXED] other Qt modules;
+   * support windows/mac;
+   * unit test;
+   * perl-ish enhancements;

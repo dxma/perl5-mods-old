@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -29,7 +23,7 @@ sub main {
     usage() unless @ARGV;
     my ( $in, $out ) = @ARGV;
     die "file not found" unless -f $in;
-    
+
     local ( *HEADER );
     open HEADER, '<', $in or die "cannot open file: $!";
     my $cont = do { local $/; <HEADER>; };
@@ -44,7 +38,7 @@ sub main {
     $cont =~ s{^"\$Author\: }{//$&}mo;
     if (defined $out) {
         local ( *STRIPPED );
-        sysopen STRIPPED, $out, O_CREAT|O_WRONLY|O_TRUNC or 
+        sysopen STRIPPED, $out, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file to write: $!";
         print STRIPPED $cont;
         close STRIPPED or die "cannot write to file: $!";

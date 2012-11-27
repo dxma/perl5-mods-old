@@ -5,12 +5,12 @@ MODULE = TagLib		PACKAGE = TagLib::APE::Footer
 PROTOTYPES: 	ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::APE::Footer * 
+TagLib::APE::Footer *
 TagLib::APE::Footer::new(...)
 PROTOTYPE: ;$
 CODE:
@@ -29,86 +29,86 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Footer::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-unsigned int 
+unsigned int
 TagLib::APE::Footer::version()
 CODE:
 	RETVAL = THIS->version();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::Footer::headerPresent()
 CODE:
 	RETVAL = THIS->headerPresent();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::Footer::footerPresent()
 CODE:
 	RETVAL = THIS->footerPresent();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::Footer::isHeader()
 CODE:
 	RETVAL = THIS->isHeader();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Footer::setHeaderPresent(b)
 	bool b
 CODE:
 	THIS->setHeaderPresent(b);
 
-unsigned int 
+unsigned int
 TagLib::APE::Footer::itemCount()
 CODE:
 	RETVAL = THIS->itemCount();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Footer::setItemCount(s)
 	unsigned int s
 CODE:
 	THIS->setItemCount(s);
 
-unsigned int 
+unsigned int
 TagLib::APE::Footer::tagSize()
 CODE:
 	RETVAL = THIS->tagSize();
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::APE::Footer::completeTagSize()
 CODE:
 	RETVAL = THIS->completeTagSize();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::Footer::setTagSize(s)
 	unsigned int s
 CODE:
 	THIS->setTagSize(s);
 
-void 
+void
 TagLib::APE::Footer::setData(data)
 	TagLib::ByteVector * data
 CODE:
 	THIS->setData(*data);
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::APE::Footer::renderFooter()
 INIT:
 	TagLib::ByteVector tmp = THIS->renderFooter();
@@ -117,7 +117,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::APE::Footer::renderHeader()
 INIT:
 	TagLib::ByteVector tmp = THIS->renderHeader();
@@ -127,18 +127,18 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
-static unsigned int 
+static unsigned int
 TagLib::APE::Footer::size()
 CODE:
 	RETVAL = TagLib::APE::Footer::size();
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::APE::Footer::fileIdentifier()
 INIT:
 	TagLib::ByteVector tmp =
@@ -149,10 +149,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
 # void parse(const ByteVector &data)
 # ByteVector render(bool isHeader) const
 # not exported
-# 
+#
 ################################################################

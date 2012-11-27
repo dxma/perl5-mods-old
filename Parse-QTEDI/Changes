@@ -1,5 +1,7 @@
 Revision history for Perl extension Parse::QTEDI.
 
+0.18    20100720
+    - operator member function and expression logic revamp
 0.16    20090806
     - strip comment between enum values
 0.15    20090724
@@ -20,7 +22,7 @@ Revision history for Perl extension Parse::QTEDI.
 	- function attribute stripped
 
 0.04    20070420
-	- fix on treating operator() as a function pointer 
+	- fix on treating operator() as a function pointer
 
 0.03    20070419
 	- function pointer detection fix

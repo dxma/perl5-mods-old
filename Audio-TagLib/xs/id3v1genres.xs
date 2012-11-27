@@ -4,26 +4,26 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v1
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC FUNCTIONS in this NAMESPACE
-# 
+#
 ################################################################
 
-static TagLib::StringList * 
+static TagLib::StringList *
 TagLib::ID3v1::genreList()
 CODE:
 	RETVAL = new TagLib::StringList(TagLib::ID3v1::genreList());
 OUTPUT:
 	RETVAL
 
-static TagLib::ID3v1::GenreMap * 
+static TagLib::ID3v1::GenreMap *
 TagLib::ID3v1::genreMap()
 CODE:
 	RETVAL = new TagLib::ID3v1::GenreMap(TagLib::ID3v1::genreMap());
 OUTPUT:
 	RETVAL
 
-static TagLib::String * 
+static TagLib::String *
 TagLib::ID3v1::genre(index)
 	int index
 CODE:
@@ -31,7 +31,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static int 
+static int
 TagLib::ID3v1::genreIndex(name)
 	TagLib::String * name
 CODE:

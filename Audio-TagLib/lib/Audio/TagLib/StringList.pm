@@ -48,13 +48,13 @@ Make a shallow, implicitly shared, copy of $l. Because this is
 Constructs a StringList with $s as a member.
 
 =item I<new(L<ByteVectorList|Audio::TagLib::ByteVectorList> $vl, PV $t =
-"Latin1")> 
+"Latin1")>
 
 Makes a deep copy of the data in $vl.
 
 B<NOTE> This should only be used with the 8-bit codecs Latin1 and
  UTF8, when used with other codecs it will simply print a warning and
- exit. 
+ exit.
 
 =item I<DESTROY()>
 
@@ -69,7 +69,7 @@ $separator.
 =item I<StringList append(L<String|Audio::TagLib::String> $s)>
 
 Appends $s to to the end of the list and returns a reference to the
-list. 
+list.
 
 =item I<StringList append(StringList $l)>
 

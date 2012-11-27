@@ -19,12 +19,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::MPC::Properties - An implementation of audio property reading
-for MPC 
+for MPC
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::MPC::Properties;
-  
+
   my $f = Audio::TagLib::MPC::File->new("sample mpc file.mpc");
   my $i = $f->audioProperties();
   print $i->channels(), "\n"; # normally got 2
@@ -32,7 +32,7 @@ for MPC
 =head1 DESCRIPTION
 
 This reads the data from an MPC stream found in the AudioProperties
-API. 
+API.
 
 =over
 

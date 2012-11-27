@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::FLAC::Properties
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::FLAC::Properties * 
+TagLib::FLAC::Properties *
 TagLib::FLAC::Properties::new(...)
 PROTOTYPE: $;$$
 PREINIT:
@@ -18,17 +18,17 @@ PREINIT:
 	TagLib::FLAC::File * file;
 	char * s;
 INIT:
-	TagLib::AudioProperties::ReadStyle style = 
+	TagLib::AudioProperties::ReadStyle style =
 		TagLib::AudioProperties::Average;
 CODE:
 	/*!
-	 * Properties(ByteVector data, long streamLength, 
+	 * Properties(ByteVector data, long streamLength,
 	 * 	ReadStyle style=Average)
 	 * Properties(File *file, ReadStyle style=Average)
 	 */
 	switch(items) {
 	case 4:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector"))
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 		else
@@ -49,20 +49,20 @@ CODE:
 			style = TagLib::AudioProperties::Accurate;
 		else
 			croak("ST(3) is not of value Fast/Average/Accurate");
-		RETVAL = new TagLib::FLAC::Properties(*data, streamLength, 
+		RETVAL = new TagLib::FLAC::Properties(*data, streamLength,
 			style);
 		break;
 	case 3:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector")) {
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
 			if(SvIOK(ST(2)))
 				streamLength = (long)SvIV(ST(2));
 			else
 				croak("ST(2) is not of type long");
-			RETVAL = new TagLib::FLAC::Properties(*data, 
+			RETVAL = new TagLib::FLAC::Properties(*data,
 				streamLength);
-		} else if(sv_isobject(ST(1)) && 
+		} else if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::FLAC::File")) {
 			file = INT2PTR(TagLib::FLAC::File *, SvIV(SvRV(ST(1))));
 			if(SvPOK(ST(2)))
@@ -83,7 +83,7 @@ CODE:
 		break;
 	default:
 		/* items == 2 */
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::FLAC::File")) {
 			file = INT2PTR(TagLib::FLAC::File *, SvIV(SvRV(ST(1))));
 			RETVAL = new TagLib::FLAC::Properties(file);
@@ -93,42 +93,42 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::FLAC::Properties::DESTROY()
 CODE:
 	/* skip if READONLY on */
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-int 
+int
 TagLib::FLAC::Properties::length()
 CODE:
 	RETVAL = THIS->length();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::FLAC::Properties::bitrate()
 CODE:
 	RETVAL = THIS->bitrate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::FLAC::Properties::sampleRate()
 CODE:
 	RETVAL = THIS->sampleRate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::FLAC::Properties::channels()
 CODE:
 	RETVAL = THIS->channels();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::FLAC::Properties::sampleWidth()
 CODE:
 	RETVAL = THIS->sampleWidth();

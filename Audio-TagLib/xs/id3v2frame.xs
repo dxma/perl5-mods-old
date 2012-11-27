@@ -4,51 +4,51 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::Frame
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::ID3v2::Frame::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ID3v2::Frame::frameID()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->frameID());
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::Frame::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::Frame::setData(data)
 	TagLib::ByteVector * data
 CODE:
 	THIS->setData(*data);
 
-void 
+void
 TagLib::ID3v2::Frame::setText(text)
 	TagLib::String * text
 CODE:
 	THIS->setText(*text);
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::Frame::toString()
 CODE:
 	RETVAL = new TagLib::String(THIS->toString());
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ID3v2::Frame::render()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->render());
@@ -56,12 +56,12 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static unsigned int 
+static unsigned int
 TagLib::ID3v2::Frame::headerSize(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -84,7 +84,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::ByteVector * 
+static TagLib::ByteVector *
 TagLib::ID3v2::Frame::textDelimiter(t)
 	TagLib::String::Type t
 CODE:
@@ -94,9 +94,9 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # Frame(const ByteVector &data)
 # Frame(Header *h)
 # Header * header() const
@@ -106,6 +106,6 @@ OUTPUT:
 # virtual ByteVector renderFields() const = 0
 # ByteVector fieldData(const ByteVector &frameData) const
 # not exported
-# 
+#
 ################################################################
 

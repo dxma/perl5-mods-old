@@ -23,7 +23,7 @@ __END__
 =head1 NAME
 
 Audio::TagLib::AudioProperties - A simple, abstract interface to common audio
-properties 
+properties
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ The values here are common to most audio formats.  For more specific,
 codec dependant values, please see see the subclasses APIs.  This is
 meant to compliment the L<Audio::TagLib::File|Audio::TagLib::File> and
 L<Audio::TagLib::Tag|Audio::TagLib::Tag> APIs in providing a simple interface that
-is sufficient for most applications. 
+is sufficient for most applications.
 
 =over
 
@@ -44,12 +44,12 @@ accuracy of the  values is not particularly important this allows the
 level of desired accuracy to be set.
 
 C<keys %Audio::TagLib::AudioProperties::_ReadStyle> lists all available
-values used in Perl code. 
+values used in Perl code.
 
 see L<FLAC::Properties|Audio::TagLib::FLAC::Properties>
 L<MPC::Properties|Audio::TagLib::MPC::Properties>
 L<MPEG::Properties|Audio::TagLib::MPEG::Properties>
-L<Vorbis::Properties|Audio::TagLib::Vorbis::Properties> 
+L<Vorbis::Properties|Audio::TagLib::Vorbis::Properties>
 
 =item I<DESTROY()>
 
@@ -64,13 +64,13 @@ Returns the lenght of the file in seconds.
 Returns the most appropriate bit rate for the file in kb/s.  For
 constant bitrate formats this is simply the bitrate of the file.  For
 variable bitrate formats this is either the average or nominal
-bitrate. 
+bitrate.
 
-=item I<sampleRate()> [pure virtual] 
+=item I<sampleRate()> [pure virtual]
 
 Returns the sample rate in Hz.
 
-=item I<channels()> [pure virtual] 
+=item I<channels()> [pure virtual]
 
 Returns the number of audio channels.
 

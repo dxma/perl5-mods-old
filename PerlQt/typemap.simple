@@ -13,6 +13,7 @@ unsigned short          T_UV
 char                    T_CHAR
 unsigned char           T_U_CHAR
 char *                  T_PV
+uchar *                 T_IV_PTR
 unsigned char *         T_PV
 const char *            T_PV
 caddr_t                 T_PV
@@ -24,7 +25,9 @@ size_t                  T_UV
 ssize_t                 T_IV
 time_t                  T_NV
 unsigned long *         T_OPAQUEPTR
-char **                 T_PACKEDARRAY
+#char **                 T_PACKEDARRAY
+char **                 T_PV_LIST
+char *&			T_PV
 void *                  T_PTR
 Time_t *                T_PV
 SV *                    T_SV
@@ -43,7 +46,7 @@ STRLEN                  T_UV
 U32                     T_U_LONG
 U16                     T_U_SHORT
 U8                      T_UV
-Result                  T_U_CHAR
+#Result                  T_U_CHAR
 Boolean                 T_BOOL
 float                   T_FLOAT
 double                  T_DOUBLE
@@ -62,46 +65,58 @@ long long		T_IV
 signed long long	T_IV
 unsigned long long	T_UV
 # typedef inside QtCore/qglobal.h
-#qint8			T_IV
-#quint8			T_UV
-#qint16			T_IV
-#quint16			T_UV
-#qint32			T_IV
-#quint32			T_UV
-#qint64			T_IV
-#quint64			T_UV
-#qlonglong		T_IV
-#qulonglong		T_UV
-#qreal			T_DOUBLE
+qint8			T_IV
+qint8 &			T_IV
+qint8 *			T_IV_PTR
+quint8			T_UV
+quint8 &		T_UV
+quint8 *		T_UV_PTR
+qint16			T_IV
+qint16 &		T_IV
+qint16 *		T_IV_PTR
+quint16			T_UV
+quint16 &		T_UV
+quint16 *		T_UV_PTR
+qint32			T_IV
+qint32 &		T_IV
+qint32 *		T_IV_PTR
+quint32			T_UV
+quint32 &		T_UV
+quint32 *		T_UV_PTR
+qint64			T_IV
+qint64 &		T_IV
+qint64 *		T_IV_PTR
+quint64			T_UV
+quint64 &		T_UV
+quint64 *		T_UV_PTR
+qlonglong		T_IV
+qlonglong &		T_IV
+qlonglong *		T_IV_PTR
+qulonglong		T_UV
+qulonglong &		T_UV
+qulonglong *		T_UV_PTR
+qreal			T_DOUBLE
+qreal &			T_DOUBLE
+qreal *			T_DOUBLE_PTR
 #qreal			T_FLOAT
 signed char		T_CHAR
 signed int		T_IV
 signed short		T_IV
 signed long		T_IV
 uint			T_UV
+uint &			T_UV
+uint *			T_UV_PTR
 ushort			T_UV
+ushort &		T_UV
+ushort *		T_UV_PTR
 ulong			T_UV
+ulong &			T_UV
+ulong *			T_UV_PTR
 
 uchar			T_U_CHAR
-# va_list could be either char* or void*
-#va_list			T_PV
+const uchar *		T_IV_PTR
+const uint *		T_IV_PTR
+const ushort *		T_UV_PTR
+
 va_list			T_PTR
-
-# FIXME
-# const char		T_C_CHAR
-# const uchar		T_C_U_CHAR
-# const int		T_C_INT
-# const uint
-# const short
-# const ushort
-# const long
-# const ulong
-# std::string
-# const std::sting
-# const wchar_t
-
-#INPUT
-#T_C_CHAR
-#        $var = const_cast<const char>((char)*SvPV_nolen($arg))
-#T_C_U_CHAR
-#        $var = const_cast<const unsigned char>((unsigned char)SvUV($arg))
+...                     T_VA_LIST

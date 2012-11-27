@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::FileRef
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::FileRef * 
+TagLib::FileRef *
 TagLib::FileRef::new(...)
 PROTOTYPE: ;$$$
 PREINIT:
@@ -19,12 +19,12 @@ PREINIT:
 	TagLib::FileRef * ref;
 INIT:
 	bool readAudioProperties = true;
-	enum TagLib::AudioProperties::ReadStyle 
+	enum TagLib::AudioProperties::ReadStyle
 		audioPropertiesStyle = TagLib::AudioProperties::Average;
 CODE:
 	/*!
 	 * FileRef()
-	 * FileRef(const char *fileName, 
+	 * FileRef(const char *fileName,
 	 * 	bool readAudioProperties=true,
 	 * 	AudioProperties::ReadStyle audioPropertiesStyle=
 	 * 	AduioProperties::Average)
@@ -62,9 +62,9 @@ CODE:
 			if(sv_derived_from(ST(1), "Audio::TagLib::File")) {
 				file = INT2PTR(TagLib::File *, SvIV(SvRV(ST(1))));
 				RETVAL = new TagLib::FileRef(file);
-				/*! 
-				 * turn READONLY flag on 
-				 * since the FileRef object takes ownership of 
+				/*!
+				 * turn READONLY flag on
+				 * since the FileRef object takes ownership of
 				 * the pointer and will delete the File accordingly
 				 */
 				SvREADONLY_on(SvRV(ST(1)));
@@ -86,21 +86,21 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::FileRef::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-SV * 
+SV *
 TagLib::FileRef::tag()
 PREINIT:
 	TagLib::Tag * t;
 PPCODE:
-	/*! 
+	/*!
 	 * the returned Tag object is owned by THIS object
 	 * thus set READONLY on to skip the destructor
-	 * refer to TagLib::Tag::DESTROY for detail 
+	 * refer to TagLib::Tag::DESTROY for detail
 	 */
 	t = THIS->tag();
 	if(t != NULL) {
@@ -111,15 +111,15 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-SV * 
+SV *
 TagLib::FileRef::audioProperties()
 PREINIT:
 	TagLib::AudioProperties * p;
 PPCODE:
 	/*!
-	 * the returned AudioProperties object is owned by THIS object 
+	 * the returned AudioProperties object is owned by THIS object
 	 * thus set READONLY on to skip the destructor
-	 * refer to TagLib::AudioProperties::DESTROY for detail  
+	 * refer to TagLib::AudioProperties::DESTROY for detail
 	 */
 	p = THIS->audioProperties();
 	if(p != NULL) {
@@ -130,15 +130,15 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-SV * 
+SV *
 TagLib::FileRef::file()
 PREINIT:
 	TagLib::File * f;
 PPCODE:
 	/*!
-	 * the returned File object is owned by THIS object 
-	 * thus set READONLY on to skip the destructor 
-	 * refer to TagLib::File::DESTROY for detail 
+	 * the returned File object is owned by THIS object
+	 * thus set READONLY on to skip the destructor
+	 * refer to TagLib::File::DESTROY for detail
 	 */
 	f = THIS->file();
 	if(f != NULL) {
@@ -149,28 +149,28 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-bool 
+bool
 TagLib::FileRef::save()
 CODE:
 	RETVAL = THIS->save();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::FileRef::isNull()
 CODE:
 	RETVAL = THIS->isNull();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::FileRef::copy(ref)
 	TagLib::FileRef * ref
 PPCODE:
 	(void)THIS->operator=(*ref);
 	XSRETURN(1);
 
-bool 
+bool
 TagLib::FileRef::_equal(ref, swap=NULL)
 	TagLib::FileRef * ref
 	char * swap
@@ -180,19 +180,19 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # bool operator!=(const FileRef &ref) const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static const TagLib::FileRef::FileTypeResolver * 
+static const TagLib::FileRef::FileTypeResolver *
 TagLib::FileRef::addFileTypeResolver(resolver)
 	const TagLib::FileRef::FileTypeResolver * resolver
 CODE:
@@ -200,7 +200,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::StringList * 
+static TagLib::StringList *
 TagLib::FileRef::defaultFileExtensions()
 CODE:
 	RETVAL = new TagLib::StringList(
@@ -208,7 +208,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-static TagLib::File * 
+static TagLib::File *
 TagLib::FileRef::create(fileName, readAudioProperties=true, style=TagLib::AudioProperties::Average)
 	const char * fileName
 	bool readAudioProperties
@@ -225,12 +225,12 @@ MODULE = TagLib			PACKAGE = TagLib::FileRef::FileTypeResolver
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::FileRef::FileTypeResolver::createFile(fileName, readAudioProperties=true, style=TagLib::AudioProperties::Average)
 	const char * fileName
 	bool readAudioProperties

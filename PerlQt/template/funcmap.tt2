@@ -1,0 +1,128 @@
+[% BLOCK funcmap_in %]
+  [% SWITCH ptype %]
+  [% CASE 'T_SV' %]
+    SvOK([% arg %])
+  [% CASE 'T_SVREF' %]
+    SvROK([% arg %])
+  [% CASE 'T_AVREF' %]
+    (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVAV)
+  [% CASE 'T_HVREF' %]
+    (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVHV)
+  [% CASE 'T_CVREF' %]
+    (SvROK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVCV)
+  [% CASE 'T_SYSRET' %]
+    SvIOK([% arg %])
+  [% CASE 'T_UV' %]
+    (SvIOK([% arg %]) || SvUOK([% arg %]))
+  [% CASE 'T_UV_PTR' %]
+    (SvIOK([% arg %]) || SvUOK([% arg %]))
+  [% CASE 'T_IV' %]
+    SvIOK([% arg %])
+  [% CASE 'T_IV_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_INT' %]
+    SvIOK([% arg %])
+  [% CASE 'T_INT_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_ENUM' %]
+    SvIOK([% arg %])
+  [% CASE 'T_ENUM_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_BOOL' %]
+    1
+  [% CASE 'T_BOOL_PTR' %]
+    1
+  [% CASE 'T_U_INT' %]
+    SvUOK([% arg %])
+  [% CASE 'T_U_INT_PTR' %]
+    SvUOK([% arg %])
+  [% CASE 'T_SHORT' %]
+    SvIOK([% arg %])
+  [% CASE 'T_SHORT_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_U_SHORT' %]
+    SvUOK([% arg %])
+  [% CASE 'T_U_SHORT_PTR' %]
+    SvUOK([% arg %])
+  [% CASE 'T_LONG' %]
+    SvIOK([% arg %])
+  [% CASE 'T_LONG_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_U_LONG' %]
+    SvUOK([% arg %])
+  [% CASE 'T_U_LONG_PTR' %]
+    SvUOK([% arg %])
+  [% CASE 'T_CHAR' %]
+    SvPOK([% arg %])
+  [% CASE 'T_U_CHAR' %]
+    SvUOK([% arg %])
+  [% CASE 'T_FLOAT' %]
+    SvNOK([% arg %])
+  [% CASE 'T_FLOAT_PTR' %]
+    SvNOK([% arg %])
+  [% CASE 'T_NV' %]
+    SvNOK([% arg %])
+  [% CASE 'T_NV_PTR' %]
+    SvNOK([% arg %])
+  [% CASE 'T_DOUBLE' %]
+    SvNOK([% arg %])
+  [% CASE 'T_DOUBLE_PTR' %]
+    SvNOK([% arg %])
+  [% CASE 'T_PV' %]
+    SvPOK([% arg %])
+  [% CASE 'T_ARRAY' %]
+    SvPOK([% arg %])
+  [% CASE [ 'T_STD_STRING_PV', 'T_STD_STRING_PV_REF', 'T_STD_STRING_PV_PTR' ] %]
+    SvPOK([% arg %])
+  [% CASE 'T_PTR' %]
+    SvIOK([% arg %])
+  [% CASE 'T_PTRREF' %]
+    SvROK([% arg %])
+  [% CASE 'T_REF_IV_REF' %]
+    sv_isa([% arg %], "[% ntype %]")
+  [% CASE 'T_REF_IV_PTR' %]
+    sv_isa([% arg %], "[% ntype %]")
+  [% CASE 'T_PTROBJ' %]
+    (sv_derived_from([% arg %], "[% ntype %]") || [% arg %] == &PL_sv_undef)
+  [% CASE 'T_PTRDESC' %]
+    sv_isa([% arg %], "[% ntype %]")
+  [% CASE 'T_REFREF' %]
+    SvROK([% arg %])
+  [% CASE 'T_REFOBJ' %]
+    sv_isa([% arg %], "[% ntype %]")
+  [% CASE 'T_OPAQUE' %]
+    SvPOK([% arg %])
+  [% CASE 'T_OPAQUEPTR' %]
+    SvPOK([% arg %])
+  [% CASE 'T_PACKED' %]
+    SvOK([% arg %])
+  [% CASE 'T_PACKEDARRAY' %]
+    SvIOK([% arg %])
+  [% CASE 'T_PV_LIST' %]
+    (SvOK([% arg %]) && SvTYPE(SvRV([% arg %]))==SVt_PVAV)
+  [% CASE 'T_CALLBACK' %]
+    SvOK([% arg %])
+  [% CASE 'T_ARRAY' %]
+    SvOK([% arg %])
+  [% CASE 'T_STDIO' %]
+    SvOK([% arg %])
+  [% CASE 'T_IN' %]
+    SvOK([% arg %])
+  [% CASE 'T_INOUT' %]
+    SvOK([% arg %])
+  [% CASE 'T_OUT' %]
+    SvOK([% arg %])
+  [% CASE 'T_OBJECT' %]
+    sv_isobject([% arg %])
+  [% CASE 'T_IUV' %]
+    [% IF Config.ptrsize == 8 %]
+      SvUOK([% arg %])
+    [% ELSE %]
+      SvIOK([% arg %])
+    [% END %]
+  [% CASE 'T_FPOINTER' %]
+    SvIOK([% arg %])
+  [% CASE DEFAULT %]
+    [% PROCESS funcmap_in2 %]
+  [% END %]
+[% END %]

@@ -4,14 +4,14 @@ MODULE = TagLib			PACKAGE = _NAMESPACE_
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # NOTE:
 # _T_ should normally be a ptr
 # Normally list takes NO charge of deleting each ptr
-# 
+#
 ################################################################
 
-_NAMESPACE_ * 
+_NAMESPACE_ *
 _NAMESPACE_::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -23,7 +23,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::_NAMESPACE_"))
 			l = INT2PTR(_NAMESPACE_ *, SvIV(SvRV(ST(1))));
 		else
@@ -37,20 +37,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-_NAMESPACE_::Iterator * 
+_NAMESPACE_::Iterator *
 _NAMESPACE_::begin()
 CODE:
 	RETVAL = new _NAMESPACE_::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-_NAMESPACE_::Iterator * 
+_NAMESPACE_::Iterator *
 _NAMESPACE_::end()
 CODE:
 	RETVAL = new _NAMESPACE_::Iterator(THIS->end());
@@ -58,28 +58,28 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 _NAMESPACE_::insert(it, value)
 	_NAMESPACE_::Iterator * it
 	_T_ * value
 CODE:
 	THIS->insert(*it, value);
 
-void 
+void
 _NAMESPACE_::sortedInsert(value, unique=false)
 	_T_ * value
 	bool unique
 CODE:
 	THIS->sortedInsert(value, unique);
 
-_NAMESPACE_ * 
+_NAMESPACE_ *
 _NAMESPACE_::append(...)
 PROTOTYPE: $
 PREINIT:
@@ -100,7 +100,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-_NAMESPACE_ * 
+_NAMESPACE_ *
 _NAMESPACE_::prepend(...)
 PROTOTYPE: $
 PREINIT:
@@ -121,26 +121,26 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 _NAMESPACE_::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-_NAMESPACE_::Iterator *  
+_NAMESPACE_::Iterator *
 _NAMESPACE_::find(value)
 	_T_ * value
 CODE:
@@ -149,13 +149,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const T &value) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 _NAMESPACE_::contains(value)
 	_T_ * value
 CODE:
@@ -163,13 +163,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::erase(it)
 	_NAMESPACE_::Iterator * it
 CODE:
 	THIS->erase(*it);
 
-void 
+void
 _NAMESPACE_::front()
 PPCODE:
 	_T_ * item = THIS->front();
@@ -178,7 +178,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 _NAMESPACE_::back()
 PPCODE:
 	_T_ * item = THIS->back();
@@ -188,20 +188,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & front() const
 # const T & back() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 _NAMESPACE_::setAutoDelete(autoDelete)
 	bool autoDelete
 CODE:
 	THIS->setAutoDelete(autoDelete);
 
-void 
+void
 _NAMESPACE_::getItem(i)
 	unsigned int i
 PPCODE:
@@ -212,20 +212,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](uint i) const
 # not exported
-# 
+#
 ################################################################
 
-void  
+void
 _NAMESPACE_::copy(l)
 	_NAMESPACE_ * l
 PPCODE:
 	(void)THIS->operator=(*l);
 	XSRETURN(1);
 
-bool 
+bool
 _NAMESPACE_::equals(l)
 	_NAMESPACE_ * l
 CODE:
@@ -234,21 +234,21 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
-# not exported 
-# 
+# not exported
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS for TIE MAGIC
-# 
+#
 ################################################################
 
-static void 
+static void
 _NAMESPACE_::TIEARRAY(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -261,7 +261,7 @@ PPCODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::_NAMESPACE_")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				/* READONLY on, create a new SV */
@@ -282,7 +282,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 _NAMESPACE_::FETCH(index)
 	unsigned int index
 PPCODE:
@@ -295,7 +295,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 _NAMESPACE_::STORE(index, item)
 	unsigned int index
 	_T_ * item
@@ -303,8 +303,8 @@ INIT:
 	_NAMESPACE_::Iterator it = THIS->begin();
 CODE:
 	/*!
-	 * insert item into specific index 
-	 * append to the end if index out of bound 
+	 * insert item into specific index
+	 * append to the end if index out of bound
 	 */
 	if( 0 <= index && index < THIS->size()) {
 		for(int i = 0; i < index + 1; i++, it++)
@@ -314,37 +314,37 @@ CODE:
 	} else
 		THIS->append(item);
 
-unsigned int 
+unsigned int
 _NAMESPACE_::FETCHSIZE()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::STORESIZE(s)
 	unsigned int s
 CODE:
 	/* do nothing here */
 
-void 
+void
 _NAMESPACE_::EXTEND(s)
 	unsigned int s
 CODE:
 	/* do nothing here */
 
-bool 
+bool
 _NAMESPACE_::EXISTS(key)
 	unsigned int key
 CODE:
 	if( 0 <= key && key < THIS->size())
 		RETVAL = true;
-	else 
+	else
 		RETVAL = false;
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::DELETE(key)
 	unsigned int key
 INIT:
@@ -356,18 +356,18 @@ CODE:
 		THIS->erase(it);
 	}
 
-void 
+void
 _NAMESPACE_::CLEAR()
 CODE:
 	THIS->clear();
 
-void 
+void
 _NAMESPACE_::PUSH(...)
 PPCODE:
 	if(items > 1) {
 		/* ensure all items are of type _T_/_NAMESPACE_ before pushing */
 		for(int i = 1; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::_T_") || 
+			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::_T_") ||
 				sv_derived_from(ST(i), "Audio::_NAMESPACE_")))
 				croak("ST(i) is not of type Audio::_T_/_NAMESPACE_");
 		}
@@ -375,22 +375,22 @@ PPCODE:
 			if(sv_derived_from(ST(i), "Audio::_T_"))
 				(void)THIS->append(INT2PTR(_T_ *, SvIV(SvRV(ST(i)))));
 			else /* _NAMESPACE_ */
-				(void)THIS->append(*INT2PTR(_NAMESPACE_ *, 
+				(void)THIS->append(*INT2PTR(_NAMESPACE_ *,
 					SvIV(SvRV(ST(i)))));
 		}
 		ST(0) = sv_2mortal(newSVuv(THIS->size()));
 		XSRETURN(1);
-	} else 
+	} else
 		XSRETURN_UNDEF;
 
 ################################################################
-# 
+#
 # POPed & SHIFTed item will ALWAYS be marks as READONLY
 # which means it is only a reference
 # NEVER takes charge of performing delete action
-# 
+#
 ################################################################
-void 
+void
 _NAMESPACE_::POP()
 PREINIT:
 	_NAMESPACE_::Iterator it;
@@ -403,9 +403,9 @@ PPCODE:
 		THIS->erase(--it);
 		XSRETURN(1);
 	} else
-		XSRETURN_UNDEF; 
+		XSRETURN_UNDEF;
 
-void 
+void
 _NAMESPACE_::SHIFT()
 PPCODE:
 	if(!THIS->isEmpty()) {
@@ -417,13 +417,13 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 _NAMESPACE_::UNSHIFT(...)
 PPCODE:
 	if(items > 1) {
 		/* ensure all items are of type _T_/_NAMESPACE_ firstly */
 		for(int i = 1; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::_T_") || 
+			if(!(sv_isobject(ST(i)) && sv_derived_from(ST(i), "Audio::_T_") ||
 				sv_derived_from(ST(i), "Audio::_NAMESPACE_")))
 				croak("ST(i) is not of type _T_/_NAMESPACE_");
 		}
@@ -431,7 +431,7 @@ PPCODE:
 			if(sv_derived_from(ST(i), "Audio::_T_"))
 				(void)THIS->append(INT2PTR(_T_ *, SvIV(SvRV(ST(i)))));
 			else /* _NAMESPACE_ */
-				(void)THIS->append(*INT2PTR(_NAMESPACE_ *, 
+				(void)THIS->append(*INT2PTR(_NAMESPACE_ *,
 					SvIV(SvRV(ST(i)))));
 		}
 		ST(0) = sv_2mortal(newSVuv(THIS->size()));
@@ -439,7 +439,7 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 _NAMESPACE_::SPLICE(...)
 PROTOTYPE: $;$@
 PREINIT:
@@ -482,8 +482,8 @@ PPCODE:
 			croak("ST(2) is not of type uint");
 		/* (items-3) items to insert */
 		for(int i = 3; i < items; i++) {
-			if(!(sv_isobject(ST(i)) && 
-				sv_derived_from(ST(i), "Audio::_T_") || 
+			if(!(sv_isobject(ST(i)) &&
+				sv_derived_from(ST(i), "Audio::_T_") ||
 				sv_derived_from(ST(i), "Audio::_NAMESPACE_")))
 			croak("ST(i) is not of type Audio::_T_/_NAMESPACE_");
 		}
@@ -493,7 +493,7 @@ PPCODE:
 		it++;
 		for(int i = 3; i < items; i++) {
 			if(sv_derived_from(ST(i), "Audio::_T_"))
-				THIS->insert(it--, 
+				THIS->insert(it--,
 					INT2PTR(_T_ *, SvIV(SvRV(ST(i)))));
 			else { /* _NAMESPACE_ */
 				obj = INT2PTR(_NAMESPACE_ *, SvIV(SvRV(ST(i))));
@@ -521,7 +521,7 @@ PPCODE:
 		XSRETURN_EMPTY;
 
 ################################################################
-# 
+#
 # NO UNTIE method defined
-# 
+#
 ################################################################

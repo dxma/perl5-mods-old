@@ -21,12 +21,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::FileRef - This class provides a simple abstraction for
-creating and handling files 
+creating and handling files
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::FileRef;
-  
+
   my $i = Audio::TagLib::FileRef->new("sample file.mp3");
   $i->tag()->setTitle(Audio::TagLib::String->new("sample title"));
   print $i->tag()->toCString(), "\n"; # got "sample title"
@@ -37,7 +37,7 @@ FileRef exists to provide a minimal, generic and value-based wrapper
 around a File.  It is lightweight and implicitly shared, and as such
 suitable for pass-by-value use.  This hides some of the uglier details
 of L<Audio::TagLib::File|Audio::TagLib::File> and the non-generic portions of the
-concrete file implementations. 
+concrete file implementations.
 
 This class is useful in a "simple usage" situation where it is
 desirable to be able to get and set some of the tag information that
@@ -63,7 +63,7 @@ L<PV|Audio::TagLib::AudioProperties> $audioPropertiesStyle = "Average")>
 Create a FileRef from $fileName. If $readAudioProperties is true then
 the audio properties will be read using $audioPropertiesStyle. If
 $readAudioProperties is false then $audioPropertiesStyle will be
-ignored. 
+ignored.
 
 Also see the note in the class documentation about why you may not
 want to use this method in your application.
@@ -102,7 +102,7 @@ Returns the file represented by this handler class.
 As a general rule this call should be avoided since if you need to
 work with file objects directly, you are probably better served
 instantiating the File subclasses (i.e. MPEG::File) manually and
-working with their APIs. 
+working with their APIs.
 
 This I<handle> exists to provide a minimal, generic and value-based
 wrapper around a File.  Accessing the file directly generally
@@ -127,12 +127,12 @@ next resolver is tried.
 
 Returns the added resolver (the same one that's passed in -- this is
 mostly so that static inialializers have something to use for
-assignment). 
+assignment).
 
 see L<FileTypeResolver|Audio::TagLib::FileRef::FileTypeResolver>
 
 =item I<L<StringList|Audio::TagLib::StringList> defaultFileExtensions()>
-[static] 
+[static]
 
 As is mentioned elsewhere in this class's documentation, the default
 file type resolution code provided by Audio::TagLib only works by comparing
@@ -147,7 +147,7 @@ The extensions are all returned in lowercase, though the comparison
 B<NOTE> This does not account for any additional file type resolvers
   that are plugged in.  Also note that this is not intended to replace
   a propper mime-type resolution system, but is just here for
-  reference. 
+  reference.
 
 see L<FileTypeResolver|Audio::TagLib::FileRef::FileTypeResolver>
 

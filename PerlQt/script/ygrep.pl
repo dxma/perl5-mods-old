@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -34,16 +28,16 @@ sub main {
     my $h         = '';
     GetOptions(
         'c|condition=s' => $condition,
-        'f|field:s'     => $fields, 
-        'h|help'        => \$h, 
+        'f|field:s'     => $fields,
+        'h|help'        => \$h,
     );
     usage() if $h;
     usage() unless @ARGV;
     my $yaml_file = $ARGV[0];
-    croak("file not found: $yaml_file") unless 
+    croak("file not found: $yaml_file") unless
       -f $yaml_file;
     local ( *YAML, );
-    open YAML, '<', $yaml_file or 
+    open YAML, '<', $yaml_file or
       croak("cannot open file to read: $!");
     my $cont = do { local $/; <YAML> };
     my $inputs  = Load($cont);

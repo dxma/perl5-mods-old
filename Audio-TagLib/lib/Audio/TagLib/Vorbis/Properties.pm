@@ -12,7 +12,7 @@ our @ISA = qw(Audio::TagLib::AudioProperties);
 
 # Preloaded methods go here.
 
-BEGIN : 
+BEGIN :
   {
       no strict 'refs';
       unless (grep {/^new$/ } keys %__PACKAGE__::) {
@@ -27,12 +27,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Vorbis::Properties  - An implementation of audio property
-reading for Ogg Vorbis 
+reading for Ogg Vorbis
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::Vorbis::Properties;
-  
+
   my $f = Audio::TagLib::Vorbis::File->("sample ogg file.ogg");
   my $i = $f->audioProperties();
   print $i->channels(), "\n"; # normally got 2
@@ -45,7 +45,7 @@ AudioProperties API.
 =over
 
 =item I<new(L<File|Audio::TagLib::Vorbis::File> $file, PV $style =
-"Average")> 
+"Average")>
 
 Create an instance of Vorbis::Properties with the data read from the
  Vorbis::File $file.
@@ -71,17 +71,17 @@ Returns the Vorbis version, currently "0" (as specified by the spec).
 =item I<IV bitrateMaximum()>
 
 Returns the maximum bitrate as read from the Vorbis identification
- header. 
+ header.
 
 =item I<IV bitrateNominal()>
 
 Returns the nominal bitrate as read from the Vorbis identification
-header. 
+header.
 
 =item I<IV bitrateMinimum()>
 
 Returns the minimum bitrate as read from the Vorbis identification
- header. 
+ header.
 
 =back
 

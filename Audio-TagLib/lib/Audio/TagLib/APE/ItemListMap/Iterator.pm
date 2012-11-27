@@ -30,7 +30,7 @@ Audio::TagLib::APE::ItemListMap::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::APE::ItemListMap;
-  
+
   my $key1   = Audio::TagLib::String->new("key1");
   my $key2   = Audio::TagLib::String->new("key2");
   my $value1 = Audio::TagLib::String->new("value1");
@@ -41,7 +41,7 @@ Audio::TagLib::APE::ItemListMap::Iterator - Perl-only class
   $map->insert($key1, $item1);
   $map->insert($key2, $item2);
   my $i     = $map->begin();
-  
+
   print $$i->toString()->toCString(), "\n"; # got "value1"
   $i++;
   print $i->data()->toString()->toCString(), "\n"; # got "value2"

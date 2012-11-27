@@ -1,0 +1,10 @@
+# Manually maintained types, which might come from:
+# 1. 3rd party header
+# 2. template
+# 3. imported by #include directive
+# NOTE: _FULL_ qualified name if possible
+
+LOGINREC			T_STRUCT
+isc_db_handle			T_PTR
+SQLHANDLE			T_PTR
+MYSQL				T_PTR

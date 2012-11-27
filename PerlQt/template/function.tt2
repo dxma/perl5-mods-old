@@ -1,36 +1,196 @@
+[% BLOCK get_pn_type %]
+  [% p_type = my_typemap.$c_type %]
+  [% c_type2 = c_type.remove('\s*(?:\*|\&)+$').remove('^const\s+').remove('\s+const$') %]
+  [% n_type = p_type.match('^T_(?:PTR|REF)OBJ$') ? c_type2 : c_type %]
+[% END %]
+
 [% BLOCK echo_func_proto %]
   [% FOREACH method = methods %]
     [% display_params = [] %]
     [% FOREACH p = method.parameters %]
-      [% name  = p.exists("name") ? p.name : "" %]
-      [% param = p.type _ " " _ name %]
-      [% display_params.push(param) %]
+      [% name  = p.exists('name') ? p.name : '' %]
+      [% param = p.type == '...' ? p.type : p.type _ ' ' _ name %]
+      [% IF p.type.match('^T_ARRAY_') %]
+        [% param = name %]
+      [% END %]
+      [% value = p.exists('default') ? ' = ' _ p.default : '' %]
+      [% display_params.push(param _ value ) %]
     [% END %]
-# [% IF method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(", ") %])
+## [% IF method.exists('static') and method.static %]static [% END %] [% method.return IF method.exists('return') %] [%+ method_name %]([% display_params.join(', ') %])
   [% END %]
 [% END %]
 
-[% BLOCK make_param_xscode %]
-  [% FOREACH i = method.parameters %]
-    [% IF my_packagemap.exists(p.type) %]
+
+[% BLOCK make_param_funcmap %]
+  [% conds = [] %]
+  [% FOREACH p = method.parameters %]
+    [% LAST IF p.exists('default') %]
+    [% s_item = 'ST(' _ loop.count _ ')' %]
+    [% PROCESS get_pn_type c_type = p.type %]
+    [% cond = BLOCK %]
+      [% INCLUDE funcmap_in
+        var   = 'arg' _ gen_arg_num(mindex, loop.index),
+        arg   = s_item,
+        type  = p.type,
+        ptype = p_type,
+        ntype = my_packagemap.$n_type
+      %]
+    [% END %]
+    [% CALL conds.push(cond) %]
+  [% END %]
+    [% UNLESS count == 1 %]else [% END %]if ([% conds.size > 0 ? conds.join(' && ') : '1' %]) {
+[% END %]
+
+[% BLOCK make_param_ppcode %]
+  [% FOREACH p = method.parameters %]
+    [% NEXT IF p.exists('default') %]
+    [% s_item = 'ST(' _ loop.count _ ')' %]
+    [% PROCESS get_pn_type c_type = p.type %]
+      [%+ INCLUDE typemap_in
+        var   = 'arg' _ gen_arg_num(mindex, loop.index),
+        arg   = s_item,
+	name  = p.name,
+        type  = p.type,
+        ptype = p_type,
+        ntype = my_packagemap.$n_type
+       %]
+  [% END %]
+[% END %]
+
+[% BLOCK make_func_ppcode %]
+  [% mindex = method.index %]
+
+    [%+ INCLUDE make_param_funcmap %]
+      [%+ INCLUDE make_param_ppcode %]
+  [% params = [] %]
+  [% FOREACH param = method.parameters %]
+    [% c_type = param.type %]
+    [% p_type = my_typemap.$c_type %]
+    [% IF p_type.match('OBJ$') and c_type.match('\s*&$') %]
+      [% arg = '*arg' %]
+    [% ELSE %]
+      [% arg = 'arg' %]
+    [% END %]
+    [% params.push(arg _ gen_arg_num(mindex, loop.index)) UNLESS c_type == '...' %]
+  [% END %]
+  [% IF method_name == 'new' %]
+    [% IF my_abstract %]
+    Perl_croak(aTHX_ "Trying to create abstract class object");
+    [% ELSE %]
+    ret = [% my_has_operator_new ? '::' : '' %]new [% my_cclass %]([% params.join(', ') %]);
+    ST(0) = sv_newmortal();
+    [%+ INCLUDE typemap_out
+      var   = 'ret',
+      arg   = 'ST(0)',
+      type  = method.return,
+      ptype = 'T_PTROBJ'
+      ntype = my_package,
+    %]
+    XSRETURN(1);
+    [% END %]
+  [% ELSE %]
+    [% IF method.exists('return') and method.return != 'void' %]
+      [% c_type = method.return %]
+      [% p_type = my_typemap.$c_type %]
+      [% IF p_type.match('OBJ$') and c_type.match('\s*&$') %]
+        [% c_type2 = c_type.replace('\s*&$', ' *') %]
+	[% r_prefix = '&' %]
+      [% ELSE %]
+        [% c_type2 = c_type %]
+        [% r_prefix = '' %]
+      [% END %]
+    [%+ c_type2 %] ret = [% r_prefix %]THIS->[% method_name %]([% params.join(', ') %]);
+      [% PROCESS get_pn_type c_type = method.return %]
+    ST(0) = sv_newmortal();
+    [%+ INCLUDE typemap_out
+      var   = 'ret',
+      arg   = 'ST(0)',
+      type  = method.return,
+      ptype = p_type
+      ntype = my_packagemap.$n_type
+    %]
+    XSRETURN(1);
+    [% ELSE %]
+    (void)THIS->[% method_name %]([% params.join(', ') %]);
+    XSRETURN(0);
     [% END %]
   [% END %]
+    }
 [% END %]
 
 [% BLOCK make_func_xscode %]
 void
-[%+ my_package %]::[% method_name %](...)
+[%+ my_cclass %]::[% methods.last.operator ? methods.last.name2 : method_name %](...)
 PREINIT:
-PPCODE:
-  [% IF methods.size > 1 %]
-    switch(items) {
-    [% FOREACH method = methods %]
-      [% INCLUDE make_param_xscode method = methods.last %]
+[% IF method_name == 'new' %]
+[%+ my_cclass %] *ret;
+[% END %]
+[% FOREACH method = methods %]
+  [% mindex = loop.index %]
+  [% method.index = mindex %]
+  [% FOREACH param = method.parameters %]
+    [% c_type = param.type %]
+    [% p_type = my_typemap.$c_type %]
+    [% NEXT IF c_type == '...' %]
+    [% IF p_type.match('REFOBJ$') %]
+      [% IF param.exists('default') %]
+[%+ param.type %] arg[% gen_arg_num(mindex, loop.index) _ '_' %] = [% param.default %];
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %] = const_cast<[% param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %]>(&arg[% gen_arg_num(mindex, loop.index) _ '_' %]);
+      [% ELSE %]
+[%+ param.type.replace('\s*\&$', ' *').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %];
+      [% END %]
+    [% ELSE %]
+      [% IF c_type.match('\*$') %]
+[%+ param.type %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% ELSIF c_type.match('\:\:T_FPOINTER_') %]
+[%+ param.type.remove('^.+\:\:') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% ELSIF c_type.match('^T_ARRAY_') %]
+[%+ param.name.remove('^const ').replace('\bT_ARRAY_[\w_\_]+', 'arg' _ gen_arg_num(mindex, loop.index)) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% ELSE %]
+[%+ param.type.remove('\s*\&$').remove('^const ').remove('\s+const$') %] arg[% gen_arg_num(mindex, loop.index) %] [% param.exists('default') ? ' = ' _ param.default : '' %];
+      [% END %]
     [% END %]
-    default:
-        croak("wrong number of arguments");
-    }
-  [% ELSE %]
-    [% INCLUDE make_param_xscode method = methods.last %]
   [% END %]
+[% END %]
+PPCODE:
+    [% IF methods.size > 1 %]
+    switch(items) {
+      [% methods_by_argn = {} %]
+      [% FOREACH method = methods %]
+        [% argn = 0 %]
+        [% FOREACH param = method.parameters %]
+          [% IF not param.exists('default') %]
+	    [% argn = argn + 1 %]
+	  [% END %]
+	[% END %]
+	[% UNLESS methods_by_argn.exists(argn) %]
+	  [% methods_by_argn.$argn = [] %]
+	[% END %]
+        [% CALL methods_by_argn.$argn.push(method) %]
+      [% END %]
+      [% FOREACH argn = methods_by_argn.keys.sort %]
+      case [% argn + 1 %]:
+      {
+        [% FOREACH method = methods_by_argn.$argn %]
+        [%+ INCLUDE make_func_ppcode
+	  count  = loop.count
+        %]
+	[% END %]
+	[% IF argn > 0 %]
+	else
+            Perl_croak(aTHX_ "wrong number/type of arguments passed in");
+	[% END %]
+        break;
+      }
+      [% END %]
+      default:
+        Perl_croak(aTHX_ "wrong number/type of arguments passed in");
+        break;
+    }
+    [% ELSE %]
+    [%+ INCLUDE make_func_ppcode
+      method = methods.last,
+      count  = 1
+    %]
+    [% END %]
 [% END %]

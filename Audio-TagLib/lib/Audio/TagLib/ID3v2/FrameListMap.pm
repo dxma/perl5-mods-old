@@ -20,7 +20,7 @@ Audio::TagLib::ID3v2::FrameListMap - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::FrameListMap;
-  
+
   my $tag  = Audio::TagLib::ID3v2::Tag->new();
   $tag->setTitle(Audio::TagLib::String->new("title"));
   $tag->setArtist(Audio::TagLib::String->new("artist"));
@@ -75,7 +75,7 @@ L<Audio::TagLib::ID3v2::FrameListMap::Iterator|Audio::TagLib::ID3v2::FrameListMa
 L<FrameList|Audio::TagLib::ID3v2::FrameList> $value)>
 
 Inserts $value under $key in the map. If a value for $key already
-  exists it will be overwritten. 
+  exists it will be overwritten.
 
 =item I<void clear()>
 

@@ -7,12 +7,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v1::GenreMap::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v1::GenreMap::Iterator * 
+TagLib::ID3v1::GenreMap::Iterator *
 TagLib::ID3v1::GenreMap::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v1::GenreMap::Iterator"))
 			i = INT2PTR(TagLib::ID3v1::GenreMap::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -38,13 +38,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v1::GenreMap::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-int 
+int
 TagLib::ID3v1::GenreMap::Iterator::data()
 CODE:
 	/* iterator for Map & List */
@@ -52,7 +52,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v1::GenreMap::Iterator::next()
 PPCODE:
 	TagLib::ID3v1::GenreMap::Iterator & i = THIS->operator++();
@@ -61,7 +61,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::ID3v1::GenreMap::Iterator::last()
 PPCODE:
 	TagLib::ID3v1::GenreMap::Iterator & i = THIS->operator--();
@@ -72,7 +72,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::ID3v1::GenreMap::Iterator::forward(n)
 	int n
 PPCODE:
@@ -82,7 +82,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v1::GenreMap::Iterator::backward(n)
 	int n
 PPCODE:
@@ -96,7 +96,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::ID3v1::GenreMap::Iterator::equal(i)
 	TagLib::ID3v1::GenreMap::Iterator * i
 CODE:
@@ -104,7 +104,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v1::GenreMap::Iterator::lessThan(i)
 	TagLib::ID3v1::GenreMap::Iterator * i
 CODE:
@@ -112,7 +112,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v1::GenreMap::Iterator::greatThan(i)
 	TagLib::ID3v1::GenreMap::Iterator * i
 CODE:
@@ -120,7 +120,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v1::GenreMap::Iterator::lessEqual(i)
 	TagLib::ID3v1::GenreMap::Iterator * i
 CODE:
@@ -128,7 +128,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v1::GenreMap::Iterator::greatEqual(i)
 	TagLib::ID3v1::GenreMap::Iterator * i
 CODE:
@@ -136,7 +136,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v1::GenreMap::Iterator::_copy(it)
 	TagLib::ID3v1::GenreMap::Iterator * it
 PPCODE:

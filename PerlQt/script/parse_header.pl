@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
@@ -36,12 +30,12 @@ EOU
 
 sub main {
     usage() unless @ARGV;
-    
+
     my ( $in, $out ) = @ARGV;
     die "file not found: $!" unless -f $in;
     my $source;
     local ( *OUT );
-    
+
     {
         local ( *IN );
         open IN, '<', $in or die "cannot open file: $!";
@@ -50,19 +44,19 @@ sub main {
         close IN or warn "cannot close file: $!";
     }
     if (defined $out) {
-        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or 
+        sysopen OUT, $out, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file: $!";
         select OUT;
     }
     else {
         *OUT = *STDOUT;
     }
-    
+
     #print STDERR $source;
     my $rc = $parser->begin($source);
-    
+
     #print STDERR "generated!\n" if defined $rc;
-    close OUT or warn "cannot write to file: $!" unless 
+    close OUT or warn "cannot write to file: $!" unless
       fileno(OUT) == fileno(STDOUT);
     unlink $out if not defined $rc and defined $out and -f $out;
 	if (defined $rc) {

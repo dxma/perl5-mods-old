@@ -1,27 +1,24 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
+no warnings 'once';
 use strict;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_WRONLY O_TRUNC O_CREAT);
-use YAML::Syck qw(Load Dump);
 use File::Spec ();
 use Config qw/%Config/;
-use FindBin ();
-use Parse::RecDescent ();
+use FindBin      ();
+use Data::Dumper ();
 # make sure typemap exists
 use ExtUtils::MakeMaker ();
 
+use YAML::Syck qw(Load Dump);
+use Parse::RecDescent ();
+
 =head1 DESCRIPTION
 
-Create typemap according to all relevant source: 
+Create typemap according to all relevant source:
 
 <module>.{function.public, function.protected, signal, slot.public,
 slot.protected} and <module>.typedef
@@ -44,7 +41,7 @@ EOU
 our $AUTOLOAD;
 our $TYPE;
 
-our $NAMESPACE_DELIMITER = '__';
+our $NAMESPACE_DELIMITER = '___';
 our $DEFAULT_NAMESPACE   = '';
 # the namespace in which the type is involved
 our $CURRENT_NAMESPACE   = '';
@@ -64,37 +61,37 @@ our @TYPE_UNKNOWN    = ();
 our @TYPE_TEMPLATE   = ();
 # shadow cache
 our %_TYPE_TEMPLATE  = ();
-# hash to hold all local type name 
+# hash to hold all local type name
 # and corresponding full qualified name
 our %TYPE_LOCALMAP   = ();
 
-# for type transform: 
+# for type transform:
 # const takes one additional parameter
 # a tiny Parse::RecDescent grammar to work on
 # grabbing const parameter
 my $const_grammar = q{
-    start : next_const const_body const_remainder 
+    start : next_const const_body const_other
             { $main::TYPE = $item[1]->[1]. "( ". $item[2]. " ) ". $item[3]; }
-            { if ($item[2] eq '') { 
+            { if ($item[2] eq '') {
                   # something like 'QMenuBar * const'
                   $main::TYPE = $item[1]->[0].", ".$main::TYPE;
               } else {
                   $main::TYPE = $item[1]->[0]. $main::TYPE;
               }
             }
-    const_remainder        : m/^(.*)\Z/o      { $return = $1; } 
+    const_other            : m/^(.*)\Z/o      { $return = $1; }
                            | { $return = ''; }
-    next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o 
-                             { $return = [$1, $2]; } 
-    const_body_simple      : m/([^()*&]+)/io { $return = $1; }  
-    next_const_body_token  : m/([^()]+)/io   { $return = $1; } 
+    next_const             : m/^(.*?)\b(const)\b(?!\_)\s*(?!\()/o
+                             { $return = [$1, $2]; }
+    const_body_simple      : m/([^()*&]+)/io { $return = $1; }
+    next_const_body_token  : m/([^()]+)/io   { $return = $1; }
     const_body     : const_body_simple ...!'(' { $return = $item[1]; }
-                   | const_body_loop           { $return = $item[1]; } 
+                   | const_body_loop           { $return = $item[1]; }
                    |                           { $return = '';       }
-    const_body_loop: next_const_body_token 
-                     ( '(' <commit> const_body_loop ')' 
-                       { $return = $item[1]. $item[3]. $item[4]; } 
-                     | { $return = '' } ) 
+    const_body_loop: next_const_body_token
+                     ( '(' <commit> const_body_loop ')' ( const_body_simple { $return = $item[1]; } | { $return = '' } )
+                       { $return = $item[1]. $item[3]. $item[4]. $item[5]; }
+                     | { $return = '' } )
                      { $return = $item[1]. $item[2]; }
 };
 my $parser = Parse::RecDescent::->new($const_grammar)
@@ -107,7 +104,10 @@ sub PTR {
     if (exists $entry->{type}) {
         # take existing type value
         # '(&|*)*' => 'PTR'
-        # '(&|*)&' => 'REF'
+        # '&&'     => 'REF'
+        # CAUTION:
+        # '*&'     => 'REF'
+        $entry->{type} = 'REF' if $entry->{type} eq 'REF';
         $entry->{c_type} = '*'. $entry->{c_type};
     }
     else {
@@ -136,18 +136,11 @@ sub REF {
 # NOTE: const struct timeval
 #       self-explaining, mark as T_STRUCT
 sub struct {
-    my $entry = @_ ? shift : {};
-    if (exists $entry->{type}) {
-        $entry->{type}   = 'T_STRUCT';
-        $entry->{c_type} = 'struct '. $entry->{c_type};
-        $entry->{t_type} = 'T_STRUCT';
-    }
-    else {
-        $entry->{type}   = 'T_STRUCT';
-        # FIXME: missing struct name
-        $entry->{c_type} = 'struct';
-        $entry->{t_type} = 'T_STRUCT';
-    }
+    my $name = shift;
+    my $entry = {};
+    $entry->{type}   = 'T_STRUCT';
+    $entry->{c_type} = 'struct '. $name;
+    $entry->{t_type} = 'T_STRUCT';
     return $entry;
 }
 # NOTE: char * const == char const *
@@ -232,9 +225,9 @@ BEGIN { require "$FindBin::Bin/create_typemap_custom_methods.pl"; }
 
 =item __final_transform
 
-Final step to identify the structure information of a type. 
+Final step to identify the structure information of a type.
 
-return final transformed type structure. 
+return final transformed type structure.
 
 =back
 
@@ -262,7 +255,8 @@ Internal use. Load a YAML-ish file and return its yaml-ed content.
 
 sub __load_yaml {
     my ( $f ) = @_;
-    
+
+    #print STDERR $f, "\n";
     local ( *FILE, );
     open FILE, "<", $f or die "cannot open file $f: $!";
     #print STDERR "loading file: $f\n";
@@ -272,12 +266,12 @@ sub __load_yaml {
     return $hcont;
 }
 
-=over 
+=over
 
 =item __read_typemap
 
 Read supported type list inside a typemap file. Store each as a key of
-hash passed-in. 
+hash passed-in.
 
 =back
 
@@ -290,10 +284,10 @@ sub __read_typemap {
     open TYPEMAP, "<", $typemap_file or die "cannot open file: $!";
     while (<TYPEMAP>) {
         chomp;
-        last if m/^INPUT\s*$/o;
-        next if m/^\#/io;
-        next if m/^\s*$/io;
-        next if m/^TYPEMAP\s*$/o;
+        last if /^INPUT\s*$/o;
+        next if /^\s*#/io;
+        next if /^\s*$/io;
+        next if /^TYPEMAP\s*$/o;
         my @t = split /\s+/, $_;
         my $v = pop @t;
         my $k = join(" ", @t);
@@ -308,13 +302,13 @@ sub __read_typemap {
 
 Try to analyse a C/C++ type. Transform it into a group of function
 calls. Return a self-deterministic structure to describe the type
-information. 
+information.
 
 B<NOTE>: the self-deterministic structure is basically a hash with
 three fundamental keys - 'type', 'c_type' and 't_type'. The value of
 'type' corresponses to the final typemap string. The value of 'c_type'
-is the raw C/C++ type string. The value of 't_type' is _ONLY_ used by 
-template types to form the specific typemap name. 
+is the raw C/C++ type string. The value of 't_type' is _ONLY_ used by
+template types to form the specific typemap name.
 
 =back
 
@@ -322,10 +316,10 @@ template types to form the specific typemap name.
 
 sub __analyse_type {
     local $TYPE = shift;
-    our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
+    our ( %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP,
           $CURRENT_NAMESPACE, %TYPE_LOCALMAP, );
     my ( $result, $type_full, );
-    
+
     # $type_full: full qualified type name (with namespace)
     # FIXME: doesn't apply to simple c type like int etc.
     if ($TYPE =~ m/::(?>[^<>]+)$/io) {
@@ -335,10 +329,10 @@ sub __analyse_type {
         $type_full = join("::", $CURRENT_NAMESPACE, $TYPE);
     }
     #print STDERR $TYPE, " -> ", $type_full, "\n";
-    if (exists $GLOBAL_TYPEMAP{$TYPE} or 
+    if (exists $GLOBAL_TYPEMAP{$TYPE} or
               exists $SIMPLE_TYPEMAP{$TYPE}) {
         $result = {};
-        $result->{type}   = exists $GLOBAL_TYPEMAP{$TYPE} ? 
+        $result->{type}   = exists $GLOBAL_TYPEMAP{$TYPE} ?
           $GLOBAL_TYPEMAP{$TYPE} : $SIMPLE_TYPEMAP{$TYPE};
         $result->{c_type} = $TYPE;
         $result->{t_type} = $result->{type};
@@ -349,13 +343,14 @@ sub __analyse_type {
         $result->{type}   = $MANUAL_TYPEMAP{$type_full};
         $result->{c_type} = $type_full;
         $result->{t_type} = $result->{type};
-        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$TYPE} = $type_full;
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        $TYPE_LOCALMAP{$ns}->{$TYPE} = $type_full;
     }
     else {
         #print STDERR "orig  : ", $TYPE, "\n";
         my $call_transform = sub {
             my $type = shift;
-            
+
             $type = '__final_transform( '. $type .' )';
             #print STDERR $type, "\n";
             # mask built-in function 'int'
@@ -365,14 +360,13 @@ sub __analyse_type {
             return $ret;
         };
         # transforms
-        # FIXME:
-        # 'Template<A>::Type' => 'Template::Type'
-        $TYPE =~ s/<[^>]+>(?=::)//io;
         # template to a function call
         # '<' => '('
         $TYPE =~ s/\</(/gio;
         # '>' => ')'
         $TYPE =~ s/\>/)/gio;
+        # 'Template<A>::Type' => 'Template<A>->Type'
+        $TYPE =~ s/\)::/)->/io;
         # FIXME:
         # '* const *' => '* *'
         $TYPE =~ s{(.*)\*\s+const\s+\*}{$1 * *}gio;
@@ -382,15 +376,15 @@ sub __analyse_type {
             defined $parser->start($TYPE) or die "Parse failed!";
         }
         #print STDERR "patch1: ", $TYPE, "\n";
-        # transform rule for coutinous (two or more) 
+        # transform rule for coutinous (two or more)
         # pointer ('*') or reference ('&')
         # * (*|&) => PTR (PTR|REF)
-        # which means second will ALWAYS be a parameter of 
+        # which means second will ALWAYS be a parameter of
         # the first
         # for instance:
         # '* & *' => 'PTR( REF( PTR ))'
         # FIRST GREDDY IS IMPORTANT
-        while ($TYPE =~ 
+        while ($TYPE =~
                  s{(.*(?<=(?:\*|\&)))\s*(\*|\&)}
                   {$1.'('. ($2 eq '*' ? 'PTR' : 'REF'). ')' }geio) {
             1;
@@ -404,14 +398,17 @@ sub __analyse_type {
         # 'signed long' => 'signed( long )'
         $TYPE =~ s/\b((?:un)?signed)\s+((?>[^ ]+))/$1($2)/go;
         # 'const struct timeval' => 'const struct'
-        $TYPE =~ s/\bstruct [A-Z_a-z_0-9_\_]+/struct/go;
+        $TYPE =~ s/\bstruct ([A-Z_a-z_0-9_\_]+)/struct($1)/go;
         # mask bareword as a function call without any
         # parameter
         #print STDERR "patch2: ", $TYPE, "\n";
         $TYPE =~ s/\b([A-Z_a-z_\_]+\w+)\b(?<!signed)(?!(?:\(|\:))/$1()/go;
+        # patch struct(foo()) back to struct('foo')
+        $TYPE =~ s/\bstruct\(([A-Z_a-z_0-9_\_]+)\(\)\)/struct('$1')/go;
         # '::' to $NAMESPACE_DELIMITER
         our $NAMESPACE_DELIMITER;
         $TYPE =~ s/\:\:/$NAMESPACE_DELIMITER/gio;
+        $TYPE =~ s/\bstd\Q$NAMESPACE_DELIMITER\E(?!(?:string|istream|ostream))/std_/go;
         #print STDERR "patch3: ", $TYPE, "\n";
         $result = $call_transform->($TYPE);
     }
@@ -423,48 +420,48 @@ sub main {
     __usage() if @ARGV < 7;
     # FIXME: GetOpt::Long
     #        see script/gen_xscode_mk.pl
-    my ( $module_dot_conf, 
+    my ( $module_dot_conf,
          $typemap_dot_ignore, $typemap_dot_simple,
-         $typemap_dot_manual, $typemap_dot_dep, 
-         $out_typemap_dir, 
+         $typemap_dot_manual, $typemap_dot_dep,
+         $out_typemap_dir,
          $out_template, $out_list ) = @ARGV;
     my $rc = 0;
-    
-    die "file $module_dot_conf not found" unless 
+
+    die "file $module_dot_conf not found" unless
       -f $module_dot_conf;
-    die "file $typemap_dot_ignore not found" unless 
+    die "file $typemap_dot_ignore not found" unless
       -f $typemap_dot_ignore;
-    die "file $typemap_dot_simple not found" unless 
+    die "file $typemap_dot_simple not found" unless
       -f $typemap_dot_simple;
-    die "file $typemap_dot_manual not found" unless 
+    die "file $typemap_dot_manual not found" unless
       -f $typemap_dot_manual;
-    die "file $typemap_dot_dep not found" unless 
+    die "file $typemap_dot_dep not found" unless
       -f $typemap_dot_dep;
-    die "dir $out_typemap_dir not found" unless 
+    die "dir $out_typemap_dir not found" unless
       -d $out_typemap_dir;
-    
+
     # categorize input files
     my @meta    = ();
     my @typedef = ();
     my %member  = ();
     {
         local ( *TYPEMAP_DOT_DEP, );
-        open TYPEMAP_DOT_DEP, "<", $typemap_dot_dep or 
+        open TYPEMAP_DOT_DEP, "<", $typemap_dot_dep or
           die "cannot open file: $!";
         while (<TYPEMAP_DOT_DEP>) {
             chomp;
             if (m/\.meta$/o) {
                 push @meta, $_;
             }
-            elsif (m/\.(function)\.(?:public|protected)$/o) {
+            elsif (m/\.(function)\.(?:public)$/o) {
                 push @{$member{$1}}, $_;
-            } 
+            }
             elsif (m/\.(signal)$/o) {
                 push @{$member{$1}}, $_;
-            } 
-            elsif (m/\.(slot)\.(?:public|protected)$/o) {
+            }
+            elsif (m/\.(slot)\.(?:public)$/o) {
                 push @{$member{$1}}, $_;
-            } 
+            }
             elsif (m/\.(fpointer)$/o) {
                 push @{$member{$1}}, $_;
             }
@@ -478,7 +475,7 @@ sub main {
     my $hconf = __load_yaml($module_dot_conf);
     our $DEFAULT_NAMESPACE;
     $DEFAULT_NAMESPACE = $hconf->{default_namespace};
-    # pre-cache relevant source to mask the whole process 
+    # pre-cache relevant source to mask the whole process
     # a transactional look
     # pre-cache all meta info
     our %META_DICTIONARY;
@@ -490,18 +487,31 @@ sub main {
     }
     # pre-cache all type info
     our %TYPE_DICTIONARY;
+    our %TYPE_KNOWN;
     foreach my $f (@typedef) {
         my @f = File::Spec::->splitdir($f);
         ( my $n = $f[-1] ) =~ s/\.typedef$//o;
         $n =~ s/\_\_/::/gio;
         $TYPE_DICTIONARY{$n} = __load_yaml($f);
+        # cache anonymous class/enum into known type directly
+        foreach my $c (keys %{$TYPE_DICTIONARY{$n}}) {
+            next if $c =~ /^T_/o;
+            if ($TYPE_DICTIONARY{$n}->{$c} =~ /^T_/o) {
+                if ($n eq $DEFAULT_NAMESPACE) {
+                    $TYPE_KNOWN{$c} = $TYPE_DICTIONARY{$n}->{$c};
+                }
+                else {
+                    $TYPE_KNOWN{$n. '::'. $c} = $TYPE_DICTIONARY{$n}->{$c};
+                }
+            }
+        }
     }
     # pre-cache all function info
     my %method = ();
     foreach my $t (qw/function signal slot fpointer/) {
         foreach my $f (@{$member{$t}}) {
             my @f = File::Spec::->splitdir($f);
-            ( my $n = $f[-1] ) =~ 
+            ( my $n = $f[-1] ) =~
               s/\.\Q$t\E(?:\.(?:public|protected))?$//;
             $n =~ s/\_\_/::/gio;
             $method{$t}->{$n} = __load_yaml($f);
@@ -542,22 +552,32 @@ sub main {
     my $known   = {};
     # in case failed lookup, push it into @TYPE_UNKNOWN
     our ( %SIMPLE_TYPEMAP, %GLOBAL_TYPEMAP, %IGNORE_TYPEMAP,
-          %MANUAL_TYPEMAP, 
-          %TYPE_KNOWN, @TYPE_UNKNOWN, %TYPE_LOCALMAP, @TYPE_TEMPLATE, );
+          %MANUAL_TYPEMAP,
+          @TYPE_UNKNOWN, %TYPE_LOCALMAP, @TYPE_TEMPLATE, );
     # locate all known types from global typemap
     my $global_typemap_file = File::Spec::->catfile(
         $Config{privlib}, 'ExtUtils', 'typemap');
-    __read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
+    #__read_typemap($global_typemap_file, \%GLOBAL_TYPEMAP);
     # locate those types which should be ignored
     __read_typemap($typemap_dot_ignore, \%IGNORE_TYPEMAP);
     # locate simple types
     __read_typemap($typemap_dot_simple, \%SIMPLE_TYPEMAP);
     # locate manual types
     __read_typemap($typemap_dot_manual, \%MANUAL_TYPEMAP);
-    
+    # if typemap.manual.something exists, load them into
+    # MANUAL_TYPEMAP
+    if (my @typemap_dot_manual = glob($typemap_dot_manual. ".*")) {
+        foreach my $f (@typemap_dot_manual) {
+            my $manual_typemap = __load_yaml($f, \%MANUAL_TYPEMAP);
+            foreach my $k (keys %$manual_typemap) {
+                $MANUAL_TYPEMAP{$k} = $manual_typemap->{$k};
+            }
+        }
+    }
+
     my $post_patch_type = sub {
         my ( $result, ) = @_;
-        
+
         my $re_type = $result->{type};
         # post patch:
         # void ** => T_GENERIC_PTR => T_PTR
@@ -568,7 +588,7 @@ sub main {
         $re_type =~ s/\:\:/___/go;
         $result->{type} = $re_type;
     };
-    
+
     our $CURRENT_NAMESPACE;
     foreach my $n (keys %type) {
         #print STDERR "name: ", $n, "\n";
@@ -577,26 +597,37 @@ sub main {
         foreach my $t (@{$type{$n}}) {
             unless (exists $IGNORE_TYPEMAP{$t}) {
                 next TYPE_LOOP if exists $TYPE_KNOWN{$t};
-                #print STDERR "analyse type : $t\n";
                 my $result = __analyse_type($t);
                 $post_patch_type->($result);
                 $TYPE_KNOWN{$result->{c_type}} = $result->{type};
-                #print STDERR "resolved as  : ", $result->{type}, "\n";
+                if ($result->{c_type} ne $t) {
+                    # maybe a typedef or local type without class name
+                    # record it in local map
+                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                    $TYPE_LOCALMAP{$ns}->{$t} = $result->{c_type};
+                }
+                #print STDERR $t, " resolved as  : ", $result->{type}, "\n";
             }
         }
     }
-    
+    # add all existing classes
+    foreach my $k (keys %META_DICTIONARY) {
+        my $meta = $META_DICTIONARY{$k};
+        if ($meta->{TYPE} eq 'class') {
+            $TYPE_KNOWN{$meta->{NAME}} = 'T_CLASS';
+        }
+    }
     # write typemap list
     my $hcont_typemap_list = Dump(\%TYPE_KNOWN);
     if (defined $out_list) {
         local ( *OUT, *UNKNOWN, );
-        sysopen OUT, $out_list, O_CREAT|O_WRONLY|O_TRUNC or 
+        sysopen OUT, $out_list, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file to write: $!";
         print OUT $hcont_typemap_list;
         close OUT or die "cannot save to file: $!";
         # write typemap.unknown if unknown one(s) found
         if (@TYPE_UNKNOWN) {
-            sysopen UNKNOWN, $out_list. '.unknown', O_CREAT|O_WRONLY|O_TRUNC or 
+            sysopen UNKNOWN, $out_list. '.unknown', O_CREAT|O_WRONLY|O_TRUNC or
               die "cannot open file to write: $!";
             foreach (@TYPE_UNKNOWN) {
                 print UNKNOWN $_;
@@ -614,14 +645,14 @@ sub main {
     foreach my $template_class (@TYPE_TEMPLATE) {
         TEMPLATE_CLASS_LOOP:
         foreach my $k (keys %$template_class) {
-            next TEMPLATE_CLASS_LOOP unless 
+            next TEMPLATE_CLASS_LOOP unless
               $k =~ m/\_type$/o;
             my $type = $template_class->{$k};
             unless (exists $IGNORE_TYPEMAP{$type}) {
                 ( my $k_type = $k ) =~ s/type$/ntype/o;
                 if (exists $TYPE_KNOWN{$type}) {
                     # already found
-                    $template_class->{$k_type} = 
+                    $template_class->{$k_type} =
                       $TYPE_KNOWN{$type};
                 }
                 else {
@@ -629,9 +660,9 @@ sub main {
                     #print STDERR "template type: $type\n";
                     my $result = __analyse_type($type);
                     $post_patch_type->($result);
-                    $template_class->{$k_type} = 
+                    $template_class->{$k_type} =
                       $result->{type};
-                    $TYPE_KNOWN{$result->{c_type}} = 
+                    $TYPE_KNOWN{$result->{c_type}} =
                       $result->{type};
                 }
             }
@@ -640,7 +671,7 @@ sub main {
     # write @TYPE_TEMPLATE
     if (@TYPE_TEMPLATE) {
         local ( *TEMPLATE, );
-        sysopen TEMPLATE, $out_template, O_CREAT|O_WRONLY|O_TRUNC or 
+        sysopen TEMPLATE, $out_template, O_CREAT|O_WRONLY|O_TRUNC or
           die "cannot open file to write: $!";
         my ( $hcont ) = Dump(\@TYPE_TEMPLATE);
         print TEMPLATE $hcont;
@@ -650,9 +681,9 @@ sub main {
     if (keys %TYPE_LOCALMAP) {
         local ( *LOCALMAP, );
         foreach my $ns (keys %TYPE_LOCALMAP) {
-            my $localmap = File::Spec::->catfile($out_typemap_dir, 
+            my $localmap = File::Spec::->catfile($out_typemap_dir,
                                                  $ns. ".typemap");
-            sysopen LOCALMAP, $localmap, O_CREAT|O_WRONLY|O_TRUNC or 
+            sysopen LOCALMAP, $localmap, O_CREAT|O_WRONLY|O_TRUNC or
               die "cannot open file to write: $!";
             my ( $hcont ) = Dump($TYPE_LOCALMAP{$ns});
             print LOCALMAP $hcont;
@@ -666,7 +697,7 @@ sub main {
 
 =item __lookup_type_in_super_class
 
-Internal use only. Lookup a type throughout class inheritance tree. 
+Internal use only. Lookup a type throughout class inheritance tree.
 
 return true and write super class name in $$ref_super_name if found;
 
@@ -678,20 +709,20 @@ return false on failure.
 
 sub __lookup_type_in_super_class {
     my ( $name, $type, $ref_super_name ) = @_;
-    
+
     our ( %META_DICTIONARY, %TYPE_DICTIONARY, );
     # recursively look into all super classes
     # depth first
-    if (exists $META_DICTIONARY{$name} and 
+    if (exists $META_DICTIONARY{$name} and
           exists $META_DICTIONARY{$name}->{ISA}) {
         foreach my $s (@{$META_DICTIONARY{$name}->{ISA}}) {
             my $super = $s->{NAME};
-            if (exists $TYPE_DICTIONARY{$super} and 
+            if (exists $TYPE_DICTIONARY{$super} and
                   exists $TYPE_DICTIONARY{$super}->{$type}) {
                 $$ref_super_name = $super;
                 return 1;
             }
-            elsif (exists $META_DICTIONARY{$super} and 
+            elsif (exists $META_DICTIONARY{$super} and
                      exists $META_DICTIONARY{$super}->{ISA}) {
                 my $result = __lookup_type_in_super_class(
                     $super, $type, $ref_super_name);
@@ -702,14 +733,14 @@ sub __lookup_type_in_super_class {
     return 0;
 }
 
-=over 
+=over
 
 =item __lookup_type_in_parent_namespace
 
 Internal use only. Lookup a type throughout parent namespaces.
 
 return true and write parent namespace name in $$ref_parent_name if
-found; 
+found;
 
 return false on failure.
 
@@ -720,14 +751,14 @@ return false on failure.
 sub __lookup_type_in_parent_namespace {
     my ( $name, $type, $ref_parent_name ) = @_;
     our ( %TYPE_DICTIONARY, );
-    
+
     my @namespace = split /\:\:/, $name;
     pop @namespace;
     # A::B::C
     # lookup in A::B, A
     for (my $i = $#namespace; $i >= 0; $i--) {
         my $ns = join("::", @namespace[0 .. $i]);
-        if (exists $TYPE_DICTIONARY{$ns} and 
+        if (exists $TYPE_DICTIONARY{$ns} and
               exists $TYPE_DICTIONARY{$ns}->{$type}) {
             $$ref_parent_name = $ns;
             return 1;
@@ -737,13 +768,14 @@ sub __lookup_type_in_parent_namespace {
 }
 
 sub AUTOLOAD {
-    our ( $NAMESPACE_DELIMITER, 
-          $DEFAULT_NAMESPACE, $CURRENT_NAMESPACE, 
-          %META_DICTIONARY, %TYPE_DICTIONARY, 
-          %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP, 
+    our ( $NAMESPACE_DELIMITER,
+          $DEFAULT_NAMESPACE, $CURRENT_NAMESPACE,
+          %META_DICTIONARY, %TYPE_DICTIONARY,
+          %GLOBAL_TYPEMAP, %SIMPLE_TYPEMAP, %MANUAL_TYPEMAP,
           @TYPE_UNKNOWN, );
     my $package = __PACKAGE__;
     ( my $autoload = $AUTOLOAD ) =~ s/^\Q$package\E(?:\:\:)?//o;
+
     my @namespace = split /\Q$NAMESPACE_DELIMITER\E/, $autoload;
     # full type name
     my $type_full = join("::", @namespace);
@@ -753,7 +785,7 @@ sub AUTOLOAD {
     # type with    namespace prefix: take its own namespace
     # type without namespace prefix: take the namespace within which
     #                                found the type
-    my $namespace = @namespace ? join("::", @namespace) : 
+    my $namespace = @namespace ? join("::", @namespace) :
       $CURRENT_NAMESPACE;
     # lookup order:
     # self
@@ -769,26 +801,27 @@ sub AUTOLOAD {
     my $TYPE_ARRAY_PREFIX    = 'T_ARRAY_';
     my $store_type_info_from_dictionary = sub {
         my ( $namespace_key, $type, $type_full, $entry, ) = @_;
-        
-        my $regex_fpointer_or_array = 
+
+        my $regex_fpointer_or_array =
           qr/^(?:\Q$TYPE_FPOINTER_PREFIX\E|\Q$TYPE_ARRAY_PREFIX\E)/o;
         if ($type =~ $regex_fpointer_or_array) {
-            # $type itself is already something like 
-            # T_FPOINTER_BLAH 
+            # $type itself is already something like
+            # T_FPOINTER_BLAH
             # processed by script/format_qtedi_production.pl
             # such case is _NOT_ typedefed
             # locate its prototype in %TYPE_DICTINOARY
             $entry->{type}   = $type_full;
-            $entry->{c_type} =
-              $TYPE_DICTIONARY{$namespace_key}->{$type};
+            $entry->{c_type} = $type_full;
+            # $entry->{c_type} =
+            #   $TYPE_DICTIONARY{$namespace_key}->{$type};
             $entry->{t_type} = $type_full;
         }
         else {
             $entry->{type} =
               $TYPE_DICTIONARY{$namespace_key}->{$type};
-            #print STDERR "type: ", $entry->{type}, "\n";
-            if ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) { 
-                # not constructed by primitive type and 
+            #print STDERR "$type: ", $entry->{type}, "\n";
+            if ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) {
+                # not constructed by primitive type and
                 # property such as: PTR/REF/CONST
                 # recursively lookup
                 # walkthrough all possible typedef alias
@@ -799,106 +832,137 @@ sub AUTOLOAD {
                 local $CURRENT_NAMESPACE = $namespace_key;
                 my $i = 0;
                 while ($entry->{type} !~ m/^(?:CONST_)?T_[A-Z_0-9_\_]+$/o) {
-                    die "deep recursive loop detected for type ". 
+                    die "deep recursive loop detected for type ".
                       $namespace_key. '::'. $entry->{type} if $i == 50;
                     my $result = __analyse_type($entry->{type});
                     for my $k (keys %$result) {
                         $entry->{$k} = $result->{$k};
                     }
-                    #use Data::Dumper ();
-                    #print Data::Dumper::Dumper($result);
+                    #use Data::Dumper;
+                    #print Data::Dumper::Dumper($entry);
                     #exit 0;
                     $i++;
                 }
             }
             elsif ($entry->{type} =~ $regex_fpointer_or_array) {
-                # bridged-typedef 
+                # bridged-typedef
                 # inside %TYPE_DICTIONARY there are two related entries:
                 # 1. $type           => T_FPOINTER_BLAH
                 # 2. T_FPOINTER_BLAH => c prototype
-                #$entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{ 
+                #$entry->{c_type} = $TYPE_DICTIONARY{$namespace_key}->{
                 #    $entry->{type} };
                 $entry->{c_type} = $type_full;
                 $entry->{t_type} = $entry->{type};
                 # $type same as $type_full this case
                 if ($CURRENT_NAMESPACE ne $DEFAULT_NAMESPACE) {
-                    # change c_type to full qualified name
-                    $type_full = 
-                      join("::", $CURRENT_NAMESPACE, $type_full);
-                    $entry->{c_type} = $type_full;
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} =
-                      $type_full;
+                    # skip type in default namespace
+                    if (!exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type_full}) {
+                        # change c_type to full qualified name
+                        $type_full =
+                          join("::", $CURRENT_NAMESPACE, $type_full);
+                        $entry->{c_type} = $type_full;
+                        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                        $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
+                    }
                 }
             }
             else {
                 $entry->{c_type} = $type_full;
-                $entry->{t_type} = uc($type_full);
-                if ($namespace_key ne $DEFAULT_NAMESPACE and 
+                ( my $t_type = $type_full ) =~ s/::/__/go;
+                $entry->{t_type} = uc($t_type);
+                if ($namespace_key ne $DEFAULT_NAMESPACE and
                       $type_full !~ m/\:\:/io) {
                     # located local type $type in namespace typedef
                     # $type same as $type_full this case
                     # change c_type to full qualified name
-                    $type_full = 
+                    $type_full =
                       join("::", $namespace_key, $type_full);
                     $entry->{c_type} = $type_full;
-                    $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = 
-                      $type_full;
+                    ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+                    $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
                 }
                 #use Data::Dumper;
                 #print STDERR Data::Dumper::Dumper($entry), "\n";
             }
         }
     };
-    
-    #print STDERR "$namespace :: $type => $type_full\n";
+
+    #print STDERR "$CURRENT_NAMESPACE => $namespace :: $type => $type_full\n";
     if ($type eq 'enum_type') {
         # QFlags template type
         my $template_type      = $namespace[-1];
         my $template_namespace = join("::", @namespace[0 .. $#namespace-1]);
         # lookup into %TYPE_DICTIONARY to verify
-#         if (exists $TYPE_DICTIONARY{$template_namespace} and 
+#         if (exists $TYPE_DICTIONARY{$template_namespace} and
 #               exists
 #                 $TYPE_DICTIONARY{$template_namespace}->{$template_type}) {
 #         }
         $entry->{type}   = $TYPE_ENUM;
-        $entry->{c_type} = join("::", 
-                                $template_namespace, $template_type);
+        $entry->{c_type} = join("::",
+                                $template_namespace, $template_type, $type);
         $entry->{t_type} = $TYPE_ENUM;
+        #use Data::Dumper;
+        #print STDERR Data::Dumper::Dumper($entry);
     }
     elsif (exists $TYPE_DICTIONARY{$namespace}->{$type}) {
-        #print STDERR $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
-        $store_type_info_from_dictionary->($namespace, 
+        #print STDERR $type, ' => ', $TYPE_DICTIONARY{$namespace}->{$type}, "\n";
+        $store_type_info_from_dictionary->($namespace,
                                            $type, $type_full, $entry);
+    }
+    elsif ($namespace ne $CURRENT_NAMESPACE and
+             exists $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$namespace[0]}) {
+        # A::B where A is typedef in current class
+        #print STDERR $namespace, ' => ', $TYPE_DICTIONARY{$CURRENT_NAMESPACE}->{$namespace[0]}, "\n";
+        $store_type_info_from_dictionary->($CURRENT_NAMESPACE,
+                                           $namespace,
+                                           $CURRENT_NAMESPACE. '::'. $namespace,
+                                           $entry);
+        $TYPE_KNOWN{$CURRENT_NAMESPACE. '::'. $namespace} = $entry->{t_type};
+        # now lookup the inner type again
+        my @namespace2 = @namespace;
+        shift @namespace2;
+        push @namespace2, $type;
+        my $type_full2 = $entry->{c_type}. '::'.
+          join('::', @namespace2);
+        #print STDERR $type_full, ' => ', $type_full2, "\n";
+        my $result = __analyse_type($type_full2);
+        #print STDERR $type_full, ' => ', $result->{t_type}, "\n";
+        for my $k (keys %$result) {
+            $entry->{$k} = $result->{$k};
+        }
     }
     elsif (__lookup_type_in_super_class(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
-        $store_type_info_from_dictionary->($super_name, 
+        $store_type_info_from_dictionary->($super_name,
                                            $type, $type_full, $entry);
     }
     elsif (exists $TYPE_DICTIONARY{$DEFAULT_NAMESPACE}->{$type}) {
-        $store_type_info_from_dictionary->($DEFAULT_NAMESPACE, 
+        $store_type_info_from_dictionary->($DEFAULT_NAMESPACE,
                                            $type, $type_full, $entry);
     }
     elsif (__lookup_type_in_parent_namespace(
         $namespace, $type, \$super_name)) {
         # located $type in $TYPE_DICTIONARY{$super_name}
-        $store_type_info_from_dictionary->($super_name, 
+        $store_type_info_from_dictionary->($super_name,
                                            $type, $type_full, $entry);
     }
-    elsif (exists $GLOBAL_TYPEMAP{$type_full} or 
+    elsif (exists $GLOBAL_TYPEMAP{$type_full} or
              exists $SIMPLE_TYPEMAP{$type_full}) {
-        $entry->{type}   = 
+        $entry->{type}   =
           exists $GLOBAL_TYPEMAP{$type_full} ?
             $GLOBAL_TYPEMAP{$type_full} : $SIMPLE_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
     }
     elsif (exists $MANUAL_TYPEMAP{$type_full}) {
         $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
-        #$TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        #$TYPE_LOCALMAP{$ns}->{$type} = $type_full;
     }
     elsif (exists $MANUAL_TYPEMAP{
         join("::", $namespace, $type_full)}) {
@@ -907,8 +971,10 @@ sub AUTOLOAD {
         $type_full = join("::", $namespace, $type_full);
         $entry->{type}   = $MANUAL_TYPEMAP{$type_full};
         $entry->{c_type} = $type_full;
-        $entry->{t_type} = uc($type_full);
-        $TYPE_LOCALMAP{$CURRENT_NAMESPACE}->{$type} = $type_full;
+        ( my $t_type = $type_full ) =~ s/::/__/go;
+        $entry->{t_type} = uc($t_type);
+        ( my $ns = $CURRENT_NAMESPACE ) =~ s/\:\:/__/go;
+        $TYPE_LOCALMAP{$ns}->{$type} = $type_full;
     }
     else {
         # unknown
@@ -918,6 +984,8 @@ sub AUTOLOAD {
         $entry->{t_type} = 'UNKNOWN_FIXME';
         push @TYPE_UNKNOWN, $type_full;
     }
+    #use Data::Dumper;
+    #print STDERR Data::Dumper::Dumper($entry);
     return $entry;
 }
 
@@ -925,7 +993,7 @@ sub AUTOLOAD {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

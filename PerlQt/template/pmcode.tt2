@@ -1,0 +1,113 @@
+package [% my_package %];
+# THE FOLLOWING CODE IS AUTOMATED, ANY MODIFICATION WILL BE LOST!
+# classname: [% my_cclass %]
+# file     : [% my_file %]
+
+use strict;
+use warnings;
+#use Carp;
+
+our $VERSION = '[% my_version %]';
+[% IF my_parents.size > 0 %]
+  [% isa = [] %]
+  [% FOREACH c = my_parents %]
+    [% IF my_typemap.exists(c) %]
+      [% c = my_typemap.$c %]
+    [% END %]
+    [% CALL isa.push(my_packagemap.$c) %]
+  [% END %]
+use base qw/[% isa.join(' ') %]/;
+#our @ISA = qw/[% isa.join(' ') %]/;
+[% END %]
+
+[% IF my_bootstrap %]
+require XSLoader;
+XSLoader::load('[% my_package %]', $VERSION);
+[% END %]
+
+# FIXME: operator overload
+
+[% IF my_type != 'namespace' and my_printfs.size > 0 %]
+# printf family functions
+# implemented upon perl's internal (s)printf
+  [% FOREACH pname = my_printfs %]
+    [% SWITCH pname %]
+    [% CASE [ 'printf', 'vprintf' ] %]
+sub [% pname %] {
+    my ( $self, @arg, ) = @_;
+    printf(@_);
+    return $self;
+}
+    [% CASE [ 'sprintf', 'vsprintf' ] %]
+sub [% pname %] {
+    my ( $self, @arg, ) = @_;
+    shift @arg;
+    $_[1] = sprintf(@arg);
+    return $self;
+}
+    [% CASE [ 'snprintf', 'vsnprintf' ] %]
+sub [% pname %] {
+    my ( $self, @arg, ) = @_;
+    shift @arg;
+    shift @arg;
+    $_[1] = sprintf(@arg);
+    return $self;
+}
+    [% CASE DEFAULT %]
+      [% PERL %] die 'unknown printf function type:' _ $stash->get(pname) [% END %]
+    [% END %]
+  [% END %]
+[% END %]
+
+1;
+
+=head1 NAME
+
+[%+ my_package %]
+
+=head1 PUBLIC METHODS
+
+=over
+
+[% IF my_type != 'namespace' %]
+  [% FOREACH method = my_methods %]
+=item [% method %]
+
+  [% END %]
+[% END %]
+
+=back
+
+=head1 ENUM VALUES
+
+=over
+
+[% IF my_enums.size > 0 %]
+  [% FOREACH enum = my_enums %]
+    [% FOREACH val = enum.VALUE %]
+=item [% val.first %]
+
+    [% END %]
+  [% END %]
+[% END %]
+
+=back
+
+=head2 EXPORT
+
+None by default.
+
+=head1 AUTHOR
+
+[%+ my_author %] E<lt>[% my_mail %]E<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2011 - 2011 by [% my_author %]
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+See L<http://dev.perl.org/licenses/artistic.html>
+
+=cut

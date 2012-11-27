@@ -10,14 +10,14 @@ use Test::More qw(no_plan);
 
 our ( $tmphome, $tmpconf );
 
-BEGIN { 
+BEGIN {
 	use File::Temp qw(tempdir);
 	$tmphome = tempdir( CLEANUP => 1 );
 	die "cannot find a temp directory for testing" unless -d $tmphome;
-	
+
 	require File::Spec;
     $tmpconf = File::Spec::->catfile($tmphome, 'dbconfig.yml');
-	open my $h1, ">", $tmpconf 
+	open my $h1, ">", $tmpconf
       or die "cannot create temp configuration file for testing";
 	print $h1 <<"EOF1";
 ---
@@ -34,7 +34,7 @@ DATABASE:
       - SCORE
 EOF1
 	close $h1;
-	open $h1, ">", File::Spec::->catfile($tmphome, 'DB_CONFIG') 
+	open $h1, ">", File::Spec::->catfile($tmphome, 'DB_CONFIG')
 	  or die "cannot create temp DB_CONFIG for testing";
 	print $h1 <<"EOF2";
 set_data_dir    $tmphome
@@ -65,7 +65,7 @@ eval { use BerkeleyDB::SecIndices::Accessor qw(:const); };
 # interface check first
 my @methods = (qw(___dbenv _student _student_index_name
                  _student_index_class _student_index_grade
-                 _student_index_score _stubs put_student 
+                 _student_index_score _stubs put_student
                  upd_student get_student get_students __students
                  del_students get_students_by_name
                  get_students_by_class get_students_by_grade
@@ -73,20 +73,20 @@ my @methods = (qw(___dbenv _student _student_index_name
                  cat_student_index_classs cat_student_index_grades
                  cat_student_index_scores __student_index_names
                  __student_index_classs __student_index_grades
-                 __student_index_scores __student_index_name_dups 
+                 __student_index_scores __student_index_name_dups
                  __student_index_class_dups __student_index_grade_dups
                  __student_index_score_dups put2_student));
 can_ok('BerkeleyDB::SecIndices::Accessor', @methods);
 
 my $student = [];
 push @$student, {
-    NAME  => 'tom', 
+    NAME  => 'tom',
     CLASS => 'one',
     GRADE => 'two',
     SCORE => 80,
 };
 push @$student, {
-    NAME  => 'jerry', 
+    NAME  => 'jerry',
     CLASS => 'two',
     GRADE => 'two',
     SCORE => 75,
@@ -96,16 +96,16 @@ ok( ref $stubs eq 'HASH' );
 
 foreach (@$student) {
     my $rc = $stubs->{STUDENT}->{PUT}->($_);
-    ok( $rc ne EPUT and $rc ne ELCK ); 
+    ok( $rc ne EPUT and $rc ne ELCK );
 }
-  
+
 my $count = $stubs->{STUDENT}->{COUNT}->();
 is( $count, scalar(@$student) );
 
 my $student_db = $stubs->{STUDENT}->{GETS}->($count);
 foreach my $i (0 .. $#{$student_db}) {
     foreach my $f (qw(NAME CLASS GRADE SCORE)) {
-        is( $student_db->[$i]->{CONTENT}->{$f}, 
+        is( $student_db->[$i]->{CONTENT}->{$f},
             $student->[$i]->{$f} );
     }
 }
@@ -115,9 +115,9 @@ foreach my $s (@$student) {
     $s->{CONTENT}->{GRADE} = 'three';
     my $rc = $stubs->{STUDENT}->{UPD}->(
         $s->{KEY}, $s->{CONTENT});
-    ok( $rc ne EUPD or $rc ne ELCK ); 
+    ok( $rc ne EUPD or $rc ne ELCK );
 }
-  
+
 my $number = $stubs->{STUDENT_INDEX}->{COUNT}->{score}->();
 cmp_ok( $number, '==', 2 );
 

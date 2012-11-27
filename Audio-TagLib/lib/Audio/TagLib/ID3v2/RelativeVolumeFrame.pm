@@ -31,12 +31,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::RelativeVolumeFrame - An ID3v2 relative volume
-adjustment frame implementation 
+adjustment frame implementation
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::RelativeVolumeFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::RelativeVolumeFrame->new(
     Audio::TagLib::ByteVector->new(""));
   $i->setChannelType("MasterVolume");
@@ -57,11 +57,11 @@ different channel types.
 =item I<new()>
 
 Constructs a RelativeVolumeFrame. The relevant data should be set
- manually. 
+ manually.
 
 =item I<new(L<ByteVector|Audio::TagLib::ByteVector> $data)>
 
-Constructs a RelativeVolumeFrame based on the contents of $data. 
+Constructs a RelativeVolumeFrame based on the contents of $data.
 
 =item I<DESTROY()>
 
@@ -107,7 +107,7 @@ see I<setVolumeAdjustmentIndex()>
 see I<volumeAjustment()>
 
 =item I<void setVolumeAdjustmentIndex(IV $index, PV $type =
-"MasterVolume")> 
+"MasterVolume")>
 
 Set the volume adjustment to $index. As indicated by the ID3v2
  standard this is a 16-bit signed integer that reflects the decibils
@@ -128,14 +128,14 @@ this value the value returned by this method may not be identical to
 the value set using setVolumeAdjustment().
 
 This defaults to returning the value for the master volume channel if
-available and returns 0 if the specified channel does not exist. 
+available and returns 0 if the specified channel does not exist.
 
 see I<setVolumeAdjustment()>
 
 see I<volumeAdjustmentIndex()>
 
 =item I<void setVolumeAdjustment(NV $adjustment, PV $type =
-"MasterVolume")> 
+"MasterVolume")>
 
 Set the relative volume adjustment in decibels to $adjustment.
 
@@ -153,7 +153,7 @@ see I<volumeAdjustmentIndex()>
 peakVolume(PV $type = "MasterVolume")>
 
 Returns the peak volume (represented as a length and a string of
- bits). 
+ bits).
 
 This defaults to returning the value for the master volume channel if
  available and returns 0 if the specified channel does not exist.

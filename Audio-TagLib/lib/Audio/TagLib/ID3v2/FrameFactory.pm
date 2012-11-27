@@ -21,7 +21,7 @@ Audio::TagLib::ID3v2::FrameFactory - A factory for creating ID3v2 frames
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::FrameFactory;
-  
+
   my $i = Audio::TagLib::ID3v2::FrameFactory->instance();
   $i->setDefaultTextEncoding("UTF8");
   print $i->defaultTextEncoding(), "\n"; # got "UTF8"
@@ -38,7 +38,7 @@ you would subclass this factory reimplement createFrame(). Then by
 setting your factory to be the default factory in ID3v2::Tag
 constructor or with MPEG::File::setID3v2FrameFactory() you can
 implement behavior that will allow for new ID3v2::Frame subclasses
-(also provided by you) to be used. 
+(also provided by you) to be used.
 
 This implements both I<abstract factory> and I<singleton> patterns of
 which more information is available on the web and in software design
@@ -52,17 +52,17 @@ Returns an instance of FrameFactory.
 
 =item I<L<Frame|Audio::TagLib::ID3v2::Frame>
 createFrame(L<Bytevector|Audio::TagLib::ByteVector> $data, BOOL
-$synchSafeInts)> 
+$synchSafeInts)>
 
 Create a frame based on $data. $synchSafeInts should only be set false
   if we are parsing an old tag (v2.3 or older) that does not support
   synchsafe ints.
 
 Please use the method below that accepts an ID3 version number in new
-  code. 
+  code.
 
 =item I<L<Frame|Audio::TagLib::ID3v2::Frame>
-createFrame(L<ByteVector|Audio::TagLib::ByteVector> $data, UV $version = 4)> 
+createFrame(L<ByteVector|Audio::TagLib::ByteVector> $data, UV $version = 4)>
 
 Create a frame based on $data. $version should indicate the ID3v2
 version of the tag. As ID3v2.4 is the most current version of the
@@ -75,7 +75,7 @@ setTextEncoding() has not been explicitly called this will only be
 used for new text frames. However, if this value has been set
 explicitly all frames will be converted to this type (unless it's
 explitly set differently for the individual frame) when being
-rendered. 
+rendered.
 
 see I<setDefaultTextEncoding()>
 

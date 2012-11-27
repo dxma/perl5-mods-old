@@ -4,24 +4,24 @@ MODULE = TagLib		PACKAGE = TagLib::APE::ItemListMap
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::APE::ItemListMap * 
+TagLib::APE::ItemListMap *
 TagLib::APE::ItemListMap::new(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::APE::ItemListMap * m;
 CODE:
-	/*! 
+	/*!
 	 * MAP()
 	 * MAP(const MAP< Key, T > &m)
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::APE::ItemListMap"))
 			m = INT2PTR(TagLib::APE::ItemListMap *, SvIV(SvRV(ST(1))));
 		else
@@ -35,20 +35,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::ItemListMap::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::APE::ItemListMap::Iterator * 
+TagLib::APE::ItemListMap::Iterator *
 TagLib::APE::ItemListMap::begin()
 CODE:
 	RETVAL = new TagLib::APE::ItemListMap::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-TagLib::APE::ItemListMap::Iterator * 
+TagLib::APE::ItemListMap::Iterator *
 TagLib::APE::ItemListMap::end()
 CODE:
 	RETVAL = new TagLib::APE::ItemListMap::Iterator(THIS->end());
@@ -56,40 +56,40 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::APE::ItemListMap::insert(key, value)
 	TagLib::String * key
 	TagLib::APE::Item * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::APE::ItemListMap::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 TagLib::APE::ItemListMap::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::ItemListMap::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-TagLib::APE::ItemListMap::Iterator *  
+TagLib::APE::ItemListMap::Iterator *
 TagLib::APE::ItemListMap::find(key)
 	TagLib::String * key
 CODE:
@@ -98,13 +98,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::APE::ItemListMap::contains(key)
 	TagLib::String * key
 CODE:
@@ -112,14 +112,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::ItemListMap::erase(key)
 	TagLib::String * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::APE::ItemListMap::getItem(key)
 	TagLib::String * key
 INIT:
@@ -131,20 +131,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # Map<Key, T> & operator=(const Map<Key, T> &m)
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::APE::ItemListMap::copy(m)
 	TagLib::APE::ItemListMap * m
 PPCODE:
@@ -153,33 +153,33 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS FOR TIE MAGIC
-# 
+#
 ################################################################
 
-static void  
+static void
 TagLib::APE::ItemListMap::TIEHASH(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::APE::ItemListMap * map;
 PPCODE:
-	/*! 
+	/*!
 	 * tie %h, "TagLib::APE::ItemListMap"
 	 * tie %h, "TagLib::APE::ItemListMap", $obj_to_tie
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::APE::ItemListMap")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				ST(0) = sv_newmortal();
@@ -199,7 +199,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 TagLib::APE::ItemListMap::FETCH(key)
 	TagLib::String * key
 PPCODE:
@@ -216,26 +216,26 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::APE::ItemListMap::STORE(key, value)
 	TagLib::String * key
 	TagLib::APE::Item * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::APE::ItemListMap::DELETE(key)
 	TagLib::String * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::APE::ItemListMap::CLEAR()
 CODE:
 	THIS->clear();
 
-bool 
+bool
 TagLib::APE::ItemListMap::EXISTS(key)
 	TagLib::String * key
 CODE:
@@ -243,7 +243,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::ItemListMap::FIRSTKEY()
 PREINIT:
 	TagLib::APE::ItemListMap::Iterator it;
@@ -258,7 +258,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-TagLib::String * 
+TagLib::String *
 TagLib::APE::ItemListMap::NEXTKEY(lastkey)
 	TagLib::String * lastkey
 PREINIT:
@@ -273,7 +273,7 @@ CODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-unsigned int 
+unsigned int
 TagLib::APE::ItemListMap::SCALAR()
 CODE:
 	/* return size of current map */
@@ -282,10 +282,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
-# TagLib::APE::ItemListMap::UNTIE() 
+#
+# TagLib::APE::ItemListMap::UNTIE()
 # not implemented
 # since there is no special action to do normally
-# 
+#
 ################################################################
 

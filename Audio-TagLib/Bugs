@@ -9,4 +9,4 @@ relativevolumeframe.h but not implemented in relativevolumeframe.cpp
 4) TagLib::ID3v2::UserTextIdentificationFrame::find not exported
 properly
 5) TagLib::MPEG::Properties::protectionEnabled() defined but not
-implemented 
+implemented

@@ -6,12 +6,12 @@ MODULE = TagLib			PACKAGE = TagLib::APE::ItemListMap::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::APE::ItemListMap::Iterator * 
+TagLib::APE::ItemListMap::Iterator *
 TagLib::APE::ItemListMap::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -23,7 +23,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::APE::ItemListMap::Iterator"))
 			i = INT2PTR(TagLib::APE::ItemListMap::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -37,13 +37,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::data()
 PPCODE:
 //USEPAIR
@@ -54,7 +54,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::next()
 PPCODE:
 	TagLib::APE::ItemListMap::Iterator & i = THIS->operator++();
@@ -63,7 +63,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::APE::ItemListMap::Iterator::last()
 PPCODE:
 	TagLib::APE::ItemListMap::Iterator & i = THIS->operator--();
@@ -74,7 +74,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::forward(n)
 	int n
 PPCODE:
@@ -85,7 +85,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::backward(n)
 	int n
 PPCODE:
@@ -100,7 +100,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::APE::ItemListMap::Iterator::equal(i)
 	TagLib::APE::ItemListMap::Iterator * i
 CODE:
@@ -108,7 +108,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::ItemListMap::Iterator::lessThan(i)
 	TagLib::APE::ItemListMap::Iterator * i
 CODE:
@@ -116,7 +116,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::ItemListMap::Iterator::greatThan(i)
 	TagLib::APE::ItemListMap::Iterator * i
 CODE:
@@ -124,7 +124,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::ItemListMap::Iterator::lessEqual(i)
 	TagLib::APE::ItemListMap::Iterator * i
 CODE:
@@ -132,7 +132,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::APE::ItemListMap::Iterator::greatEqual(i)
 	TagLib::APE::ItemListMap::Iterator * i
 CODE:
@@ -140,7 +140,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::APE::ItemListMap::Iterator::copy(i)
 	TagLib::APE::ItemListMap::Iterator * i
 PPCODE:

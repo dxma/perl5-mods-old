@@ -5,12 +5,12 @@ PROTOTYPES: ENABLE
 
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::String * 
+TagLib::String *
 TagLib::String::new(...)
 PROTOTYPE: ;$$
 PREINIT:
@@ -33,7 +33,7 @@ CODE:
 	 * String(wchar_t c,Type t=Latin1)
 	 * String(const char *s,Type t=Latin1)
 	 * String(const ByteVector &v,Type t=Latin1)
-	 * 
+	 *
 	 * not all the constructors to be used
 	 * from the use point of view
 	 * just five types are concerned
@@ -42,26 +42,26 @@ CODE:
 	 * c)copy from a ByteVector instance
 	 * d)construct from a 8bit-based encode char or string
 	 * e)construct from a non 8bit-based encode char or string
-	 * 
+	 *
 	 * 8bit-based     => Latin1 or UTF8
 	 * non 8bit-based => UTF16BE or UTF16LE or UTF16
 	 */
 	switch(items) {
 	case 3:
 		/*!
-		 * encode is specified by user 
+		 * encode is specified by user
 		 * which means
 		 * the string param should be of the specified encode format
 		 */
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector")) {
 			/* encode must be 8bit-based */
 			encode = SvPV_nolen(ST(2));
 			if(strncasecmp(encode, "Latin1", 6) == 0)
 				t = TagLib::String::Latin1;
-			else if(strncasecmp(encode, "UTF8", 4) == 0) 
+			else if(strncasecmp(encode, "UTF8", 4) == 0)
 				t = TagLib::String::UTF8;
-			else 
+			else
 				croak("encode must be Latin1 or UTF8 for ByteVector");
 			RETVAL = new TagLib::String(*INT2PTR(
 				TagLib::ByteVector *,SvIV(SvRV(ST(1)))),t);
@@ -80,7 +80,7 @@ CODE:
 				RETVAL = new TagLib::String(*INT2PTR(
 					TagLib::String *,SvIV(SvRV(ST(1)))));
 				is_copy_from_string = FALSE;
-			} else if(sv_derived_from(ST(1), 
+			} else if(sv_derived_from(ST(1),
 				"Audio::TagLib::ByteVector")) {
 				RETVAL = new TagLib::String(*INT2PTR(
 					TagLib::ByteVector *,SvIV(SvRV(ST(1)))));
@@ -88,7 +88,7 @@ CODE:
 			}
 		} else if(SvUTF8(ST(1))) {
 				encode = "UTF8";
-		} else { 
+		} else {
 				/* default encode */
 				encode = "Latin1";
 		}
@@ -114,14 +114,14 @@ CODE:
 		} else if(strncasecmp(encode, "UTF16", 5) == 0) {
 			t = TagLib::String::UTF16;
 			fromcode = "UTF16";
-		} else 
+		} else
 			croak("invalid encode in TagLib::String::new()");
 		/* process data */
 		switch(t) {
 		case TagLib::String::Latin1:
 			//printf("Latin1: %s\n", SvPV_nolen(ST(1)));
-			RETVAL = sv_len(ST(1)) == 1 ? 
-				new TagLib::String(*SvPV_nolen(ST(1))) : 
+			RETVAL = sv_len(ST(1)) == 1 ?
+				new TagLib::String(*SvPV_nolen(ST(1))) :
 				new TagLib::String(SvPV_nolen(ST(1)));
 			break;
 		case TagLib::String::UTF8:
@@ -144,7 +144,7 @@ CODE:
 			outbuf = utf8;
 			iconv(codec, NULL, NULL, NULL, NULL);
 			if(iconv_wrap(codec, &inbuf, &inlen, &outbuf, &outlen) == -1) {
-				sprintf(errmsg, "error converting from %s to UTF8", 
+				sprintf(errmsg, "error converting from %s to UTF8",
 					fromcode);
 				delete [] utf8;
 				iconv_close(codec);
@@ -172,14 +172,14 @@ CODE:
 		delete THIS;
 
 ################################################################
-# 
+#
 # std::string to8Bit(bool unicode=false) const
-# 
+#
 # return a PV instead
 # set UTF8 flag accordingly
-# 
+#
 ################################################################
-SV * 
+SV *
 TagLib::String::to8Bit(unicode = false)
 	bool unicode
 INIT:
@@ -191,8 +191,8 @@ CODE:
 OUTPUT:
 	RETVAL
 
-SV * 
-TagLib::String::toCString(unicode = false) 
+SV *
+TagLib::String::toCString(unicode = false)
 	bool unicode
 INIT:
 	const char *c_str = THIS->toCString(unicode);
@@ -203,7 +203,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-TagLib::String::Iterator * 
+TagLib::String::Iterator *
 TagLib::String::begin()
 CODE:
 	RETVAL = new TagLib::String::Iterator(THIS->begin());
@@ -211,13 +211,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # not exported
-# 
+#
 ################################################################
 
-TagLib::String::Iterator * 
+TagLib::String::Iterator *
 TagLib::String::end()
 CODE:
 	RETVAL = new TagLib::String::Iterator(THIS->end());
@@ -225,13 +225,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-int 
+int
 TagLib::String::find(s, offset = 0)
 	TagLib::String * s
 	int offset
@@ -240,7 +240,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::String::substr(position, n = 0xffffffff)
 	unsigned int position
 	unsigned int n
@@ -249,42 +249,42 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::String::append(s)
 	TagLib::String * s
 CODE:
 	(void)THIS->append(*s);
 	XSRETURN(1);
 
-TagLib::String * 
+TagLib::String *
 TagLib::String::upper()
 CODE:
 	RETVAL = new TagLib::String(THIS->upper());
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::String::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::isNull()
 CODE:
 	RETVAL = THIS->isNull();
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::String::data(t)
 	TagLib::String::Type t
 PREINIT:
@@ -299,14 +299,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::String::toInt()
 CODE:
 	RETVAL = THIS->toInt();
 OUTPUT:
 	RETVAL
 
-TagLib::String * 
+TagLib::String *
 TagLib::String::stripWhiteSpace()
 CODE:
 	RETVAL = new TagLib::String(THIS->stripWhiteSpace());
@@ -314,11 +314,11 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # implement wchar & operator[](int i)
-# 
+#
 ################################################################
-SV * 
+SV *
 TagLib::String::getChar(i)
 	int i
 PREINIT:
@@ -350,13 +350,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # const wchar & operator[](int i) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::String::_equal(s, swap = NULL)
 	TagLib::String * s
 	char * swap
@@ -366,17 +366,17 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
-# implement 
+#
+# implement
 # String & operator+=(const String &s)
-# 
+#
 # String & operator+=(const char *s)
 # String & operator+=(char c)
 # String & operator+=(const wchar_t *s)
 # String & operator+=(wchar_t c)
-# 
+#
 ################################################################
-TagLib::String * 
+TagLib::String *
 TagLib::String::_append(...)
 PROTOTYPE: $
 CODE:
@@ -387,15 +387,15 @@ CODE:
 		/*!
 		 * in perl the string might be encoded as either Latin1
 		 * or UTF-8
-		 * on the other side, operator+=(const char *s) doesn't 
+		 * on the other side, operator+=(const char *s) doesn't
 		 * specify the encoding of param s
-		 * furture more, the returned String object is allcated 
+		 * furture more, the returned String object is allcated
 		 * on stack
-		 * 
-		 * so in this case, the appended string is initially stored 
-		 * in a string object, which formats the string to the same 
+		 *
+		 * so in this case, the appended string is initially stored
+		 * in a string object, which formats the string to the same
 		 * internal encode of String class
-		 * then copy the data to a new object which is allocated on 
+		 * then copy the data to a new object which is allocated on
 		 * heap
 		 */
 		RETVAL = new TagLib::String(THIS->append(TagLib::String(
@@ -409,16 +409,16 @@ OUTPUT:
 # implement
 # String & operator=(const String &s)
 # String & operator=(const ByteVector &v)
-# 
+#
 # String & operator=(const std::string &s)
 # String & operator=(const wstring &s)
 # String & operator=(const wchar_t *s)
 # String & operator=(char c)
 # String & operator=(wchar_t c)
 # String & operator=(const char *s)
-# 
+#
 ################################################################
-void 
+void
 TagLib::String::copy(...)
 PROTOTYPE: $
 PREINIT:
@@ -458,7 +458,7 @@ PPCODE:
 		croak("ST(1) is not of type String/ByteVector or a valid string");
 	XSRETURN(1);
 
-bool 
+bool
 TagLib::String::_lessThan(s, swap = NULL)
 	TagLib::String * s
 	char * swap
@@ -468,11 +468,11 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
-static TagLib::String * 
+static TagLib::String *
 TagLib::String::number(n)
 	int n
 CODE:
@@ -481,11 +481,11 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC ATTRIBUTES
-# 
+#
 ################################################################
-static TagLib::String * 
+static TagLib::String *
 TagLib::String::null()
 CODE:
 	RETVAL = &(TagLib::String::null);
@@ -493,28 +493,28 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL MEMBER FUNCTIONS
-# 
+#
 # for special use in Perl
-# 
+#
 ################################################################
 
 ################################################################
-# 
-# return the memory address of instance 
-# 
+#
+# return the memory address of instance
+#
 ################################################################
-void 
+void
 TagLib::String::_memoAddress()
 PREINIT:
 	char strAddress[512];

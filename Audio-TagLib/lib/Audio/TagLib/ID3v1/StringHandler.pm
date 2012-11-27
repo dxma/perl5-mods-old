@@ -17,7 +17,7 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v1::StringHandler - A abstraction for the string to data
-encoding in ID3v1 tags. 
+encoding in ID3v1 tags.
 
 =head1 DESCRIPTION
 
@@ -28,7 +28,7 @@ in ID3v1 tags.
 However by subclassing this class and reimplementing parse() and
 render() and setting your reimplementation as the default with
 ID3v1::Tag::setStringHandler() you can define how you would like these
-transformations to be done. 
+transformations to be done.
 
 B<WARNING> It is advisable B<NOT> to write non-ISO-8859-1 data to
 ID3v1 tags. Please consider disabling the writing of ID3v1 tags in the
@@ -39,20 +39,20 @@ see I<L<ID3v1::Tag::setStringHandler()|Audio::TagLib::ID3v1::Tag>>
 =over
 
 =item I<L<String|Audio::TagLib::String>
-parse(L<ByteVector|Audio::TagLib::ByteVector> $data)> 
+parse(L<ByteVector|Audio::TagLib::ByteVector> $data)>
 
 Decode a string from $data. The default implementation assumes that
 $data is an ISO-8859-1 (Latin1) character array.
 
 =item I<ByteVector|Audio::TagLib::ByteVector> render(L<String|Audio::TagLib::String>
-$s)> 
+$s)>
 
 Encode a ByteVector with the data from $s. The default implementation
 assumes that $s is an ISO-8859-1 (Latin1) string.
 
 B<WARNING> It is recommended that you B<NOT> override this method, but
 instead do not write an ID3v1 tag in the case that the data is not
-ISO-8859-1. 
+ISO-8859-1.
 
 =back
 

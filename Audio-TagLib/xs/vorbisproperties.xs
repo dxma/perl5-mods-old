@@ -5,12 +5,12 @@ MODULE = TagLib			PACKAGE = TagLib::Vorbis::Properties
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Vorbis::Properties * 
+TagLib::Vorbis::Properties *
 TagLib::Vorbis::Properties::new(file, style=TagLib::AudioProperties::Average)
 	TagLib::Vorbis::File * file
 	TagLib::AudioProperties::ReadStyle style
@@ -19,62 +19,62 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Vorbis::Properties::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-int 
+int
 TagLib::Vorbis::Properties::length()
 CODE:
 	RETVAL = THIS->length();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::bitrate()
 CODE:
 	RETVAL = THIS->bitrate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::sampleRate()
 CODE:
 	RETVAL = THIS->sampleRate();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::channels()
 CODE:
 	RETVAL = THIS->channels();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::vorbisVersion()
 CODE:
 	RETVAL = THIS->vorbisVersion();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::bitrateMaximum()
 CODE:
 	RETVAL = THIS->bitrateMaximum();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::bitrateNominal()
 CODE:
 	RETVAL = THIS->bitrateNominal();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Vorbis::Properties::bitrateMinimum()
 CODE:
 	RETVAL = THIS->bitrateMinimum();

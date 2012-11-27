@@ -27,12 +27,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::MPEG::File - An MPEG file class with some useful methods
-specific to MPEG 
+specific to MPEG
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::MPEG::File;
-  
+
   my $i = Audio::TagLib::MPEG::File->new("sample file.mp3");
   print $i->tag()->artist()->toCString(), "\n"; # got artist
 
@@ -42,7 +42,7 @@ This implements the generic Audio::TagLib::File API and additionally provides
 access to properties that are distinct to MPEG files, notably access
 to the different ID3 tags.
 
-=over 
+=over
 
 =item I<new(PV $file, BOOL $readProperties = TRUE, PV $propertiesStyle
 = "Average")>
@@ -61,7 +61,7 @@ $readProperties = TRUE, PV $propertiesStyle = "Average")>
 Constructs an MPEG file from $file. If $readProperties is true the
 file's audio properties will also be read using $propertiesStyle. If
 false, $propertiesStyle is ignored. The frames will be created using
-$frameFactory. 
+$frameFactory.
 
 =item I<DESTROY()>
 
@@ -72,10 +72,10 @@ Destroys this instance of the File.
 Returns a tag that is the union of the ID3v2 and ID3v1 tags. The ID3v2
 tag is given priority in reading the information -- if requested
 information exists in both the ID3v2 tag and the ID3v1 tag, the
-information from the ID3v2 tag will be returned. 
+information from the ID3v2 tag will be returned.
 
 If you would like more granular control over the content of the tags,
-with the concession of generality, use the tag-type specific calls. 
+with the concession of generality, use the tag-type specific calls.
 
 B<NOTE> As this tag is not implemented as an ID3v2 tag or an ID3v1
 tag, but a union of the two this pointer may not be cast to the
@@ -104,7 +104,7 @@ from the file.
 This is the same as calling save(AllTags);
 
 If you would like more granular control over the content of the tags,
-with the concession of generality, use paramaterized save call below. 
+with the concession of generality, use paramaterized save call below.
 
 see I<save(PV $tags)>
 
@@ -112,7 +112,7 @@ see I<save(PV $tags)>
 
 Save the file. This will attempt to save all of the tag types that are
 specified by TagTypes values. The save() method above uses
-AllTags. This returns true if saving was successful. 
+AllTags. This returns true if saving was successful.
 
 This strips all tags not included in the mask, but does not modify
 them in memory, so later calls to save() which make use of these tags
@@ -127,7 +127,7 @@ AllTags. This returns true if saving was successful.
 If $stripOthers is true this strips all tags not included in the mask,
 but does not modify them in memory, so later calls to save() which
 make use of these tags will remain valid. This also strips empty
-tags. 
+tags.
 
 =item I<L<ID3v2::Tag|Audio::TagLib::ID3v2::Tag> ID3v2Tag(BOOL $create =
 FALSE)>
@@ -140,7 +140,7 @@ one does not exist.
 
 B<NOTE> The Tag is B<STILL> owned by the MPEG::File and should not be
 deleted by the user. It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 =item I<L<ID3v1::Tag|Audio::TagLib::ID3v1::Tag> ID3v1Tag(BOOL $create =
 FALSE)>
@@ -153,7 +153,7 @@ one does not exist.
 
 B<NOTE> The Tag is B<STILL> owned by the MPEG::File and should not be
 deleted by the user. It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 =item I<L<APE::Tag|Audio::TagLib::APE::Tag> APETag(BOOL $create = FALSE)>
 
@@ -165,14 +165,14 @@ does not exist.
 
 B<NOTE> The Tag is B<STILL> owned by the MPEG::File and should not be
 deleted by the user. It will be deleted when the file (object) is
-destroyed. 
+destroyed.
 
 
 =item I<BOOL strip(PV $tags = "AllTags")>
 
 This will strip tags that match the TagTypes from the file. By default
 it strips all tags. It returns true if the tags are successfully
-stripped. 
+stripped.
 
 This is equivalent to strip($tags, TRUE)
 
@@ -186,10 +186,10 @@ default it strips all tags. It returns true if the tags are
 successfully stripped.
 
 If $freeMemory is true the ID3 and APE tags will be deleted and
-pointers to them will be invalidated. 
+pointers to them will be invalidated.
 
 =item I<void
-setID3v2FrameFactory(L<ID3v2::FrameFactory|Audio::TagLib::ID3v2::FrameFactory> 
+setID3v2FrameFactory(L<ID3v2::FrameFactory|Audio::TagLib::ID3v2::FrameFactory>
 $factory)>
 
 Set the ID3v2::FrameFactory to something other than the default.
@@ -218,7 +218,7 @@ current position as start
 
 This set of flags is used for various operations. C<keys
 %Audio::TagLib::MPEG::File::_TagTypes> lists all available values used in Perl
-code. 
+code.
 
 B<WARNING> The values are not allowed to be OR-ed together in Perl.
 

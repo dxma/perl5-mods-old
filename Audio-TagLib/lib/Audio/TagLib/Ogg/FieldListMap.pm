@@ -20,7 +20,7 @@ Audio::TagLib::Ogg::FieldListMap - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::FieldListMap;
-  
+
   my $xc = Audio::TagLib::Ogg::XiphComment->new();
   $xc->setTitle(Audio::TagLib::String->new("title"));
   $xc->setArtist(Audio::TagLib::String->new("artist"));
@@ -74,7 +74,7 @@ L<Audio::TagLib::Ogg::FieldListMap::Iterator|Audio::TagLib::Ogg::FieldListMap::I
 L<StringList|Audio::TagLib::StringList> $value)>
 
 Inserts $value under $key in the map. If a value for $key already
-  exists it will be overwritten. 
+  exists it will be overwritten.
 
 =item I<void clear()>
 

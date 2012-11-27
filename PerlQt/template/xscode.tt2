@@ -1,0 +1,82 @@
+[% USE Dumper(Indent=1) %]
+[% USE format %]
+[% gen_arg_num = format("%x%x") %]
+[% INCLUDE header.tt2 %]
+################################################################
+####
+#### PUBLIC MEMBER FUNCTIONS
+####
+################################################################
+
+[% PROCESS typemap.tt2  %]
+[% PROCESS typemap2.tt2 %]
+[% PROCESS funcmap.tt2  %]
+[% PROCESS funcmap2.tt2 %]
+[% PROCESS function.tt2 %]
+
+[% my_cclass2 = my_cclass.remove('.+\:\:') %]
+[% IF my_methods_by_name.exists(my_cclass2) %]
+  [% constructors = my_methods_by_name.$my_cclass2 %]
+  [% my_methods_by_name.delete(my_cclass2) %]
+  [% INCLUDE echo_func_proto
+    method_name = my_cclass,
+    methods     = constructors
+  %]
+
+  [% INCLUDE make_func_xscode
+    method_name = 'new',
+    methods     = constructors
+  %]
+[% END %]
+
+
+[% IF my_methods_by_name.exists('~' _ my_cclass2) %]
+  [% my_methods_by_name.delete('~' _ my_cclass2) %]
+  [% INCLUDE echo_func_proto
+    method_name = '~' _ my_cclass2,
+    methods     = [ {} ]
+  %]
+void
+[%+ my_cclass %]::DESTROY()
+CODE:
+    if(THIS != 0 && !SvREADONLY(SvRV(ST(0))))
+        delete THIS;
+[% END %]
+
+
+[% FOREACH name = my_methods %]
+  [% entries = my_methods_by_name.$name %]
+  [% INCLUDE echo_func_proto
+    method_name = name,
+    methods     = entries
+  %]
+
+  [% INCLUDE make_func_xscode
+    method_name = name,
+    methods     = entries
+  %]
+
+
+[% END %]
+
+
+[% IF my_enums.size > 0 %]
+################################################################
+####
+#### ENUMS
+####
+################################################################
+  [% FOREACH enum = my_enums %]
+    [% FOREACH val = enum.VALUE %]
+# [% enum.NAME %]::[% val.0 %]
+void
+[%+ val.first %]()
+PPCODE:
+    ST(0) = sv_newmortal();
+    sv_setiv(ST(0), (IV)[% my_cclass %]::[% val.first %]);
+    XSRETURN(1);
+
+
+    [% END %]
+  [% END %]
+[% END %]

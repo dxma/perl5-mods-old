@@ -75,17 +75,17 @@ sub shell() {
         } elsif(not defined $2 and $1 eq 'en_US') {
             $encoding = 0;
         } else {
-            croak(sprintf("currently only support %s\n", 
+            croak(sprintf("currently only support %s\n",
                           join(" ", @ENCODING)));
         }
     } else {
         croak("no valid locale setting found");
     }
-    
+
     # open shell
     require Term::BashTab;
     local (*Term::BashTab::COMMAND) = \@callback;
-    
+
     my $term = Term::BashTab->new("TagLib mini shell");
     my $line;
     my $OUT  = $term->OUT || \*STDOUT;
@@ -120,15 +120,15 @@ sub __permission {
     my ($mode, $uid, $gid) = (stat $file)[2, 4, 5];
     if($uid == $<) {
         # the same user
-        return 0 
+        return 0
           unless(($mode & 00700) >> 6 & $perm);
     } elsif($gid == $() {
         # the same group
-        return 0 
+        return 0
           unless(($mode & 00070) >> 3 & $perm);
     } else {
         # the other
-        return 0 
+        return 0
           unless(($mode & 00007) & $perm);
     }
     return 1;
@@ -185,7 +185,7 @@ sub _artist {
     if(defined $fileref) {
         return $fileref->tag()->artist()->toCString(
             $ENCODING[$encoding] eq 'UTF8' ? 1 : 0). "\n";
-    } else { 
+    } else {
         return "no file openned\n";
     }
 }
@@ -234,8 +234,8 @@ sub _track {
 }
 
 sub _setTitle {
-    my $title = $_[0] ? 
-      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) : 
+    my $title = $_[0] ?
+      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) :
         Audio::TagLib::String->null();
     if(defined $fileref) {
         $fileref->tag()->setTitle($title);
@@ -246,8 +246,8 @@ sub _setTitle {
 }
 
 sub _setArtist {
-    my $artist = $_[0] ? 
-      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) : 
+    my $artist = $_[0] ?
+      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) :
         Audio::TagLib::String->null();
     if(defined $fileref) {
         $fileref->tag()->setArtist($artist);
@@ -258,8 +258,8 @@ sub _setArtist {
 }
 
 sub _setAlbum {
-    my $album = $_[0] ? 
-      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) : 
+    my $album = $_[0] ?
+      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) :
         Audio::TagLib::String->null();
     if(defined $fileref) {
         $fileref->tag()->setAlbum($album);
@@ -270,8 +270,8 @@ sub _setAlbum {
 }
 
 sub _setComment {
-    my $comment = $_[0] ? 
-      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) : 
+    my $comment = $_[0] ?
+      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) :
         Audio::TagLib::String->null();
     if(defined $fileref) {
         $fileref->tag()->setComment($comment);
@@ -282,8 +282,8 @@ sub _setComment {
 }
 
 sub _setGenre {
-    my $genre = $_[0] ? 
-      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) : 
+    my $genre = $_[0] ?
+      Audio::TagLib::String->new($_[0], $ENCODING[$encoding]) :
         Audio::TagLib::String->null();
     if(defined $fileref) {
         $fileref->tag()->setGenre($genre);
@@ -405,23 +405,23 @@ Audio::TagLib::Shell - A mini shell of Audio::TagLib
 =head1 DESCRIPTION
 
 A mini shell of L<Audio::TagLib|Audio::TagLib>, for viewing and
-editing common audio meta data on the fly. 
+editing common audio meta data on the fly.
 
-The functionality offerred follows the abstract interface designing of 
+The functionality offerred follows the abstract interface designing of
 L<Audio::TagLib|Audio::TagLib>, for instance,
 L<Audio::TagLib::Tag|Audio::TagLib::Tag> and
-L<Audio::TagLib::AudioProperties|Audio::TagLib::AudioProperties>. 
+L<Audio::TagLib::AudioProperties|Audio::TagLib::AudioProperties>.
 
 =head2 WHAT CAN DO
 
 Simply start the shell and push E<lt>TABE<gt>. All available commands
-will appear. 
+will appear.
 
 =head2 HOW TO GET & SET DATA
 
 First of all, choose an audio file and open it. Then play your game.
 
-B<Don't> forget to use E<lt>TABE<gt> ;-) 
+B<Don't> forget to use E<lt>TABE<gt> ;-)
 
 No need to escape the space in path.
 
@@ -431,7 +431,7 @@ Every game should have rule. Pls save or close current openned file
 before openning another one. C<close> will discard all changes you
 made while C<save> does what it should do.
 
-B<hmmm..> I<$tag:>> vs. I<$tag:o>> 
+B<hmmm..> I<$tag:>> vs. I<$tag:o>>
 
 =head2 MORE WORDS ABOUT set???
 
@@ -445,7 +445,7 @@ C<shell> by default.
 =head1 SEE ALSO
 
 L<Audio::TagLib> L<Audio::TagLib::Tag|Audio::TagLib::Tag>
-L<Audio::TagLib::AudioProperties|Audio::TagLib::AudioProperties> 
+L<Audio::TagLib::AudioProperties|Audio::TagLib::AudioProperties>
 
 =head1 AUTHOR
 

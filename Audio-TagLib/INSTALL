@@ -16,15 +16,15 @@ perl -MCPAN -e shell
 
 More to say about Build
 
-Due to some bugs(Refer to Bugs for detail) of the 
-original release of TagLib version 1.4, some methods 
-are not exported by default. 
-You can check out the latest cvs build and re-install 
-if possible. Then insert '-DFIXME' into the value of 
+Due to some bugs(Refer to Bugs for detail) of the
+original release of TagLib version 1.4, some methods
+are not exported by default.
+You can check out the latest cvs build and re-install
+if possible. Then insert '-DFIXME' into the value of
 DEFINE in MakeFile.PL to enable the masked methods.
 
-The namespace TagLib::Ogg::Vorbis is only defined by 
-'DOXYGEN'. In case your libtag.so has symbols under 
-that namespace, change '-DNO_DOXYGEN' to '-DDOXYGEN' 
+The namespace TagLib::Ogg::Vorbis is only defined by
+'DOXYGEN'. In case your libtag.so has symbols under
+that namespace, change '-DNO_DOXYGEN' to '-DDOXYGEN'
 in MakeFile.PL
 

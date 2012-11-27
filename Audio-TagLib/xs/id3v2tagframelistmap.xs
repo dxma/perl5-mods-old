@@ -5,24 +5,24 @@ MODULE = TagLib		PACKAGE = TagLib::ID3v2::FrameListMap
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::FrameListMap * 
+TagLib::ID3v2::FrameListMap *
 TagLib::ID3v2::FrameListMap::new(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::ID3v2::FrameListMap * m;
 CODE:
-	/*! 
+	/*!
 	 * MAP()
 	 * MAP(const MAP< Key, T > &m)
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v2::FrameListMap"))
 			m = INT2PTR(TagLib::ID3v2::FrameListMap *, SvIV(SvRV(ST(1))));
 		else
@@ -36,20 +36,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameListMap::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::ID3v2::FrameListMap::Iterator * 
+TagLib::ID3v2::FrameListMap::Iterator *
 TagLib::ID3v2::FrameListMap::begin()
 CODE:
 	RETVAL = new TagLib::ID3v2::FrameListMap::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-TagLib::ID3v2::FrameListMap::Iterator * 
+TagLib::ID3v2::FrameListMap::Iterator *
 TagLib::ID3v2::FrameListMap::end()
 CODE:
 	RETVAL = new TagLib::ID3v2::FrameListMap::Iterator(THIS->end());
@@ -57,40 +57,40 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::ID3v2::FrameListMap::insert(key, value)
 	TagLib::ByteVector * key
 	TagLib::ID3v2::FrameList * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::ID3v2::FrameListMap::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::FrameListMap::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-TagLib::ID3v2::FrameListMap::Iterator *  
+TagLib::ID3v2::FrameListMap::Iterator *
 TagLib::ID3v2::FrameListMap::find(key)
 	TagLib::ByteVector * key
 CODE:
@@ -99,13 +99,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::contains(key)
 	TagLib::ByteVector * key
 CODE:
@@ -113,14 +113,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameListMap::erase(key)
 	TagLib::ByteVector * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::ID3v2::FrameListMap::getItem(key)
 	TagLib::ByteVector * key
 INIT:
@@ -132,20 +132,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # Map<Key, T> & operator=(const Map<Key, T> &m)
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 TagLib::ID3v2::FrameListMap::copy(m)
 	TagLib::ID3v2::FrameListMap * m
 PPCODE:
@@ -154,33 +154,33 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS FOR TIE MAGIC
-# 
+#
 ################################################################
 
-static void  
+static void
 TagLib::ID3v2::FrameListMap::TIEHASH(...)
 PROTOTYPE: ;$
 PREINIT:
 	TagLib::ID3v2::FrameListMap * map;
 PPCODE:
-	/*! 
+	/*!
 	 * tie %h, "TagLib::ID3v2::FrameListMap"
 	 * tie %h, "TagLib::ID3v2::FrameListMap", $obj_to_tie
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v2::FrameListMap")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				ST(0) = sv_newmortal();
@@ -200,7 +200,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v2::FrameListMap::FETCH(key)
 	TagLib::ByteVector * key
 PPCODE:
@@ -217,26 +217,26 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 TagLib::ID3v2::FrameListMap::STORE(key, value)
 	TagLib::ByteVector * key
 	TagLib::ID3v2::FrameList * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 TagLib::ID3v2::FrameListMap::DELETE(key)
 	TagLib::ByteVector * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 TagLib::ID3v2::FrameListMap::CLEAR()
 CODE:
 	THIS->clear();
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::EXISTS(key)
 	TagLib::ByteVector * key
 CODE:
@@ -244,7 +244,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameListMap::FIRSTKEY()
 PREINIT:
 	TagLib::ID3v2::FrameListMap::Iterator it;
@@ -259,7 +259,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::ID3v2::FrameListMap::NEXTKEY(lastkey)
 	TagLib::ByteVector * lastkey
 PREINIT:
@@ -274,7 +274,7 @@ CODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-unsigned int 
+unsigned int
 TagLib::ID3v2::FrameListMap::SCALAR()
 CODE:
 	/* return size of current map */
@@ -283,10 +283,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
-# TagLib::ID3v2::FrameListMap::UNTIE() 
+#
+# TagLib::ID3v2::FrameListMap::UNTIE()
 # not implemented
 # since there is no special action to do normally
-# 
+#
 ################################################################
 

@@ -6,12 +6,12 @@ MODULE = TagLib			PACKAGE = _NAMESPACE_
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-_NAMESPACE_ * 
+_NAMESPACE_ *
 _NAMESPACE_::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -23,7 +23,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::_NAMESPACE_"))
 			i = INT2PTR(_NAMESPACE_ *, SvIV(SvRV(ST(1))));
 		else
@@ -37,13 +37,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 _NAMESPACE_::data()
 PPCODE:
 !!!!USEPAIR
@@ -87,7 +87,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 _NAMESPACE_::next()
 PPCODE:
 	_NAMESPACE_ & i = THIS->operator++();
@@ -96,7 +96,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 _NAMESPACE_::last()
 PPCODE:
 	_NAMESPACE_ & i = THIS->operator--();
@@ -107,7 +107,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 _NAMESPACE_::forward(n)
 	int n
 PPCODE:
@@ -118,7 +118,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 _NAMESPACE_::backward(n)
 	int n
 PPCODE:
@@ -133,7 +133,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 _NAMESPACE_::equal(i)
 	_NAMESPACE_ * i
 CODE:
@@ -141,7 +141,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::lessThan(i)
 	_NAMESPACE_ * i
 CODE:
@@ -149,7 +149,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::greatThan(i)
 	_NAMESPACE_ * i
 CODE:
@@ -157,7 +157,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::lessEqual(i)
 	_NAMESPACE_ * i
 CODE:
@@ -165,7 +165,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::greatEqual(i)
 	_NAMESPACE_ * i
 CODE:
@@ -173,7 +173,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::copy(i)
 	_NAMESPACE_ * i
 PPCODE:

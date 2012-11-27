@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::Ogg::Page
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Ogg::Page * 
+TagLib::Ogg::Page *
 TagLib::Ogg::Page::new(file, pageOffset)
 	TagLib::Ogg::File * file
 	long pageOffset
@@ -18,20 +18,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::Page::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-long 
+long
 TagLib::Ogg::Page::fileOffset()
 CODE:
 	RETVAL = THIS->fileOffset();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::Page::header()
 INIT:
 	const TagLib::Ogg::PageHeader * h = THIS->header();
@@ -41,20 +41,20 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-int 
+int
 TagLib::Ogg::Page::firstPacketIndex()
 CODE:
 	RETVAL = THIS->firstPacketIndex();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::Page::setFirstPacketIndex(index)
 	int index
 CODE:
 	THIS->setFirstPacketIndex(index);
 
-TagLib::Ogg::Page::ContainsPacketFlags 
+TagLib::Ogg::Page::ContainsPacketFlags
 TagLib::Ogg::Page::containsPacket(index)
 	int index
 CODE:
@@ -62,28 +62,28 @@ CODE:
 OUTPUT:
 	RETVAL
 
-unsigned int 
+unsigned int
 TagLib::Ogg::Page::packetCount()
 CODE:
 	RETVAL = THIS->packetCount();
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVectorList * 
+TagLib::ByteVectorList *
 TagLib::Ogg::Page::packets()
 CODE:
 	RETVAL = new TagLib::ByteVectorList(THIS->packets());
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Ogg::Page::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::Ogg::Page::render()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->render());
@@ -91,12 +91,12 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # STATIC PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-static void 
+static void
 TagLib::Ogg::Page::paginate(packets, strategy, streamSerialNumber, firstPage, firstPacketContinued=false, lastPacketCompleted=true, containsLastPacket=false)
 	TagLib::ByteVectorList * packets
 	TagLib::Ogg::Page::PaginationStrategy strategy
@@ -109,8 +109,8 @@ PREINIT:
 	SV * sv;
 INIT:
 	TagLib::List<TagLib::Ogg::Page *> l = TagLib::Ogg::Page::paginate(
-		*packets, strategy, streamSerialNumber, firstPage, 
-		firstPacketContinued, lastPacketCompleted, 
+		*packets, strategy, streamSerialNumber, firstPage,
+		firstPacketContinued, lastPacketCompleted,
 		containsLastPacket);
 PPCODE:
 	switch(GIMME_V) {
@@ -122,7 +122,7 @@ PPCODE:
 			EXTEND(SP, l.size());
 			for(int i = 0; i < l.size(); i++) {
 				sv = sv_newmortal();
-				sv_setref_pv(sv, "Audio::TagLib::Ogg::Page", 
+				sv_setref_pv(sv, "Audio::TagLib::Ogg::Page",
 					(void *)l[i]);
 				/* READONLY_off here */
 				PUSHs(sv);
@@ -137,15 +137,15 @@ PPCODE:
 	}
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
-# Page(const ByteVectorList &packets, 
-# 	uint streamSerialNumber, int pageNumber, 
-# 	bool firstPacketContinued=false, 
-# 	bool lastPacketCompleted=true, 
+#
+# Page(const ByteVectorList &packets,
+# 	uint streamSerialNumber, int pageNumber,
+# 	bool firstPacketContinued=false,
+# 	bool lastPacketCompleted=true,
 # 	bool containsLastPacket=false)
 # not exported
-# 
+#
 ################################################################
 

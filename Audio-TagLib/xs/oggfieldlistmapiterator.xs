@@ -7,12 +7,12 @@ MODULE = TagLib			PACKAGE = TagLib::Ogg::FieldListMap::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Ogg::FieldListMap::Iterator * 
+TagLib::Ogg::FieldListMap::Iterator *
 TagLib::Ogg::FieldListMap::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::Ogg::FieldListMap::Iterator"))
 			i = INT2PTR(TagLib::Ogg::FieldListMap::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -38,13 +38,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::data()
 PPCODE:
 //USEPAIR
@@ -55,7 +55,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::next()
 PPCODE:
 	TagLib::Ogg::FieldListMap::Iterator & i = THIS->operator++();
@@ -64,7 +64,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::Ogg::FieldListMap::Iterator::last()
 PPCODE:
 	TagLib::Ogg::FieldListMap::Iterator & i = THIS->operator--();
@@ -75,7 +75,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::forward(n)
 	int n
 PPCODE:
@@ -86,7 +86,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::backward(n)
 	int n
 PPCODE:
@@ -101,7 +101,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::Iterator::equal(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 CODE:
@@ -109,7 +109,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::Iterator::lessThan(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 CODE:
@@ -117,7 +117,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::Iterator::greatThan(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 CODE:
@@ -125,7 +125,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::Iterator::lessEqual(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 CODE:
@@ -133,7 +133,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::Ogg::FieldListMap::Iterator::greatEqual(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 CODE:
@@ -141,7 +141,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::FieldListMap::Iterator::copy(i)
 	TagLib::Ogg::FieldListMap::Iterator * i
 PPCODE:

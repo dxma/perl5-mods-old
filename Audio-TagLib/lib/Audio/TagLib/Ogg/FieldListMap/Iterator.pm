@@ -30,7 +30,7 @@ Audio::TagLib::Ogg::FiledListMap::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::FiledListMap::Iterator;
-  
+
   my $xc = Audio::TagLib::Ogg::XiphComment->new();
   $xc->setTitle(Audio::TagLib::String->new("title"));
   $xc->setArtist(Audio::TagLib::String->new("artist"));

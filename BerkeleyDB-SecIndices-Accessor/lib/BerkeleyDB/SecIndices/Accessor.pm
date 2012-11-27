@@ -62,7 +62,7 @@ BEGIN {
     }
 }
 
-# This section inits _ALL_ databases 
+# This section inits _ALL_ databases
 # _ALL_ db handlers are stored in $db_pool with specific keys
 # the key is contructed according to keys %{$_config->{DATABASE}}
 
@@ -70,21 +70,21 @@ BEGIN {
     use YAML ();
     ( $_config ) = YAML::LoadFile($CONFIG);
     # soft check
-    croak("no database HOME found") unless 
+    croak("no database HOME found") unless
       exists $_config->{HOME} and -d $_config->{HOME};
-    croak("wrong database declaration") unless 
+    croak("wrong database declaration") unless
       ref $_config->{DATABASE} eq 'HASH';
-    
+
     # Global Env for _ALL_ DBs
     # created in system shared memory by flag DB_SYSTEM_MEM
-    # Shared memory key can also be specified in DB_CONFIG 
+    # Shared memory key can also be specified in DB_CONFIG
     my $Env = BerkeleyDB::Env::->new(
         -Home         => $_config->{HOME},
-        #-Cachesize    => 2000000, 
-        -ErrFile      => *STDERR, 
-        -ErrPrefix    => __PACKAGE__, 
+        #-Cachesize    => 2000000,
+        -ErrFile      => *STDERR,
+        -ErrPrefix    => __PACKAGE__,
         -Flags        => DB_CREATE|DB_INIT_CDB|DB_INIT_MPOOL|DB_SYSTEM_MEM,
-        -Verbose      => 1, 
+        -Verbose      => 1,
     );
     croak("cannot create dbenv") unless $Env and $Env->status() == 0;
     my $DB = $_config->{DATABASE};
@@ -92,13 +92,13 @@ BEGIN {
     my $db_pool = {};
     # container to check required index fields for primary database
     my $required_index = {};
-    
+
     # DIRTY CODE START
     no strict 'refs';
     my $getenv = '___dbenv';
-    
+
     *$getenv = sub() { $Env; };
-    
+
     my $makekey = sub {
         my ( $primary, $index ) = @_;
         if ($index) {
@@ -108,7 +108,7 @@ BEGIN {
             return '_'. lc($primary);
         }
     };
-    
+
     my $_db_property = DB_DUP;
     if (defined $CB_DUPSORT and ref $CB_DUPSORT eq 'CODE') {
         $_db_property |= DB_DUPSORT;
@@ -129,7 +129,7 @@ BEGIN {
                 if (defined $CB_DUP and ref $CB_DUP eq 'CODE') {
                     $params->{-Compare} = $CB_DUP;
                 }
-                if (defined $CB_DUPSORT and 
+                if (defined $CB_DUPSORT and
                       ref $CB_DUPSORT eq 'CODE') {
                     $params->{-DupCompare} = $CB_DUPSORT;
                 }
@@ -160,7 +160,7 @@ BEGIN {
             if ($_type == 0) {
                 $db = BerkeleyDB::Recno::->new(
                     -Filename  => $DB->{$i}->{FILE},
-                    -Flags     => DB_CREATE|DB_DIRECT_DB, 
+                    -Flags     => DB_CREATE|DB_DIRECT_DB,
                     -Mode      => 0644,
                     -Env       => $Env,
                 );
@@ -168,7 +168,7 @@ BEGIN {
             elsif ($_type == 1) {
                 $db = BerkeleyDB::Hash::->new(
                     -Filename  => $DB->{$i}->{FILE},
-                    -Flags     => DB_CREATE|DB_DIRECT_DB, 
+                    -Flags     => DB_CREATE|DB_DIRECT_DB,
                     -Property  => DB_DUP,
                     -Mode      => 0644,
                     -Env       => $Env,
@@ -177,13 +177,13 @@ BEGIN {
             else {
                 $db = BerkeleyDB::Btree::->new(
                     -Filename  => $DB->{$i}->{FILE},
-                    -Flags     => DB_CREATE|DB_DIRECT_DB, 
+                    -Flags     => DB_CREATE|DB_DIRECT_DB,
                     -Property  => DB_DUP,
                     -Mode      => 0644,
                     -Env       => $Env,
                 );
             }
-            
+
             my $key = $makekey->($i);
             $db_pool->{$key} = $db;
             *$key = sub() { $db_pool->{$key}; };
@@ -199,7 +199,7 @@ BEGIN {
                 ( my $p = $i ) =~ s/_INDEX$//o;
                 my $primary   = $makekey->($p);
                 push @{$required_index->{$p}}, $DB->{$i}->{SUBS}->[$j];
-                
+
                 unless (exists $db_pool->{$primary}) {
                     croak("database $primary not found");
                 }
@@ -229,12 +229,12 @@ BEGIN {
                     }
                     return 0;
                 };
-                
+
                 my $rc;
-                if (defined $CB_EXTRACT_SECKEY and 
+                if (defined $CB_EXTRACT_SECKEY and
                       ref $CB_EXTRACT_SECKEY eq 'CODE') {
                     $rc = $db_pool->{$primary}->associate(
-                        $db_pool->{$secondary}, 
+                        $db_pool->{$secondary},
                         $CB_EXTRACT_SECKEY);
                 }
                 else {
@@ -248,7 +248,7 @@ BEGIN {
             }
         }
     }
-    
+
     # make accessor for each primary database
     foreach my $i (keys %$DB) {
         if ($i !~ m/INDEX$/o) {
@@ -270,13 +270,13 @@ BEGIN {
             $STUBS->{$i}->{GETS}  = sub { __PACKAGE__->$gets(@_); };
             $STUBS->{$i}->{COUNT} = sub { __PACKAGE__->$count(@_); };
             $STUBS->{$i}->{DEL}   = sub { __PACKAGE__->$dels(@_); };
-            
-            if (exists $DB->{$i}->{TYPE} and 
-                  ($DB->{$i}->{TYPE} eq 'Hash' or 
+
+            if (exists $DB->{$i}->{TYPE} and
+                  ($DB->{$i}->{TYPE} eq 'Hash' or
                      $DB->{$i}->{TYPE} eq 'Btree')) {
                 *$put = sub {
                     my ( $self, $k, $hcontent ) = @_;
-                    croak("ref $_[2] ne 'HASH'") unless 
+                    croak("ref $_[2] ne 'HASH'") unless
                       ref $hcontent eq 'HASH';
                     # check required index fields
                     foreach my $field (@{$required_index->{$i}}) {
@@ -307,12 +307,12 @@ BEGIN {
                     $lock->cds_unlock();
                     return $rc == 0 ? TRUE : EPUT;
                 };
-                
+
                 *$put2 = sub {
                     my ( $self, $rpairs ) = @_;
                     return TRUE if keys %$rpairs == 0;
-                    
-                    croak("ref $_[1] ne 'HASH'") unless 
+
+                    croak("ref $_[1] ne 'HASH'") unless
                       ref $rpairs eq 'HASH';
                     # check required index fields
                     foreach my $field (@{$required_index->{$i}}) {
@@ -338,7 +338,7 @@ BEGIN {
                     unless (defined $lock) {
                         return ELOCK;
                     }
-                    
+
                     my ( $k, $v, $rc );
                     $rc = 0;
                     while (( $k, $v ) = each %$rpairs) {
@@ -355,7 +355,7 @@ BEGIN {
                 # Recno by default
                 *$put = sub {
                     my ( $self, @hcontent ) = @_;
-                    croak("ref $_[1] ne 'HASH'") unless 
+                    croak("ref $_[1] ne 'HASH'") unless
                       ref $hcontent[0] eq 'HASH';
                     # check required index fields
                     foreach my $field (@{$required_index->{$i}}) {
@@ -392,11 +392,11 @@ BEGIN {
                     $lock->cds_unlock();
                     return $rc == 0 ? $first_key : EPUT;
                 };
-                
+
                 *$put2 = sub {
                     my ( $self, $hcontent_array, $key_array ) = @_;
                     return TRUE if @$hcontent_array == 0;
-                    croak('ref $_[1]->[0] ne "HASH"') unless 
+                    croak('ref $_[1]->[0] ne "HASH"') unless
                       ref($hcontent_array->[0]) eq 'HASH';
                     # check required index fields
                     foreach my $field (@{$required_index->{$i}}) {
@@ -432,12 +432,12 @@ BEGIN {
                     $db_pool->{$key}->db_sync();
                     $lock->cds_unlock();
                     return $rc_all == 0 ? TRUE : EPUT;
-                }; 
+                };
             }
-            
+
             *$upd = sub {
                 my ( $self, $k, $hcontent ) = @_;
-                croak("ref $_[2] ne 'HASH'") unless 
+                croak("ref $_[2] ne 'HASH'") unless
                   ref $hcontent eq 'HASH';
                 my ( $v, $rc );
                 $v = '';
@@ -473,7 +473,7 @@ BEGIN {
                 $cursor->c_close();
                 return $rc == 0 ? 0 : EUPD;
             };
-            
+
             *$get = sub {
                 my ( $self, $k ) = @_;
                 my $key = $makekey->($i);
@@ -511,8 +511,8 @@ BEGIN {
                 }
                 if (defined $offset and $offset > 0) {
                     OFFSET:
-                    for (my $i = 0; $rc == 0 or $rc == DB_KEYEMPTY; 
-                         $rc = $cursor->c_get($k, $fcontent, 
+                    for (my $i = 0; $rc == 0 or $rc == DB_KEYEMPTY;
+                         $rc = $cursor->c_get($k, $fcontent,
                                               $desc ? DB_PREV :
                                                 DB_NEXT)
                      ) {
@@ -522,7 +522,7 @@ BEGIN {
                 }
                 my $ret = [];
                 FETCH:
-                for (my $i = 0; $rc == 0 or $rc == DB_KEYEMPTY; 
+                for (my $i = 0; $rc == 0 or $rc == DB_KEYEMPTY;
                      $rc = $cursor->c_get(
                          $k, $fcontent, $desc ? DB_PREV : DB_NEXT)) {
                     last FETCH if $i == $n;
@@ -538,11 +538,11 @@ BEGIN {
                 $cursor->c_close();
                 return $ret;
             };
-            
+
             *$count = sub {
                 my $key = $makekey->($i);
                 my $stat = $db_pool->{$key}->db_stat();
-                if (exists $DB->{$i}->{TYPE} and 
+                if (exists $DB->{$i}->{TYPE} and
                       $DB->{$i}->{TYPE} eq 'Hash') {
                     return $stat->{hash_ndata};
                 }
@@ -550,7 +550,7 @@ BEGIN {
                     return $stat->{bt_ndata};
                 }
             };
-            
+
             *$dels = sub {
                 my ( $self, @n ) = @_;
                 return 0 if @n == 0;
@@ -583,20 +583,20 @@ BEGIN {
             # index database(s)
             foreach my $j (0 .. $#{$DB->{$i}->{SUBS}}) {
                 ( my $p = $i ) =~ s/_INDEX$//o;
-                my $get = 'get_'. lc($p). 
+                my $get = 'get_'. lc($p).
                   's_by_'. lc($DB->{$i}->{SUBS}->[$j]);
-                my $cat = 'cat_'. lc($i). '_'. lc($DB->{$i}->{SUBS}->[$j]). 
+                my $cat = 'cat_'. lc($i). '_'. lc($DB->{$i}->{SUBS}->[$j]).
                   's';
                 my $count =
                   '__'. lc($i). '_'. lc($DB->{$i}->{SUBS}->[$j]). 's';
-                my $countdup = 
+                my $countdup =
                   '__'. lc($i). '_'. lc($DB->{$i}->{SUBS}->[$j]). '_dups';
-                
-                $STUBS->{$p}->{FIELDS}->{lc($DB->{$i}->{SUBS}->[$j])} = 
+
+                $STUBS->{$p}->{FIELDS}->{lc($DB->{$i}->{SUBS}->[$j])} =
                   sub { __PACKAGE__->$get(@_); };
                 $STUBS->{$i}->{CAT}->{lc($DB->{$i}->{SUBS}->[$j])}
                   = sub { __PACKAGE__->$cat(@_); };
-                $STUBS->{$i}->{COUNT}->{lc($DB->{$i}->{SUBS}->[$j])} = 
+                $STUBS->{$i}->{COUNT}->{lc($DB->{$i}->{SUBS}->[$j])} =
                   sub { __PACKAGE__->$count(@_); };
                 $STUBS->{$i}->{COUNTDUP}->{lc($DB->{$i}->{SUBS}->[$j])}
                   = sub { __PACKAGE__->$countdup(@_); };
@@ -604,7 +604,7 @@ BEGIN {
                 *$get = sub {
                     # FIXME ugly api..
                     # TODO hash param
-                    my ( $self, $k, $returnValue, $lastone, 
+                    my ( $self, $k, $returnValue, $lastone,
                          $n, $offset ) = @_;
                     $returnValue ||= 0;
                     croak("undefined key: $k") unless defined $k;
@@ -613,7 +613,7 @@ BEGIN {
                     #print "key = ", $key, "\n";
                     my ( $rc, $pk, $v );
                     my $ret = [];
-                    
+
                     $pk = -1;
                     #$rc = $db_pool->{$key}->db_pget($k, $pk, $v);
                     #if ($rc == DB_NOTFOUND or $rc == DB_KEYEMPTY) {
@@ -639,15 +639,15 @@ BEGIN {
                         croak("cannot count duplicate keys");
                     }
                     # offset out of range
-                    return $ret if defined $offset and 
+                    return $ret if defined $offset and
                       $offset < 0 and -$offset >= $dup_count;
-                    
+
                     if ($n and defined $offset) {
                         # splice
                         if ($offset >= 0) {
                             if ($offset > 0) {
                                 OFFSET:
-                                for (my $i = 0; $rc == 0; 
+                                for (my $i = 0; $rc == 0;
                                      $rc = $cursor->c_pget(
                                          $k, $pk, $v, DB_NEXT_DUP)) {
                                     last OFFSET if $i == $offset;
@@ -655,7 +655,7 @@ BEGIN {
                                 }
                             }
                             my $i = 0;
-                            FETCH: 
+                            FETCH:
                             {
                                 last FETCH if $i == $n;
                                 if ($BerkeleyDB::VERSION < 0.29) {
@@ -690,14 +690,14 @@ BEGIN {
                             }
                             if ($start_index > 0) {
                                 OFFSET:
-                                for (my $i = 0; $rc == 0; 
+                                for (my $i = 0; $rc == 0;
                                      $rc = $cursor->c_pget(
                                          $k, $pk, $v, DB_NEXT_DUP)) {
                                     last OFFSET if $i++ == $start_index;
                                 }
                             }
                             my $i = $start_index;
-                            FETCH: 
+                            FETCH:
                             {
                                 last FETCH if $i > $end_index;
                                 if ($BerkeleyDB::VERSION < 0.29) {
@@ -705,7 +705,7 @@ BEGIN {
                                     $pk = unpack("L", $pk) - 1;
                                 }
                                 if ($returnValue) {
-                                    my $entry = { 
+                                    my $entry = {
                                         KEY     => $pk,
                                         CONTENT => thaw($v),
                                     };
@@ -724,7 +724,7 @@ BEGIN {
                     }
                     else {
                         my $last;
-                        FETCH: 
+                        FETCH:
                         {
                             if ($BerkeleyDB::VERSION < 0.29) {
                                 # Bug fix for BerkeleyDB v0.27
@@ -754,14 +754,14 @@ BEGIN {
                     }
                     # NOREACH
                 };
-                
+
                 *$cat = sub {
                     my ( $self, $value ) = @_;
                     my $key = $makekey->($i, $DB->{$i}->{SUBS}->[$j]);
                     #print STDERR
                     #  'database:'. $DB->{$i}->{SUBS}->[$j]. "\n";
                     my $cursor = $db_pool->{$key}->db_cursor();
-                    
+
                     my $ret = {};
                     my ( $k, $pk, $v );
                     $k = $pk = -1;
@@ -775,7 +775,7 @@ BEGIN {
                             #print STDERR 'length of key:'. length($k). "\n";
                         }
                         if ($value) {
-                            push @{$ret->{$k}}, { 
+                            push @{$ret->{$k}}, {
                                 KEY     => $pk,
                                 CONTENT => thaw($v),
                             };
@@ -789,7 +789,7 @@ BEGIN {
                     $cursor->c_close();
                     return $ret;
                 };
-                
+
                 *$count = sub {
                     my $key = $makekey->($i, $DB->{$i}->{SUBS}->[$j]);
                     my $stat = $db_pool->{$key}->db_stat();
@@ -803,7 +803,7 @@ BEGIN {
                     #print "key = ", $key, "\n";
                     my ( $rc, $pk, $v );
                     my $ret;
-                    
+
                     $pk = -1;
                     #$rc = $db_pool->{$key}->db_pget($k, $pk, $v);
                     #if ($rc == DB_NOTFOUND or $rc == DB_KEYEMPTY) {
@@ -827,7 +827,7 @@ BEGIN {
                     $cursor->c_close();
                     return $rc == 0 ? $ret : EDUP;
                 };
-                
+
             }
         }
     }
@@ -848,16 +848,16 @@ database with secondary indices
 =head1 SYNOPSIS
 
   use BerkeleyDB::SecIndices::Accessor qw(EGET ELCK EPUT EUPD);
-  
+
   my $student = [];
   push @$student, {
-    NAME  => 'tom', 
+    NAME  => 'tom',
     CLASS => 'one',
     GRADE => 'two',
     SCORE => 80,
   };
   push @$student, {
-    NAME  => 'jerry', 
+    NAME  => 'jerry',
     CLASS => 'two',
     GRADE => 'two',
     SCORE => 75,
@@ -865,10 +865,10 @@ database with secondary indices
   my $stubs = BerkeleyDB::SecIndices::Accessor::->_stubs;
   foreach (@$student) {
     my $rc = $stubs->{STUDENT}->{PUT}->($_);
-    die "cannot put record into database STUDENT" 
+    die "cannot put record into database STUDENT"
       if $rc == EPUT or $rc == ELCK;
   }
-  
+
   my $count = $stubs->{STUDENT}->{COUNT}->();
   print "so far we have $count record(s)\n";
 
@@ -884,10 +884,10 @@ database with secondary indices
     $s->{CONTENT}->{GRADE} = 'three';
     my $rc = $stubs->{STUDENT}->{UPD}->(
       $s->{KEY}, $s->{CONTENT});
-    die "cannot update record in database STUDENT" 
+    die "cannot update record in database STUDENT"
       if $rc == EUPD or $rc == ELCK;
   }
-  
+
   my $number = $stubs->{STUDENT_INDEX}->{COUNTDUP}->{class}->('one');
   print "we have $number students in class one\n";
 
@@ -897,11 +897,11 @@ BerkeleyDB is one of the most famous flat/non-relational databases
 widely used. Depending on the very strong features offerred, one can
 implement fast cache, in-memory/embedded database, btree, queue and
 vice versa. Smart guys from both sleepycat and open-source world are
-working very hard to bring new wonderful stuff. 
+working very hard to bring new wonderful stuff.
 
 Here you are touching another great feature of BerkeleyDB - Secondary
 Indicies. One can create several secondary databases for index
-purpose. 
+purpose.
 
 A typical scenario is showed in code example above. The primary
 database whose name here is 'STUDENT' is associated with several
@@ -914,15 +914,15 @@ secondary index database.
 
 =head2 WHY BerkeleyDB, WHAT ABOUT TRANSACTION, LOG and LOCK HERE
 
-SQL-statement is mining nearly everything nowadays, indeed. 
+SQL-statement is mining nearly everything nowadays, indeed.
 For the data set which is access-performance-critical, stable,
 by-query-and-reference-mainly, of-short-length-record-type,
-non-table-join-demand, BerkeleyDB gains a stage. 
+non-table-join-demand, BerkeleyDB gains a stage.
 
 In most databases one have to talk with database locker(s) here and
 there. The case is not so often this time, by introducing another
 feature of BerkeleyDB - Concurrent Access Mode. The database working
-under this mode, is nearly dead-lock-free. Refer to document 
+under this mode, is nearly dead-lock-free. Refer to document
 on Sleepycat in case to know more about this.
 
 =head2 DATABASE CONFIGURATION
@@ -953,7 +953,7 @@ DATABASE:
 
     FILE: indices_student.db
 
-    SUBS: 
+    SUBS:
 
       - NAME
 
@@ -969,7 +969,7 @@ As seen, this configuration file tells the module to create two db
 files. The primary database is named 'STUDENT', and allocated file
 name should be student.db, which will be created under the path
 introduced by param 'set_data_dir' in DB_CONFIG found under the
-directory specified by key 'HOME'. 
+directory specified by key 'HOME'.
 
 The naming rule of secondary index databases is the name of primary
 database plus '_INDEX'. There will possibly be more than one database
@@ -1008,7 +1008,7 @@ Refer to document on sleepycat for more detail.
 =head2 INSTALL CALLBACKS
 
 BerkeleyDB supports four known types of database - Btree, Hash, Recno
-and Queue. 
+and Queue.
 
 A primary database is by default of Recno type. A 'TYPE' key can be
 specified in database configuration file for the primary
@@ -1016,10 +1016,10 @@ database. Currently only support Btree/Hash/Recno. The module will
 honor this setting. The feature is openned in case a standalone
 database, which is of type Btree or Hash, is required. The database
 permits duplicate key by default, DO NOT create any index database
-upon it unless you know what you are doing. 
+upon it unless you know what you are doing.
 
 For index database, it will be B<ALWAYS> a Btree. Duplicate key is
-okay. 
+okay.
 
 There are three callbacks available: C< $CB_EXTRACT_SECKEY $CB_DUP
 $CB_DUPSORT >. By asigning the code ref to a callback, one can:
@@ -1037,7 +1037,7 @@ B<Caution:> install the callback(s) in BEGIN section of your code. In
 case one indeed wants to initialize all module-scope variables in
 run-time of code, he has to postpone the load of module by C< eval
 "use BerkeleyDB::SecIndices::Accessor;"; > while this way is not
-recommended. 
+recommended.
 
 B<Note:> a standalone Btree/Hash database mentioned above is left
 untouched by _ALL_ the callbacks.
@@ -1054,7 +1054,7 @@ Each subroutine has a explicitly exported name also.
 =item ___dbenv
 
 A special subroutine to return db environment handler. Normally not
-required. 
+required.
 
 C<< BerkeleyDB::SecIndices::Accessor::->___dbenv >>
 
@@ -1064,7 +1064,7 @@ B<Note:> not covered by _stubs
 
 For each database declared in configuration file, module will generate
 a subroutine to fetch the database handler for invoking other
-berkeleydb database methods not covered. 
+berkeleydb database methods not covered.
 
 Naming rule is C<< '_'. lc(<database_name>) >>
 
@@ -1090,7 +1090,7 @@ C<< BerkeleyDB::SecIndices::Accessor::->put_student->(@entries) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{PUT}->(@entries)
->> 
+>>
 
 return the first new key on success, EPUT or ELCK on failure.
 
@@ -1104,7 +1104,7 @@ $entry) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{dbname}->{PUT}->($key,
-$entry) >> 
+$entry) >>
 
 return TRUE on success, EPUT or ELCK on failure.
 
@@ -1140,7 +1140,7 @@ BerkeleyDB::SecIndices::Accessor::->_stubs->{dbname}->{PUT2}->(\%pairs,
 \@keys) >>
 
 return TRUE on success, EPUT or ELCK on failure.
-The keys of new created records will be filled in C<< @keys >>. 
+The keys of new created records will be filled in C<< @keys >>.
 B<Note:> Since using HASH, sequence of keys is not guaranteed.
 
 =item upd_student($key, $entry)
@@ -1149,24 +1149,24 @@ For each primary database declared in configuration file, module will
 generate a subroutine to update a HASH record in database. This will
 also lead to specific key change in some secondary index database.
 
-C<< BerkeleyDB::SecIndices::Accessor::->upd_student->($key, $entry) >> 
+C<< BerkeleyDB::SecIndices::Accessor::->upd_student->($key, $entry) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{UPD}->($key,
-$entry) >> 
+$entry) >>
 
 return 0 on success, EUPD or ELCK on failure.
 
 =item get_student($key)
 
 For each primary database declared in configuration file, module will
-generate a subroutine to get a HASH record in database. 
+generate a subroutine to get a HASH record in database.
 
 C<< BerkeleyDB::SecIndices::Accessor::->get_student->($key) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{GET}->($key)
->> 
+>>
 
 return HASH ref of record on success, EGET EEPT or EGET on failure.
 
@@ -1178,7 +1178,7 @@ generate a subroutine to get records.
 in reverse order if $is_reverse is true;
 from offset $offset if $offset is set.
 
-return a ref of ARRAY which contains fetched records. 
+return a ref of ARRAY which contains fetched records.
 The number of items returned is actually depended on real item count
 in database.
 The structure of item is C<< { KEY => $key, CONTENT => $entry } >>
@@ -1198,7 +1198,7 @@ C<< BerkeleyDB::SecIndices::Accessor::->del_students(@key_list) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{DEL}->(@key_list)
->> 
+>>
 
 return deleted item number on success, ELCK on failure.
 
@@ -1210,7 +1210,7 @@ generate a subroutine to return current record number in database.
 C<< BerkeleyDB::SecIndices::Accessor::->__students() >>
 
 C<< BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{COUNT}->()
->> 
+>>
 
 =item get_students_by_class($sec_key, [ $need_return_value,
 $fetch_only_lastone, $number, $offset ])
@@ -1233,7 +1233,7 @@ $offset            : specify the offset to start for $number.
 $offset can be a negative value, retrieving in reverse order.
 
 C<<
-BerkeleyDB::SecIndices::Accessor::->get_students_by_class($sec_key) >> 
+BerkeleyDB::SecIndices::Accessor::->get_students_by_class($sec_key) >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{FIELDS}->{class}->($sec_key,
@@ -1247,12 +1247,12 @@ C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT}->{FIELDS}->{class}->($sec_key,
 1, undef, 20, 3) >>
 
-return a ref of ARRAY which contains keys of fetched record. 
+return a ref of ARRAY which contains keys of fetched record.
 The structure of item is C<< { KEY => $key, CONTENT => $entry } >> if
 $need_return_value is true.
 
 Yeah, the proto is very ugly... Possibly offer a hash-style proto in
-future. 
+future.
 
 =item cat_student_index_grades([ $need_return_value ])
 
@@ -1265,11 +1265,11 @@ C<< BerkeleyDB::SecIndices::Accessor::->cat_student_grades() >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT_INDEX}->{CAT}->{grade}->(1)
->> 
+>>
 
 return a ref of ARRAY which contains key/value pairs of fetched
 record. Recall that the record value in secondary index database is
-the key of associated record in primary database. 
+the key of associated record in primary database.
 The structure of value for each key is C<< { KEY => $key, CONTENT =>
 $primary_entry } >> if $need_return_value is true.
 
@@ -1277,13 +1277,13 @@ $primary_entry } >> if $need_return_value is true.
 
 For each secondary database declared in configuration file, module
 will generate a subroutine to return current record number in
-database. 
+database.
 
-C<< BerkeleyDB::SecIndices::Accessor::->__student_scores() >> 
+C<< BerkeleyDB::SecIndices::Accessor::->__student_scores() >>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT_INDEX}->{COUNT}->{score}->()
->> 
+>>
 
 =item __student_index_score_dups($sec_key)
 
@@ -1292,11 +1292,11 @@ will generate a subroutine to return current duplicate record number
 of requested $sec_key in database.
 
 C<< BerkeleyDB::SecIndices::Accessor::->_student_score_dups($sec_key)
->> 
+>>
 
 C<<
 BerkeleyDB::SecIndices::Accessor::->_stubs->{STUDENT_INDEX}->{COUNTDUP}->{score}->($sec_key)
->> 
+>>
 
 =head2 Error Checking
 
@@ -1315,7 +1315,7 @@ EDEL: error on deleting record(s);
 ELCK: error on obtaining a database cocurrent lock.
 
 B<CAUTION:> _ALL_ subroutines related to secondary index database will
-croak in case the index database corrupted. 
+croak in case the index database corrupted.
 
 =head2 EXPORT
 
@@ -1327,13 +1327,13 @@ BerkeleyDB::SecIndices::Accessor qw(:const) >
 =head1 CAVEAT
 
 Refer to document on Sleepycat regarding database backup/recovery and
-upgrade. 
+upgrade.
 
 =head1 BUG
 
 _ALL_ error check flags is integer. Once the returned value of
 subroutine is a reference or string, such code C<< $ret == EGET >>
-will get a warning message. 
+will get a warning message.
 
 B<NO BerkeleyDB::Queue support>.
 

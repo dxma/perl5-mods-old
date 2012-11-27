@@ -40,9 +40,9 @@ This can be accomplished with:
       }
       return undef;
   }
-  
+
   package main;
-  
+
   Audio::TagLib::FileRef->addFileTypeResolver(
       Audio::TagLib::FileRef::MyFileTypeResolver->new());
 

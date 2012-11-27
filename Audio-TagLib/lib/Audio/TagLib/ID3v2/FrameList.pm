@@ -23,7 +23,7 @@ Audio::TagLib::ID3v2::FrameList - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::FrameList;
-  
+
   my $tag  = Audio::TagLib::ID3v2::Tag->new();
   $tag->setTitle(Audio::TagLib::String->new("title"));
   $tag->setArtist(Audio::TagLib::String->new("artist"));
@@ -37,17 +37,17 @@ Audio::TagLib::ID3v2::FrameList - Perl-only class
 
 This implements Audio::TagLib::ID3v2::FrameList in C/C++ code, which is of
 type Audio::TagLib::ListE<lt>Audio::TagLib::ID3v2::Frame *E<gt>. The list is
-copy-on-write. 
+copy-on-write.
 
 You can also tie the instance to a array symbol, then operate through
 the functionalities of array.
 
 B<WARNING> The STORE method behaves different. It will insert item into
 specific index, or append to the end of list if index is out of
-bound. That means it will NEVER replace ANY existing item. 
+bound. That means it will NEVER replace ANY existing item.
 
 Just GET what you want from the tied array and SET everything through
-normal class methods. 
+normal class methods.
 
 =over
 
@@ -64,7 +64,7 @@ pass-by-value usage.
 =item I<DESTROY()>
 
 Destroys this List instance. If auto deletion is enabled and this list
- contains a pointer type all of the memebers are also deleted. 
+ contains a pointer type all of the memebers are also deleted.
 
 =item I<L<Iterator|Audio::TagLib::ID3v2::FrameList::Iterator> begin()>
 
@@ -90,7 +90,7 @@ inserted if it is already in the list.
 append(L<Frame|Audio::TagLib::ID3v2::Frame> $item)>
 
 Appends $item to the end of the list and returns a reference to the
-list. 
+list.
 
 =item I<L<FrameList|Audio::TagLib::ID3v2::FrameList>
 append(L<FrameList|Audio::TagLib::ID3v2::FrameList> $l)>
@@ -102,7 +102,7 @@ reference to the list.
 prepend(L<Frame|Audio::TagLib::ID3v2::Frame> $item)>
 
 Prepends $item to the beginning list and returns a reference to the
-list. 
+list.
 
 =item I<L<FrameList|Audio::TagLib::ID3v2::FrameList>
 prepend(L<FrameList|Audio::TagLib::ID3v2::FrameList> $l)>
@@ -135,7 +135,7 @@ Finds the first occurance of $value.
 Returns true if the list contains $value.
 
 =item I<void erase(L<Iterator|Audio::TagLib::ID3v2::FrameList::Iterator>
-$it)> 
+$it)>
 
 Erase the item at $it from the list.
 
@@ -161,7 +161,7 @@ C++ compilers should now support this.
 Returns the item $i in the list.
 
 B<WARNING> This method is slow. Use iterators to loop through the
-list. 
+list.
 
 =item I<L<FrameList|Audio::TagLib::ID3v2::FrameList>
 copy(L<FrameList|Audio::TagLib::ID3v2::FrameList> $l)>

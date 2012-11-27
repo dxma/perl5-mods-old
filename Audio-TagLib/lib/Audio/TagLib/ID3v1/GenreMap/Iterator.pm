@@ -30,7 +30,7 @@ Audio::TagLib::ID3v1::GenreMap::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v1::GenreMap::Iterator;
-  
+
   my $map = Audio::TagLib::ID3v1->genreMap();
   my $i   = $map->begin();
   print $$i, "\n"; # got 123

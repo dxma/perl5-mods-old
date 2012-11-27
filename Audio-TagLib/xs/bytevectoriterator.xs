@@ -7,12 +7,12 @@ MODULE = TagLib			PACKAGE = TagLib::ByteVector::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ByteVector::Iterator * 
+TagLib::ByteVector::Iterator *
 TagLib::ByteVector::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector::Iterator"))
 			i = INT2PTR(TagLib::ByteVector::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -38,13 +38,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ByteVector::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::ByteVector::Iterator::data()
 PPCODE:
 //USECHAR
@@ -53,7 +53,7 @@ PPCODE:
 	ST(0) = sv_2mortal(newSVpvn(&data, 1));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ByteVector::Iterator::next()
 PPCODE:
 	TagLib::ByteVector::Iterator & i = THIS->operator++();
@@ -62,7 +62,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::ByteVector::Iterator::last()
 PPCODE:
 	TagLib::ByteVector::Iterator & i = THIS->operator--();
@@ -73,7 +73,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::ByteVector::Iterator::forward(n)
 	int n
 PPCODE:
@@ -84,7 +84,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ByteVector::Iterator::backward(n)
 	int n
 PPCODE:
@@ -99,7 +99,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::ByteVector::Iterator::equal(i)
 	TagLib::ByteVector::Iterator * i
 CODE:
@@ -107,7 +107,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::Iterator::lessThan(i)
 	TagLib::ByteVector::Iterator * i
 CODE:
@@ -115,7 +115,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::Iterator::greatThan(i)
 	TagLib::ByteVector::Iterator * i
 CODE:
@@ -123,7 +123,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::Iterator::lessEqual(i)
 	TagLib::ByteVector::Iterator * i
 CODE:
@@ -131,7 +131,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ByteVector::Iterator::greatEqual(i)
 	TagLib::ByteVector::Iterator * i
 CODE:
@@ -139,7 +139,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ByteVector::Iterator::copy(i)
 	TagLib::ByteVector::Iterator * i
 PPCODE:

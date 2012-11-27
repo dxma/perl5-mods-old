@@ -23,7 +23,7 @@ Audio::TagLib::APE::Tag - An APE tag implementation
 =head1 SYNOPSIS
 
   use Audio::TagLib::APE::Tag;
-  
+
   my $i = Audio::TagLib::APE::Tag();
   $i->setTitle(Audio::TagLib::String->new("title"));
   print $i->title()->toCString(), "\n"; # got "title"
@@ -41,7 +41,7 @@ Create an APE tag with default values.
 =item I<new(L<File|Audio::TagLib::File> $file, IV $tagOffset)>
 
 Create an APE tag and parse the data in $file with APE footer at a
-  $tagOffset. 
+  $tagOffset.
 
 =item I<DESTROY()>
 
@@ -94,11 +94,11 @@ Returns a pointer to the tag's footer.
 =item I<RV itemListMap()>
 
 Returns a reference to a hash, which is tied with the returned item
-list map in C/C++ code. 
+list map in C/C++ code.
  This is an ItemListMap of all of the items in the tag.
 
 This is the most powerfull structure for accessing the items of the
-tag. 
+tag.
 
 B<warning>  You should not modify this data structure directly,
 instead use I<setItem()> and I<removeItem()>.
@@ -112,7 +112,7 @@ L<String|Audio::TagLib::String> $value, BOOL $replace=TRUE)>
 
 Adds to the item specified by $key the data $value.  If $replace is
 true, then all of the other values on the same key will be removed
-first. 
+first.
 
 =item I<void setItem(L<String|Audio::TagLib::String> $key,
 L<Item|Audio::TagLib::APE::Item> $item)>

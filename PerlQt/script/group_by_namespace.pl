@@ -1,19 +1,18 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use warnings;
 use strict;
+use Carp;
 #use English qw( -no_match_vars );
 use Fcntl qw(O_RDWR O_TRUNC O_CREAT :flock);
 use File::Spec ();
 use FindBin    ();
-use YAML::Syck;
+use Getopt::Long qw(GetOptions);
+
+use YAML::Syck qw/Load Dump/;
+
+my %opt;
 
 =head1 DESCIPTION
 
@@ -31,13 +30,13 @@ For each namespace there will be files generated as below:
   8. <namespace_name>.function           : no use
 
 B<NOTE>: 'namespace' here, as a generic form, stands for any
-full-qualified class/struct/namespace name in C/CXX. 
+full-qualified class/struct/namespace name in C/CXX.
 
 B<NOTE>: filename length limit is _PC_NAME_MAX on POSIX,
-normally this should not be an issue. 
+normally this should not be an issue.
 
 B<NOTE>: a special namespace - <NAMESPACE_DEFAULT()>, will hold any
-entry which does not belong to other namespace. 
+entry which does not belong to other namespace.
 
 =cut
 
@@ -50,20 +49,24 @@ EOU
 
 # private consts
 # TODO: Getopt::Long
-sub ARGV_INDEX_NAMESPACE_DEFAULT() { 0 }
-sub ARGV_INDEX_NAMESPACE_ROOT()    { 1 }
-# see __qt_get_module_name
-sub ARGV_INDEX_FILE_INPUT()        { 2 }
+sub NAMESPACE_DEFAULT { $opt{nsdefault} }
+sub NAMESPACE_ROOT    { $opt{nsroot}    }
 
-sub NAMESPACE_DEFAULT { $ARGV[ARGV_INDEX_NAMESPACE_DEFAULT] }
-sub NAMESPACE_ROOT    { $ARGV[ARGV_INDEX_NAMESPACE_ROOT]    }
-
-sub VISIBILITY_PUBLIC { 
-    +{ type => 'accessibility', VALUE => [ 'public' ], } 
+sub VISIBILITY_PUBLIC {
+    +{ type => 'accessibility', VALUE => [ 'public' ], }
 }
 
 sub VISIBILITY_PRIVATE {
     +{ type => 'accessibility', VALUE => [ 'private' ], }
+}
+
+sub load_yaml {
+    my $path = shift;
+    local ( *YAML, );
+    open YAML, "<", $path or croak "cannot open file to read: $!";
+    my $cont = do { local $/; <YAML> };
+    close YAML;
+    return Load($cont);
 }
 
 =over
@@ -71,10 +74,10 @@ sub VISIBILITY_PRIVATE {
 =item write_to_file
 
 A configurable hook to save content into file(s). How/where to
-create such file and the file name is totally blind for caller. 
+create such file and the file name is totally blind for caller.
 
 B<NOTE>: Currently create the file with a full-qualified
-namespace string as its name. 
+namespace string as its name.
 
 =back
 
@@ -82,7 +85,7 @@ namespace string as its name.
 
 sub write_to_file {
     my ( $hcont, $root_dir ) = @_;
-    
+
     my $NS_DELIMITER = q(::);
     my $FN_DELIMITER = q(__);
     #die "root directory not found" unless -d $root_dir;
@@ -93,7 +96,7 @@ sub write_to_file {
         $filename = File::Spec::->catfile($root_dir, $filename);
         #print STDERR $filename, "\n";
         local ( *OUT );
-        sysopen OUT, $filename, O_CREAT|O_RDWR or 
+        sysopen OUT, $filename, O_CREAT|O_RDWR or
           die "cannot open file to read/write: $!";
         until (flock OUT, LOCK_EX) { sleep 3; }
         seek OUT, 0, 0;
@@ -130,33 +133,31 @@ Adapt content of @$type and @$visibility accordingly. Invoked by _process.
 
 sub __process_accessibility {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     # push @$type and @$visibility stacks, others left untouched
     # empty first
     splice @$type, 0, scalar(@$type) if @$type;
     splice @$visibility, 0, scalar(@$visibility) if @$visibility;
-    foreach my $t (@{$entry->{VALUE}}) {
-        if ($t eq 'Q_SIGNALS' or $t eq 'signals') {
-            # Q_SIGNALS/signals
-            # SIGNAL HAS NO VISIBILITY IN QT
-            push @$type, 'signal';
-        }
-        elsif ($t eq 'Q_SLOTS' or $t eq 'slots') {
-            # Q_SLOTS/slots
-            push @$type, 'slot';
-        }
-        else {
-            # public/private/protected
-            push @$visibility, $t;
-        }
+    if ($entry->{VALUE} =~ /(?:Q_SIGNALS|signals)/o) {
+        # Q_SIGNALS/signals
+        # SIGNAL HAS NO VISIBILITY IN QT
+        push @$type, 'signal';
+    }
+    elsif ($entry->{VALUE} =~ /(?:Q_SLOTS|slots)/o) {
+        # Q_SLOTS/slots
+        push @$type, 'slot';
+    }
+    if ($entry->{VALUE} =~ /(public|private|protected)/o) {
+        # public/private/protected
+        push @$visibility, $1;
     }
 }
 
 =over
 
-=item 
+=item
 
-Internal use only. Generate a simple typedef entry. 
+Internal use only. Generate a simple typedef entry.
 
 =back
 
@@ -164,21 +165,21 @@ Internal use only. Generate a simple typedef entry.
 
 sub __gen_simple_typedef {
     my ( $from, $to ) = @_;
-    
-    return +{ type    => 'typedef', 
+
+    return +{ type    => 'typedef',
               subtype => 'simple',
-              FROM    => $from, 
+              FROM    => $from,
               TO      => $to, };
 }
 
 =over
 
-=item __process_typedef 
+=item __process_typedef
 
 Push new entries into either <namespace_name>.typedef or
-<NAMESPACE_DEFAULT>.typedef accordingly. 
+<NAMESPACE_DEFAULT>.typedef accordingly.
 
-B<NOTE>: typedef might define new container type as side-effect. 
+B<NOTE>: typedef might define new container type as side-effect.
 
 =back
 
@@ -186,31 +187,32 @@ B<NOTE>: typedef might define new container type as side-effect.
 
 sub __process_typedef {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     # subtype:
     # class/struct/enum/union/fpointer/simple
     my $entries_to_create = [];
     if ($entry->{subtype} eq 'simple') {
-        push @$entries_to_create, 
+        push @$entries_to_create,
           [$entry->{FROM}, $entry->{TO}];
     }
     elsif ($entry->{subtype} eq 'fpointer') {
-        push @$entries_to_create, 
-          [$entry->{FROM}, $entry->{TO}];
+        # remove namespace
+        push @$entries_to_create,
+          [$entry->{FROM}, (split /\:\:/, $entry->{TO})[-1]];
         # keep prototype info for future use
-        push @$entries_to_create, 
+        push @$entries_to_create,
           [$entry->{PROTOTYPE}, $entry->{FROM}];
         # store function pointer info
-        # normally function pointer is global 
+        # normally function pointer is global
         # unless itself has namespace prefix
-        __process_fpointer($entry->{FPOINTERINFO}, $entries, 
+        __process_fpointer($entry->{FPOINTERINFO}, $entries,
                            $namespace, $type, $visibility);
     }
     else {
         # container types
         # typedef permits self-define of container type within
         # typedef enum FROM {} TO;
-        # will: 
+        # will:
         #     1. define enum itself
         #     2. map enum FROM to TO
         my $gen_type = sub { 'T_'. uc($entry->{subtype}) };
@@ -218,14 +220,14 @@ sub __process_typedef {
             if (exists $entry->{FROM}->{NAME}) {
                 # typedef enum FROM {} TO;
                 # has explicit name
-                push @$entries_to_create, 
+                push @$entries_to_create,
                   [$entry->{FROM}->{NAME}, $entry->{TO}];
-                push @$entries_to_create, 
+                push @$entries_to_create,
                   [$gen_type->(), $entry->{FROM}->{NAME}];
             }
             else {
                 # typedef enum {} TO;
-                push @$entries_to_create, 
+                push @$entries_to_create,
                   [$gen_type->(), $entry->{TO}];
                 # fill name for anonymous enum/class/struct/union typedef
                 $entry->{FROM}->{NAME} = $entry->{TO};
@@ -237,7 +239,7 @@ sub __process_typedef {
                 # check for pointer def
                 # FIXME: something like "Qt::*funcpointer"
                 # NOTE: "STRUCT * * "
-                push @$entries_to_create, 
+                push @$entries_to_create,
                   [$gen_type->(). '_PTR', $entry->{FROM}];
                 my $type_without_pointer = $1;
                 $type_without_pointer =~ s/\s+$//io;
@@ -249,23 +251,23 @@ sub __process_typedef {
                 $entry->{FROM} = 'T_'. uc($entry->{subtype});
             }
             else {
-                push @$entries_to_create, 
+                push @$entries_to_create,
                   [$gen_type->(), $entry->{FROM}];
             }
-            push @$entries_to_create, 
+            push @$entries_to_create,
               [$entry->{FROM}, $entry->{TO}];
         }
         # push built-in anonymous define
         if (ref $entry->{FROM} eq 'HASH') {
-            if ($entry->{subtype} eq 'enum' and 
+            if ($entry->{subtype} eq 'enum' and
                   exists $entry->{FROM}->{VALUE}) {
                 __process_enum(
                     $entry->{FROM}, $entries, $namespace, $type, $visibility);
-            } elsif ($entry->{subtype} eq 'class' and 
+            } elsif ($entry->{subtype} eq 'class' and
                        exists $entry->{FROM}->{BODY}) {
                 __process_class(
                     $entry->{FROM}, $entries, $namespace, $type, $visibility);
-            } elsif ($entry->{subtype} eq 'struct' and 
+            } elsif ($entry->{subtype} eq 'struct' and
                        exists $entry->{FROM}->{BODY}) {
                 __process_struct(
                     $entry->{FROM}, $entries, $namespace, $type, $visibility);
@@ -303,7 +305,7 @@ sub __process_typedef {
 =item __process_enum
 
 Push a new enum entry into either <namespace>.enum or
-<NAMESPACE_DEFAULT>.enum 
+<NAMESPACE_DEFAULT>.enum
 
 =back
 
@@ -311,10 +313,12 @@ Push a new enum entry into either <namespace>.enum or
 
 sub __process_enum {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     #print "enum found: ", $entry->{NAME}, "\n";
+    return if @$visibility and $visibility->[-1] ne 'public';
+
     my $entry_to_create = {};
-    $entry_to_create->{NAME}  = $entry->{NAME} if 
+    $entry_to_create->{NAME}  = $entry->{NAME} if
       exists $entry->{NAME};
     $entry_to_create->{VALUE} = $entry->{VALUE};
     if (exists $entry->{NAME}) {
@@ -341,12 +345,12 @@ Push a function pointer entry into either <namespace>.fpointer or
 <NAMESPACE_DEFAULT>.fpointer
 
 B<NOTE>: Function pointer, in most case, should be global. Unless
-declared as something like 'void (*QtTest::callback)(int i)'. 
+declared as something like 'void (*QtTest::callback)(int i)'.
 
 B<NOTE>: Global function pointer could be still pushed into a
 namespace other than NAMESPACE_DEFAULT, in order to reference envolved
 C/C++ types in that particular namespace. In such case, function
-pointer name will be prefixed as <NAMESPACE_DEFAULT>::<name>. 
+pointer name will be prefixed as <NAMESPACE_DEFAULT>::<name>.
 
 =back
 
@@ -354,12 +358,12 @@ pointer name will be prefixed as <NAMESPACE_DEFAULT>::<name>.
 
 sub __process_fpointer {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     # store
     my $TYPE = 'fpointer';
-    my $fpname = ref $entry->{NAME} eq 'HASH' ? 
+    my $fpname = ref $entry->{NAME} eq 'HASH' ?
       $entry->{NAME}->{NAME} : $entry->{NAME};
-    
+
     if ($fpname =~ m/\:\:/io) {
         # namespace delimiter found
         # push into that namespace
@@ -378,11 +382,11 @@ sub __process_fpointer {
     elsif (@$namespace) {
         # prefix with NAMESPACE_DEFAULT
         if (ref $entry->{NAME} eq 'HASH') {
-            $entry->{NAME}->{NAME} = 
+            $entry->{NAME}->{NAME} =
               join("::", NAMESPACE_DEFAULT(), $entry->{NAME}->{NAME});
         }
         else {
-            $entry->{NAME} = 
+            $entry->{NAME} =
               join("::", NAMESPACE_DEFAULT(), $entry->{NAME});
         }
         push @{$entries->{$namespace->[-1]. '.'. $TYPE}}, $entry;
@@ -396,7 +400,7 @@ sub __process_fpointer {
 
 =item __process_function
 
-Push a function entry into possible files: 
+Push a function entry into possible files:
 
   1. <namespace>.function.public
   2. <namespace>.function.protected
@@ -409,15 +413,15 @@ Push a function entry into possible files:
 
 B<NOTE>: One of the most important missions in this phase is to gather
 overload functions. Since overload functions might be pushed from
-different header files. 
+different header files.
 
 =back
 
-=cut 
+=cut
 
 sub __process_function {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     delete $entry->{type};
     $entry->{operator} = $entry->{subtype};
     delete $entry->{subtype};
@@ -440,10 +444,10 @@ sub __process_function {
                 # check function pointer parameter
                 # push into typedef
                 __process_typedef(
-                    __gen_simple_typedef($p->{NAME}, $p->{TYPE}), 
+                    __gen_simple_typedef($p->{NAME}, $p->{TYPE}),
                     $entries, $namespace, $type, $visibility);
                 # store function pointer info
-                __process_fpointer($p->{FPOINTERINFO}, $entries, 
+                __process_fpointer($p->{FPOINTERINFO}, $entries,
                                    $namespace, $type, $visibility);
             }
             elsif ($p->{TYPE} =~ m/^T\_ARRAY\_/o) {
@@ -465,8 +469,8 @@ sub __process_function {
     else {
         my $TYPE = 'function';
         if (@$namespace) {
-            my $k = join('.', $namespace->[-1], 
-                         scalar(@$type) ? $type->[-1] : $TYPE, 
+            my $k = join('.', $namespace->[-1],
+                         scalar(@$type) ? $type->[-1] : $TYPE,
                          scalar(@$visibility) ? $visibility->[-1] : ());
             push @{$entries->{$k}}, $entry;
         } else {
@@ -489,16 +493,16 @@ BEGIN { require "$FindBin::Bin/group_by_namespace_custom_methods.pl"; }
 # extract QT-specific module info from file path
 sub __get_qt_module_name {
     my ( $module, $name ) = __get_custom_module_name(
-        @_, $ARGV[ARGV_INDEX_FILE_INPUT]);
+        @_, $opt{file});
     return(join('::', NAMESPACE_ROOT, $module), $name);
 }
 
-# internal 
+# internal
 # process a class or struct entry
 sub __process_class_or_struct {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
-    if (exists $entry->{PROPERTY} and 
+
+    if (exists $entry->{PROPERTY} and
           grep { $_ eq 'friend'} @{$entry->{PROPERTY}}) {
         # friend decl
         delete $entry->{PROPERTY};
@@ -510,21 +514,22 @@ sub __process_class_or_struct {
         # push new typedef
         if (exists $entry->{NAME}) {
             # make sure not an anonymous class/struct
-            __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}), 
-                                                   $entry->{NAME}), 
+            __process_typedef(__gen_simple_typedef('T_'. uc($entry->{type}),
+                                                   $entry->{NAME}),
                               $entries, $namespace, $type, $visibility);
         }
-        if (exists $entry->{BODY} and @{$entry->{BODY}} and 
+        if (exists $entry->{BODY} and @{$entry->{BODY}} and
               not exists $entry->{VARIABLE}) {
-            # normal full decl 
+            # normal full decl
             # make sure not an anymous struct/class variable like
             # struct { int i; } d;
             my $entry_to_create = {};
+            $entry_to_create->{FILE} = $opt{name};
             # keep PROPERTY for future reference
-            $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if 
+            $entry_to_create->{PROPERTY} = $entry->{PROPERTY} if
               exists $entry->{PROPERTY};
             # required class-specific meta information
-            $entry_to_create->{ISA} = $entry->{ISA} if 
+            $entry_to_create->{ISA} = $entry->{ISA} if
               exists $entry->{ISA};
             $entry_to_create->{TYPE} = $entry->{type};
             # push new typedef
@@ -535,37 +540,42 @@ sub __process_class_or_struct {
             my $new_namespace = @$namespace ?
               $namespace->[-1]. '::'. $entry->{NAME} : $entry->{NAME};
             push @$namespace, $new_namespace;
-            # get QT module info 
-            ( $entry_to_create->{MODULE}, $entry_to_create->{PERL_NAME} ) = 
+            # get QT module info
+            ( $entry_to_create->{MODULE}, $entry_to_create->{PERL_NAME} ) =
               __get_qt_module_name($namespace->[-1]);
             $entry_to_create->{NAME} = $namespace->[-1];
             # store
-            my $TYPE = 'meta';    
+            my $TYPE = 'meta';
+            if (@$visibility and $visibility->[-1] ne 'public') {
+                $TYPE .= '.'. $visibility->[-1];
+            }
             $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
             # process body
             # push 'private' as initial visibility
             __process_accessibility($entry->{type} eq 'class' ?
                                       VISIBILITY_PRIVATE() :
-                                        VISIBILITY_PUBLIC(), $entries, 
+                                        VISIBILITY_PUBLIC(), $entries,
                                     $namespace, $type, $visibility);
-            __process_loop($entry->{BODY}, $entries, 
+            __process_loop($entry->{BODY}, $entries,
                            $namespace, $type, $visibility);
             # leave class declaration
             # pop current namespace
             pop @$namespace;
-        }   
+            # pop current visibility
+            pop @$visibility;
+        }
     }
 }
 
-=over 
+=over
 
 =item __process_class
 
 Create a new file <namespace>.meta for class, keep specific
 information inside. Push new items into @$namespace, @$type and
-@$visibility stacks. 
+@$visibility stacks.
 
-Create new typedef entry. 
+Create new typedef entry.
 
 =back
 
@@ -579,7 +589,7 @@ sub __process_class {
 
 =item __process_struct
 
-Similar as __process_class. See above. 
+Similar as __process_class. See above.
 
 =back
 
@@ -594,8 +604,8 @@ sub __process_struct {
 =item __process_extern
 
 Currently pay no attention to extern stuff. Normally it is used to
-import C symbols into C++ code or to bridge an existing variable in 
-another namespace. 
+import C symbols into C++ code or to bridge an existing variable in
+another namespace.
 
 =back
 
@@ -613,7 +623,7 @@ sub __process_extern {
 =item __process_namespace
 
 Recursively process namespace body. While no <namespace>.meta
-created. 
+created.
 
 =back
 
@@ -621,13 +631,12 @@ created.
 
 sub __process_namespace {
     my ( $entry, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     #print "namespace found: ", $entry->{NAME}, "\n";
     my $entry_to_create = {};
     $entry_to_create->{NAME}   = $entry->{NAME};
     $entry_to_create->{TYPE}   = $entry->{type};
-    # FIXME
-    $entry_to_create->{MODULE} = 
+    $entry_to_create->{MODULE} =
       @$namespace ? join('::', @$namespace) : '';
     # push new namespace
     # namespace could _ONLY_ be nested in another namespace
@@ -638,18 +647,18 @@ sub __process_namespace {
     my $TYPE = 'meta';
     $entries->{$namespace->[-1]. '.'. $TYPE} = $entry_to_create;
     # process body
-    __process_loop($entry->{BODY}, $entries, 
+    __process_loop($entry->{BODY}, $entries,
                    $namespace, $type, $visibility);
     # leave namespace declaration
     # pop current namespace
     pop @$namespace;
 }
 
-=over 
+=over
 
 =item __process_loop
 
-Internal use only. Process each entry inside current list body. 
+Internal use only. Process each entry inside current list body.
 
 =back
 
@@ -657,7 +666,7 @@ Internal use only. Process each entry inside current list body.
 
 sub __process_loop {
     my ( $list, $entries, $namespace, $type, $visibility ) = @_;
-    
+
     foreach my $entry (@$list) {
         if ($entry->{type} eq 'accessibility') {
             __process_accessibility(
@@ -709,26 +718,26 @@ sub __process_loop {
     }
 }
 
-=over 
+=over
 
 =item _process
 
-Re-group current content by namespace, store as on-disk files. 
+Re-group current content by namespace, store as on-disk files.
 
 B<NOTE>: Create a new typemap entry for raw function pointer parameter
-in function declaration. 
+in function declaration.
 
-B<NOTE>: Function parameter name is stripped in this phase. 
+B<NOTE>: Function parameter name is stripped in this phase.
 
-B<NOTE>: Function PROPERTY field is stripped in this phase. 
+B<NOTE>: Function PROPERTY field is stripped in this phase.
 
 =back
 
 =cut
 
 sub _process {
-    my ( $list, $root_dir ) = @_;
-    
+    my ( $list, $root_dir, ) = @_;
+
     # internal stacks
     # namespace stack
     my $namespace       = [];
@@ -743,15 +752,19 @@ sub _process {
     # recursively process each entry inside list body
     __process_loop($list, $entries, $namespace, $type, $visibility);
     # make <NAMESPACE_DEFAULT>.meta
-    $entries->{NAMESPACE_DEFAULT. '.meta'} = { 
-        NAME   => NAMESPACE_DEFAULT, 
-        TYPE   => 'namespace', 
-        MODULE => NAMESPACE_DEFAULT, 
+    $entries->{NAMESPACE_DEFAULT. '.meta'} = {
+        NAME   => NAMESPACE_DEFAULT,
+        TYPE   => 'namespace',
+        MODULE => NAMESPACE_DEFAULT,
     };
+    # patch MODULE attribute in <NAMESPACE_ROOT>.meta
+    if (exists $entries->{NAMESPACE_ROOT. '.meta'}) {
+        $entries->{NAMESPACE_ROOT. '.meta'}->{MODULE} = NAMESPACE_ROOT;
+    }
     # special patch to <NAMESPACE_DEFAULT>.function
     # rename to <NAMESPACE_DEFAULT>.function.public
     if (exists $entries->{NAMESPACE_DEFAULT. '.function'}) {
-        $entries->{NAMESPACE_DEFAULT. '.function.public'} = 
+        $entries->{NAMESPACE_DEFAULT. '.function.public'} =
           $entries->{NAMESPACE_DEFAULT. '.function'};
         delete $entries->{NAMESPACE_DEFAULT. '.function'};
     }
@@ -760,18 +773,22 @@ sub _process {
 }
 
 sub main {
-    usage() unless @ARGV == 4;
-    my ( undef, undef, $in, $out ) = @ARGV;
-    die "file not found" unless -f $in;
-    die "directory not found" unless -d $out;
-    
-    local ( *HEADER );
-    open HEADER, '<', $in or die "cannot open file: $!";
-    my $cont = do { local $/; <HEADER>; };
-    close HEADER;
-    my ( $entries ) = Load($cont);
-    _process($entries, $out);
-    
+    GetOptions(
+        \%opt,
+        'file=s',
+        'dir=s',
+        'name=s',
+        'nsdefault=s',
+        'nsroot=s',
+    );
+    #usage() unless @ARGV;
+    croak "file not found: $opt{file}" if !-f $opt{file};
+    croak "directory not found: $opt{dir}" if !-d $opt{dir};
+    croak "filename not found" if !$opt{name};
+    croak "default namespace not found" if !$opt{nsdefault};
+    croak "root namespace not found" if !$opt{nsroot};
+
+    _process(load_yaml($opt{file}), $opt{dir});
     exit 0;
 }
 
@@ -779,7 +796,7 @@ sub main {
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 - 2008 by Dongxu Ma <dongxu@cpan.org>
+Copyright (C) 2007 - 2011 by Dongxu Ma <dongxu@cpan.org>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

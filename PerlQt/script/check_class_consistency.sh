@@ -1,11 +1,5 @@
 #!/bin/sh
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 # sanity check for stuff inside 04grouped
 
@@ -17,6 +11,6 @@ echo "meta  in total:" $num_of_meta
 
 if [[ $num_of_class==$num_of_meta+1 ]] ; then
 	echo "ok"
-else 
+else
 	echo "not ok"
 fi

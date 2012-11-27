@@ -30,14 +30,14 @@ Audio::TagLib::ID3v2::FrameListMap::Iterator - Perl-only class
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::FrameListMap::Iterator;
-  
+
   my $tag  = Audio::TagLib::ID3v2::Tag->new();
   $tag->setTitle(Audio::TagLib::String->new("title"));
   $tag->setArtist(Audio::TagLib::String->new("artist"));
   my $map  = $tag->frameListMap();
   my $i    = $map->begin();
-  print $$i->begin()->data()->toString()->toCString(), "\n"; 
-  # got "title" 
+  print $$i->begin()->data()->toString()->toCString(), "\n";
+  # got "title"
 
 =head1 DESCRIPTION
 

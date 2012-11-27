@@ -1,11 +1,5 @@
 #! /usr/bin/perl -w
-
-################################################################
-# $Id$
-# $Author$
-# $Date$
-# $Rev$
-################################################################
+# Author: Dongxu Ma
 
 use strict;
 #use English qw( -no_match_vars );
@@ -16,7 +10,7 @@ use YAML::Syck qw/Load Dump/;
 
 =head1 DESCRIPTION
 
-Create 05typemap/packagemap accordingly to 04group/<module>.meta
+Create 05typemap/packagemap according to 04group/<module>.meta
 
 =cut
 
@@ -39,28 +33,28 @@ sub load_yaml {
 sub main {
     my ( $out_group_dir, $packagemap_file ) = @ARGV;
     usage() unless -d $out_group_dir;
-    
+
     my $packagemap = {};
     my @metas = glob("$out_group_dir/*.meta");
     foreach my $m (@metas) {
         my $meta = load_yaml($m);
         if ($meta->{TYPE} eq 'namespace') {
             # FIXME
-            $packagemap->{$meta->{MODULE}} = $meta->{MODULE};
+            $packagemap->{$meta->{NAME}} = $meta->{MODULE};
         }
         else {
-            $packagemap->{$meta->{NAME}} = exists $meta->{PERL_NAME} ? 
-              join('::', $meta->{MODULE}, $meta->{PERL_NAME}) : 
+            $packagemap->{$meta->{NAME}} = exists $meta->{PERL_NAME} ?
+              join('::', $meta->{MODULE}, $meta->{PERL_NAME}) :
                 $meta->{MODULE};
         }
     }
-    
+
     local ( *PKGMAP, );
-    open PKGMAP, ">", $packagemap_file or 
+    open PKGMAP, ">", $packagemap_file or
       croak("cannot open file to write: $!");
     print PKGMAP Dump($packagemap);
     close PKGMAP or croak("cannot save to file: $!");
-    
+
     exit 0;
 }
 

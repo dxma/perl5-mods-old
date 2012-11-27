@@ -4,24 +4,24 @@ MODULE = TagLib		PACKAGE = _NAMESPACE_
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-_NAMESPACE_ * 
+_NAMESPACE_ *
 _NAMESPACE_::new(...)
 PROTOTYPE: ;$
 PREINIT:
 	_NAMESPACE_ * m;
 CODE:
-	/*! 
+	/*!
 	 * MAP()
 	 * MAP(const MAP< Key, T > &m)
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::_NAMESPACE_"))
 			m = INT2PTR(_NAMESPACE_ *, SvIV(SvRV(ST(1))));
 		else
@@ -35,20 +35,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-_NAMESPACE_::Iterator * 
+_NAMESPACE_::Iterator *
 _NAMESPACE_::begin()
 CODE:
 	RETVAL = new _NAMESPACE_::Iterator(THIS->begin());
 OUTPUT:
 	RETVAL
 
-_NAMESPACE_::Iterator * 
+_NAMESPACE_::Iterator *
 _NAMESPACE_::end()
 CODE:
 	RETVAL = new _NAMESPACE_::Iterator(THIS->end());
@@ -56,40 +56,40 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator begin() const
 # ConstIterator end() const
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 _NAMESPACE_::insert(key, value)
 	_KEY_ * key
 	_T_ * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 _NAMESPACE_::clear()
 CODE:
 	THIS->clear();
 
-unsigned int 
+unsigned int
 _NAMESPACE_::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 _NAMESPACE_::isEmpty()
 CODE:
 	RETVAL = THIS->isEmpty();
 OUTPUT:
 	RETVAL
 
-_NAMESPACE_::Iterator *  
+_NAMESPACE_::Iterator *
 _NAMESPACE_::find(key)
 	_KEY_ * key
 CODE:
@@ -98,13 +98,13 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
+#
 # ConstIterator find(const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
-bool 
+bool
 _NAMESPACE_::contains(key)
 	_KEY_ * key
 CODE:
@@ -112,14 +112,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::erase(key)
 	_KEY_ * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 _NAMESPACE_::getItem(key)
 	_KEY_ * key
 INIT:
@@ -131,20 +131,20 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # const T & operator[](const Key &key) const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # Map<Key, T> & operator=(const Map<Key, T> &m)
 # not exported
-# 
+#
 ################################################################
 
-void 
+void
 _NAMESPACE_::copy(m)
 	_NAMESPACE_ * m
 PPCODE:
@@ -153,33 +153,33 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void detach()
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
-# 
+#
 # SPECIAL FUNCTIONS FOR TIE MAGIC
-# 
+#
 ################################################################
 
-static void  
+static void
 _NAMESPACE_::TIEHASH(...)
 PROTOTYPE: ;$
 PREINIT:
 	_NAMESPACE_ * map;
 PPCODE:
-	/*! 
+	/*!
 	 * tie %h, "_NAMESPACE_"
 	 * tie %h, "_NAMESPACE_", $obj_to_tie
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::_NAMESPACE_")) {
 			if(SvREADONLY(SvRV(ST(1)))){
 				ST(0) = sv_newmortal();
@@ -199,7 +199,7 @@ PPCODE:
 	}
 	XSRETURN(1);
 
-void 
+void
 _NAMESPACE_::FETCH(key)
 	_KEY_ * key
 PPCODE:
@@ -216,26 +216,26 @@ PPCODE:
 	} else
 		XSRETURN_UNDEF;
 
-void 
+void
 _NAMESPACE_::STORE(key, value)
 	_KEY_ * key
 	_T_ * value
 CODE:
 	THIS->insert(*key, *value);
 
-void 
+void
 _NAMESPACE_::DELETE(key)
 	_KEY_ * key
 CODE:
 	if(THIS->contains(*key))
 		THIS->erase(THIS->find(*key));
 
-void 
+void
 _NAMESPACE_::CLEAR()
 CODE:
 	THIS->clear();
 
-bool 
+bool
 _NAMESPACE_::EXISTS(key)
 	_KEY_ * key
 CODE:
@@ -243,7 +243,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 _NAMESPACE_::FIRSTKEY()
 PREINIT:
 	_NAMESPACE_::Iterator it;
@@ -258,7 +258,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-_KEY_ * 
+_KEY_ *
 _NAMESPACE_::NEXTKEY(lastkey)
 	_KEY_ * lastkey
 PREINIT:
@@ -273,7 +273,7 @@ CODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-unsigned int 
+unsigned int
 _NAMESPACE_::SCALAR()
 CODE:
 	/* return size of current map */
@@ -282,10 +282,10 @@ OUTPUT:
 	RETVAL
 
 ################################################################
-# 
-# _NAMESPACE_::UNTIE() 
+#
+# _NAMESPACE_::UNTIE()
 # not implemented
 # since there is no special action to do normally
-# 
+#
 ################################################################
 

@@ -19,12 +19,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::ID3v2::TextIdentificationFrame - An ID3v2 text identification
-frame implementation 
+frame implementation
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::ID3v2::TextIdentificationFrame;
-  
+
   my $i = Audio::TagLib::ID3v2::TextIdentificationFrame->new(
     new(Audio::TagLib::ByteVector->new("TALB"), "UTF8");
   $i->setText(Audio::TagLib::String->new("blah blah"));
@@ -34,7 +34,7 @@ frame implementation
 
 This is an implementation of the most common type of ID3v2 frame --
 text identification frames. There are a number of variations on
-this. Those enumerated in the ID3v2.4 standard are: 
+this. Those enumerated in the ID3v2.4 standard are:
 
      TALB  Album/Movie/Show title
      TBPM  BPM (beats per minute)
@@ -94,7 +94,7 @@ Construct an empty frame of type $type. Uses $encoding as the default
 text encoding.
 
 B<NOTE> In this case you must specify the text encoding as it resolves
-the ambiguity between constructors. 
+the ambiguity between constructors.
 
 =item I<new(L<ByteVector|Audio::TagLib::ByteVector> $data)>
 
@@ -115,7 +115,7 @@ This function will accept either a StringList or a String (using the
 B<NOTE> This will not change the text encoding of the frame even if
  the strings passed in are not of the same encoding. Please use
  setEncoding(s.type()) if you wish to change the encoding of the
- frame. 
+ frame.
 
 =item I<void setText(L<String|Audio::TagLib::String> $s)>
 

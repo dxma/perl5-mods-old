@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::Ogg::PageHeader
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::Ogg::PageHeader * 
+TagLib::Ogg::PageHeader *
 TagLib::Ogg::PageHeader::new(file=0, pageOffset=-1)
 	TagLib::Ogg::File * file
 	long pageOffset
@@ -18,20 +18,20 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-bool 
+bool
 TagLib::Ogg::PageHeader::isValid()
 CODE:
 	RETVAL = THIS->isValid();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::packetSizes()
 INIT:
 	TagLib::List<int> l = THIS->packetSizes();
@@ -53,7 +53,7 @@ PPCODE:
 		XSRETURN_UNDEF;
 	}
 
-void 
+void
 TagLib::Ogg::PageHeader::setPacketSizes(...)
 PROTOTYPE: @
 PREINIT:
@@ -67,112 +67,112 @@ CODE:
 		l.append(SvIV(ST(i)));
 	THIS->setPacketSizes(l);
 
-bool 
+bool
 TagLib::Ogg::PageHeader::firstPacketContinued()
 CODE:
 	RETVAL = THIS->firstPacketContinued();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setFirstPacketContinued(continued)
 	bool continued
 CODE:
 	THIS->setFirstPacketContinued(continued);
 
-bool 
+bool
 TagLib::Ogg::PageHeader::lastPacketCompleted()
 CODE:
 	RETVAL = THIS->lastPacketCompleted();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setLastPacketCompleted(completed)
 	bool completed
 CODE:
 	THIS->setLastPacketCompleted(completed);
 
-bool 
+bool
 TagLib::Ogg::PageHeader::firstPageOfStream()
 CODE:
 	RETVAL = THIS->firstPageOfStream();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setFirstPageOfStream(first)
 	bool first
 CODE:
 	THIS->setFirstPageOfStream(first);
 
-bool 
+bool
 TagLib::Ogg::PageHeader::lastPageOfStream()
 CODE:
 	RETVAL = THIS->lastPageOfStream();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setLastPageOfStream(last)
 	bool last
 CODE:
 	THIS->setLastPageOfStream(last);
 
-long long 
+long long
 TagLib::Ogg::PageHeader::absoluteGranularPosition()
 CODE:
 	RETVAL = THIS->absoluteGranularPosition();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setAbsoluteGranularPosition(agp)
 	long long agp
 CODE:
 	THIS->setAbsoluteGranularPosition(agp);
 
-unsigned int 
+unsigned int
 TagLib::Ogg::PageHeader::streamSerialNumber()
 CODE:
 	RETVAL = THIS->streamSerialNumber();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setStreamSerialNumber(n)
 	unsigned int n
 CODE:
 	THIS->setStreamSerialNumber(n);
 
-int 
+int
 TagLib::Ogg::PageHeader::pageSequenceNumber()
 CODE:
 	RETVAL = THIS->pageSequenceNumber();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::Ogg::PageHeader::setPageSequenceNumber(sequenceNumber)
 	int sequenceNumber
 CODE:
 	THIS->setPageSequenceNumber(sequenceNumber);
 
-int 
+int
 TagLib::Ogg::PageHeader::size()
 CODE:
 	RETVAL = THIS->size();
 OUTPUT:
 	RETVAL
 
-int 
+int
 TagLib::Ogg::PageHeader::dataSize()
 CODE:
 	RETVAL = THIS->dataSize();
 OUTPUT:
 	RETVAL
 
-TagLib::ByteVector * 
+TagLib::ByteVector *
 TagLib::Ogg::PageHeader::render()
 CODE:
 	RETVAL = new TagLib::ByteVector(THIS->render());

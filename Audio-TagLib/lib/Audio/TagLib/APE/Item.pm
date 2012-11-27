@@ -26,7 +26,7 @@ Audio::TagLib::APE::Item - An implementation of APE-items
 =head1 SYNOPSIS
 
   use Audio::TagLib::APE::Item;
-  
+
   my $key   = Audio::TagLib::String->new("key");
   my $value = Audio::TagLib::String->new("value");
   my $i     = Audio::TagLib::APE::Item->new($key, $value);
@@ -45,9 +45,9 @@ This class provides the features of items in the APEv2 standard.
 Constructs an empty item.
 
 =item I<new(L<String|Audio::TagLib::String> $key, L<String|Audio::TagLib::String>
-$value)> 
+$value)>
 
-Constructs an item with $key and $value. 
+Constructs an item with $key and $value.
 
 =item I<new(L<String|Audio::TagLib::String> $key,
 L<StringList|Audio::TagLib::StringList> $values)>
@@ -122,7 +122,7 @@ Returns if the item has any real content.
 =item %_ItemTypes
 
 C<keys %Audio::TagLib::APE::Item::_ItemTypes> lists all available itemtypes
-used in Perl. 
+used in Perl.
 
 see I<L<setType>>
 

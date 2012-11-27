@@ -7,12 +7,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::FrameListMap::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::FrameListMap::Iterator * 
+TagLib::ID3v2::FrameListMap::Iterator *
 TagLib::ID3v2::FrameListMap::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ID3v2::FrameListMap::Iterator"))
 			i = INT2PTR(TagLib::ID3v2::FrameListMap::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -38,13 +38,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::data()
 PPCODE:
 //USEPAIR
@@ -55,7 +55,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::next()
 PPCODE:
 	TagLib::ID3v2::FrameListMap::Iterator & i = THIS->operator++();
@@ -64,7 +64,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::ID3v2::FrameListMap::Iterator::last()
 PPCODE:
 	TagLib::ID3v2::FrameListMap::Iterator & i = THIS->operator--();
@@ -75,7 +75,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::forward(n)
 	int n
 PPCODE:
@@ -86,7 +86,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::backward(n)
 	int n
 PPCODE:
@@ -101,7 +101,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::Iterator::equal(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 CODE:
@@ -109,7 +109,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::Iterator::lessThan(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 CODE:
@@ -117,7 +117,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::Iterator::greatThan(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 CODE:
@@ -125,7 +125,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::Iterator::lessEqual(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 CODE:
@@ -133,7 +133,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::ID3v2::FrameListMap::Iterator::greatEqual(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 CODE:
@@ -141,7 +141,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::FrameListMap::Iterator::copy(i)
 	TagLib::ID3v2::FrameListMap::Iterator * i
 PPCODE:

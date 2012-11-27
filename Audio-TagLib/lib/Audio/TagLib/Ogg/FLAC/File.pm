@@ -19,12 +19,12 @@ __END__
 =head1 NAME
 
 Audio::TagLib::Ogg::FLAC::File -  An implementation of Audio::TagLib::File with
-Ogg/FLAC specific methods 
+Ogg/FLAC specific methods
 
 =head1 SYNOPSIS
 
   use Audio::TagLib::Ogg::FLAC::File;
-  
+
   my $i = Audio::TagLib::Ogg::FLAC::File->new("sample file.flac");
   print $i->tag()->album()->toCString(), "\n"; # got album
 
@@ -65,7 +65,7 @@ XiphComment. Returns true if the save is successful.
 =item I<IV streamLength()>
 
 Returns the length of the audio-stream, used by FLAC::Properties for
-calculating the bitrate. 
+calculating the bitrate.
 
 =back
 

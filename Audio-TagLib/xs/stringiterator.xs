@@ -7,12 +7,12 @@ MODULE = TagLib			PACKAGE = TagLib::String::Iterator
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::String::Iterator * 
+TagLib::String::Iterator *
 TagLib::String::Iterator::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -24,7 +24,7 @@ CODE:
 	 */
 	switch(items) {
 	case 2:
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::String::Iterator"))
 			i = INT2PTR(TagLib::String::Iterator *, SvIV(SvRV(ST(1))));
 		else
@@ -38,13 +38,13 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::String::Iterator::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-void 
+void
 TagLib::String::Iterator::data()
 PPCODE:
 //USEWCHAR
@@ -69,7 +69,7 @@ PPCODE:
 	SvUTF8_on(ST(0));
 	XSRETURN(1);
 
-void 
+void
 TagLib::String::Iterator::next()
 PPCODE:
 	TagLib::String::Iterator & i = THIS->operator++();
@@ -78,7 +78,7 @@ PPCODE:
 	SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void  
+void
 TagLib::String::Iterator::last()
 PPCODE:
 	TagLib::String::Iterator & i = THIS->operator--();
@@ -89,7 +89,7 @@ PPCODE:
 
 #ifdef LONGMOVEMENT
 
-void 
+void
 TagLib::String::Iterator::forward(n)
 	int n
 PPCODE:
@@ -100,7 +100,7 @@ PPCODE:
 	//SvREADONLY_on(SvRV(ST(0)));
 	XSRETURN(1);
 
-void 
+void
 TagLib::String::Iterator::backward(n)
 	int n
 PPCODE:
@@ -115,7 +115,7 @@ PPCODE:
 
 #ifdef MOREMETHODS
 
-bool 
+bool
 TagLib::String::Iterator::equal(i)
 	TagLib::String::Iterator * i
 CODE:
@@ -123,7 +123,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::Iterator::lessThan(i)
 	TagLib::String::Iterator * i
 CODE:
@@ -131,7 +131,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::Iterator::greatThan(i)
 	TagLib::String::Iterator * i
 CODE:
@@ -139,7 +139,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::Iterator::lessEqual(i)
 	TagLib::String::Iterator * i
 CODE:
@@ -147,7 +147,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-bool 
+bool
 TagLib::String::Iterator::greatEqual(i)
 	TagLib::String::Iterator * i
 CODE:
@@ -155,7 +155,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::String::Iterator::copy(i)
 	TagLib::String::Iterator * i
 PPCODE:

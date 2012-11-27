@@ -4,12 +4,12 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::RelativeVolumeFrame
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::RelativeVolumeFrame * 
+TagLib::ID3v2::RelativeVolumeFrame *
 TagLib::ID3v2::RelativeVolumeFrame::new(...)
 PROTOTYPE: ;$
 PREINIT:
@@ -20,15 +20,15 @@ CODE:
 	 * RelativeVolumeFrame(const ByteVector &data)
 	 */
 	if(items == 2) {
-		if(sv_isobject(ST(1)) && 
+		if(sv_isobject(ST(1)) &&
 			sv_derived_from(ST(1), "Audio::TagLib::ByteVector"))
 			data = INT2PTR(TagLib::ByteVector *, SvIV(SvRV(ST(1))));
-		else 
+		else
 			croak("ST(1) is not of type TagLib::ByteVector");
 		RETVAL = new TagLib::ID3v2::RelativeVolumeFrame(*data);
 	} else {
-		/* RelativeVolumeFrame() not implemented, 
-		 * a bug of libtag.so.1.4.0 
+		/* RelativeVolumeFrame() not implemented,
+		 * a bug of libtag.so.1.4.0
 		 */
 		RETVAL = NULL;
 #ifdef FIXME
@@ -38,23 +38,23 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
-TagLib::String * 
+TagLib::String *
 TagLib::ID3v2::RelativeVolumeFrame::toString()
 CODE:
 	RETVAL = new TagLib::String(THIS->toString());
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::channels()
 INIT:
-	TagLib::List<TagLib::ID3v2::RelativeVolumeFrame::ChannelType> 
+	TagLib::List<TagLib::ID3v2::RelativeVolumeFrame::ChannelType>
 		l = THIS->channels();
 PPCODE:
 	switch(GIMME_V) {
@@ -103,20 +103,20 @@ PPCODE:
 		XSRETURN_UNDEF;
 	}
 
-TagLib::ID3v2::RelativeVolumeFrame::ChannelType 
+TagLib::ID3v2::RelativeVolumeFrame::ChannelType
 TagLib::ID3v2::RelativeVolumeFrame::channelType()
 CODE:
 	RETVAL = THIS->channelType();
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::setChannelType(t)
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType t
 CODE:
 	THIS->setChannelType(t);
 
-short 
+short
 TagLib::ID3v2::RelativeVolumeFrame::volumeAdjustmentIndex(type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
 CODE:
@@ -124,14 +124,14 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::setVolumeAdjustmentIndex(index, type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	short index
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
 CODE:
 	THIS->setVolumeAdjustmentIndex(index, type);
 
-float 
+float
 TagLib::ID3v2::RelativeVolumeFrame::volumeAdjustment(type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
 CODE:
@@ -139,18 +139,18 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::setVolumeAdjustment(adjustment, type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	float adjustment
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
 CODE:
 	THIS->setVolumeAdjustment(adjustment, type);
 
-TagLib::ID3v2::RelativeVolumeFrame::PeakVolume * 
+TagLib::ID3v2::RelativeVolumeFrame::PeakVolume *
 TagLib::ID3v2::RelativeVolumeFrame::peakVolume(type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
 INIT:
-	TagLib::ID3v2::RelativeVolumeFrame::PeakVolume 
+	TagLib::ID3v2::RelativeVolumeFrame::PeakVolume
 		pv = THIS->peakVolume(type);
 CODE:
 	RETVAL = new TagLib::ID3v2::RelativeVolumeFrame::PeakVolume();
@@ -159,7 +159,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::setPeakVolume(peak, type=TagLib::ID3v2::RelativeVolumeFrame::MasterVolume)
 	TagLib::ID3v2::RelativeVolumeFrame::PeakVolume * peak
 	TagLib::ID3v2::RelativeVolumeFrame::ChannelType type
@@ -167,13 +167,13 @@ CODE:
 	THIS->setPeakVolume(*peak, type);
 
 ################################################################
-# 
+#
 # PROTECTED MEMBER FUNCTIONS
-# 
+#
 # void parseFields(const ByteVector &data)
 # ByteVector renderFields() const
 # not exported
-# 
+#
 ################################################################
 
 ################################################################
@@ -183,44 +183,44 @@ MODULE = TagLib			PACKAGE = TagLib::ID3v2::RelativeVolumeFrame::PeakVolume
 PROTOTYPES: ENABLE
 
 ################################################################
-# 
+#
 # PUBLIC MEMBER FUNCTIONS
-# 
+#
 ################################################################
 
-TagLib::ID3v2::RelativeVolumeFrame::PeakVolume * 
+TagLib::ID3v2::RelativeVolumeFrame::PeakVolume *
 TagLib::ID3v2::RelativeVolumeFrame::Peakvolume::new()
 CODE:
 	RETVAL = new TagLib::ID3v2::RelativeVolumeFrame::PeakVolume();
 OUTPUT:
 	RETVAL
 
-unsigned char 
+unsigned char
 TagLib::ID3v2::RelativeVolumeFrame::PeakVolume::bitsRepresentingPeak()
 CODE:
 	RETVAL = THIS->bitsRepresentingPeak;
 OUTPUT:
 	RETVAL
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::PeakVolume::DESTROY()
 CODE:
 	if(!SvREADONLY(SvRV(ST(0))))
 		delete THIS;
 
 ################################################################
-# 
+#
 # new member function
 # exported for setting bitRepresentingPeak
-# 
+#
 ################################################################
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::PeakVolume::setBitsRepresentingPeak(c)
 	unsigned char c
 CODE:
 	THIS->bitsRepresentingPeak = c;
 
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::PeakVolume::peakVolume()
 INIT:
 	TagLib::ByteVector & pv = THIS->peakVolume;
@@ -231,12 +231,12 @@ PPCODE:
 	XSRETURN(1);
 
 ################################################################
-# 
+#
 # new member function
 # exported for setting peakVolume
-# 
+#
 ################################################################
-void 
+void
 TagLib::ID3v2::RelativeVolumeFrame::PeakVolume::setPeakVolume(pv)
 	TagLib::ByteVector * pv
 INIT:
