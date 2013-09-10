@@ -17,4 +17,4 @@ Dongxu's CPAN mods
 
 * [Audio::TagLib](http://search.cpan.org/perldoc?Audio::TagLib) - Process Audio Tag
 * [Audio::TagLib::Shell](http://search.cpan.org/perldoc?Audio::TagLib::Shell) - A mini shell for Audio::TagLib
-* [Term::BashTab](http://search.cpan.org/perldoc?Term::BashTab) - Simulate <TAB> in bash shell
+* [Term::BashTab](http://search.cpan.org/perldoc?Term::BashTab) - Simulate TAB in bash shell
