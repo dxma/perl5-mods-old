@@ -1,20 +1,19 @@
 cpan
 ====
 
-Dongxu's CPAN mods
+Dongxu's CPAN modules
 
 ## DEVELOPMENT
 
-* [Perl Qt4 binding](http://wiki.github.com/dxma/cpan/perl-qt4-binding) - Nokia Qt4 binding Project
-* [Perl KDE binding](http://wiki.github.com/dxma/cpan/perl-kde-bindings) - KDE binding Project
-
-## PROTOTYPE
-
-* [QTEDI](http://wiki.github.com/dxma/cpan/qt-and-qt-based-desktop-environment-interface) - QT and QT-based Desktop Environment Interface
-* [BerkeleyDB::SecIndices::Accessor](http://search.cpan.org/perldoc?BerkeleyDB::SecIndices::Accessor) - Operate BerkeleyDB with secondary index
-
 ## RELEASE
 
-* [Audio::TagLib](http://search.cpan.org/perldoc?Audio::TagLib) - Process Audio Tag
-* [Audio::TagLib::Shell](http://search.cpan.org/perldoc?Audio::TagLib::Shell) - A mini shell for Audio::TagLib
-* [Term::BashTab](http://search.cpan.org/perldoc?Term::BashTab) - Simulate TAB in bash shell
+* [Data::Validate::Perl](http://search.cpan.org/perldoc?Data::Validate::Perl) - validate in-memory perl data
+* [QTEDI](http://wiki.github.com/dxma/cpan/qt-and-qt-based-desktop-environment-interface) - QT and QT-based Desktop Environment Interface
+* PerlQt - auto-make Qt4 perl bindings
+
+## OLD
+
+* [BerkeleyDB::SecIndices::Accessor](http://search.cpan.org/perldoc?BerkeleyDB::SecIndices::Accessor) - operate BerkeleyDB with secondary index
+* [Audio::TagLib](http://search.cpan.org/perldoc?Audio::TagLib) - process audio file tag
+* [Audio::TagLib::Shell](http://search.cpan.org/perldoc?Audio::TagLib::Shell) - mini shell for Audio::TagLib
+* [Term::BashTab](http://search.cpan.org/perldoc?Term::BashTab) - simulate TAB in bash shell
